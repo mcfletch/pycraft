@@ -40,7 +40,7 @@ def draw_parabolic_dome(
     center, 
     height, 
     relaxation=4, 
-    material=block.STONE,
+    material=block.STAINED_GLASS,
     start_angle=0,
     stop_angle=np.pi*2,
     steps = None

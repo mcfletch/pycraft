@@ -55,9 +55,10 @@ def draw_parabolic_dome(
 
 def main():
     mc = minecraft.Minecraft.create()
+    # players = [1,2,3]
     for player in mc.getPlayerEntityIds():
-        x,y,z = position = mc.entity.getPos(player)
-        draw_parabolic_dome(mc,(x,y,z),20)
+        position = mc.entity.getPos(player)
+        draw_parabolic_dome(mc,position,20)
     
 if __name__ == "__main__":
     main()

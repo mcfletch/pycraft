@@ -5,7 +5,35 @@
 # Get the collection of code that the minecraft people
 # have given us that lets us talk to minecraft, the
 # "library" or "module" provides lots of functions for
-# manipulating the minecraft server
+# manipulating the minecraft server.
+#
+# Programmers create different levels of code "abstraction" 
+# that can be reused, generally these are:
+#
+#  * packages -- everything you need to work with some bit topic (minecraft),
+#                these are the level where you decide to install a solution,
+#                so there might be 3 programmers with packages to control Minecraft
+#                but we are going to choose `mcpi`. A package in Python is
+#                generally a directory of python (.py) files.
+#  * modules -- everything that deals with a particular sub-topic (blocks, players)
+#               in Python a module is generally a file with the name `something.py`
+#  * functions -- a small piece of functionality, a thing that does something,
+#                 create('x'), add(3,2), set(4,3,4). You create new functions with
+#                 ```
+#                 def somefunction( first, second ):
+#                     return first+second
+#                 ```
+#  * classes -- a "thing" that defines how to work with a single `instance` of 
+#               something, a Player, an Entity, a Minecraft (server). Think of
+#               these as functions that always get a first argument that is a
+#               place to store information about the thing (instance)
+#               ```class Player(object):```
+#  * methods -- a function in a class that works on the instance and maybe other things
+#               ```def somemethod(self, something):```
+#
+# All of these are created by programmers, so those descriptions
+# aren't necessarily hard-and-fast rules, they're just a good
+# idea of what people put at each level of "abstraction" 
 from mcpi import minecraft, block
 
 # Create a "thing" which is a `minecraft.Minecraft` instance

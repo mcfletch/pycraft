@@ -1,3 +1,4 @@
 ipython
 mcpi
 numpy
+pillow

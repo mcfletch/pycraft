@@ -1,6 +1,6 @@
 """Expose commands via chat on a minecraft instance"""
 from mcpi import minecraft, block
-import threading, logging, inspect
+import threading, logging, inspect, operator
 import re, time, ast
 import contextlib, functools
 log = logging.getLogger('chatcommands')
@@ -94,41 +94,22 @@ class ChatListener(object):
             top = ast.parse(message.message,'chat.py','eval')
             if not isinstance(top, ast.Expression):
                 log.debug("Not an expression: %r", message.message)
-                return False
+                raise TypeError("Not an expression")
             call = top.body 
             if not isinstance(call,ast.Call):
                 log.debug("Not a call: %r", message.message)
-                return False 
-            func = call.func
-            if not isinstance(func,ast.Name):
-                log.debug("Function not called by name", message.message)
-                return False 
-            name = func.id 
-            log.info('Top level %s',ast.dump(call,True,True))
-            if name not in self.namespace:
-                return "%s: Sorry, I don't know the function %r"%(sender,name)
-            function = self.namespace.get(name)
-            if not hasattr(function,'__call__'):
-                return "%s: Sorry, that isn't a function %r"%(sender,name)
-            args = []
-            for arg in call.args:
-                if isinstance(arg,ast.Name):
-                    if arg.id in self.namespace:
-                        args.append(self.namespace[arg.id])
-                    else:
-                        return "%s: Could not find %r"%(sender,name)
-                else:
-                    value = ast.literal_eval(ast.Expr(arg))
-                    args.append(value)
-            named = {}
+                raise TypeError("Not a function call")
+            log.info('Top level call %s',ast.dump(call,True,True))
+            func = self.get_function(call,self.namespace)
+            args,named = self.get_call_args(call, self.namespace)
             event = Event(
                 self,
                 sender,
                 message,
-                args[:],
+                args,
                 named,
             )
-            result = function(event,*args,**named)
+            result = func(event,*args,**named)
             return result
 
             # return f'Would call {function} with {args}'
@@ -147,6 +128,63 @@ class ChatListener(object):
         except Exception:
             log.exception('Failed during parsing')
             return 'Error'
+    def get_function(self, call, namespace):
+        """Lookup a function in namespace for the given call"""
+        func = call.func
+        if not isinstance(func,ast.Name):
+            raise TypeError("Function not called by name")
+        name = func.id 
+        if name not in self.namespace:
+            raise NameError("I don't know the name %r"%( name))
+        function = self.namespace.get(name)
+        if not hasattr(function,'__call__'):
+            raise NameError("Sorry, %r isn't a function, it is a %s"%(name,type(function)))
+        return function
+    def get_call_args(self, call, namespace):
+        args,named = [],{}
+        for arg in call.args:
+            value = self.interpret_expr(arg,self.namespace)
+            args.append(value)
+        return args, named
+    def interpret_call(self, call, namespace):
+        func = self.get_function(call,self.namespace)
+        args,named = self.get_call_args(call, self.namespace)
+        return func(*args,**named)
+
+    BINOP_TO_OPERATOR = {
+        ast.Add:operator.add,
+        ast.Sub:operator.sub,
+        ast.Mult:operator.mul,
+        ast.MatMult:operator.matmul,
+        ast.Div: operator.truediv,
+        ast.Mod: operator.mod,
+        ast.Pow: operator.pow,
+        ast.LShift: operator.lshift,
+        ast.RShift: operator.rshift,
+        ast.BitOr: operator.__or__,
+        ast.BitXor: operator.__xor__,
+        ast.BitAnd: operator.__and__,
+        ast.FloorDiv: operator.floordiv,
+    }
+
+    def interpret_expr(self, arg, namespace):
+        if isinstance(arg,ast.Name):
+            if arg.id in self.namespace:
+                return self.namespace[arg.id]
+            raise NameError(arg.id)
+        elif isinstance(arg,ast.BinOp):
+            left,op,right = arg.left,arg.op,arg.right
+            first,second = (
+                self.interpret_expr(left,namespace), 
+                self.interpret_expr(right,namespace)
+            )
+            impl = self.BINOP_TO_OPERATOR[op.__class__]
+            return impl(first,second)
+        elif isinstance(arg,ast.Call):
+            return self.interpret_call(arg,namespace)
+        else:
+            return ast.literal_eval(ast.Expression(body=arg))
+
 
 def main():
     mc = minecraft.Minecraft.create()

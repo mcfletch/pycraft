@@ -1,15 +1,18 @@
 """Draw a parabolic dome over the user"""
 from mcpi import block, minecraft
 import numpy as np
+from . import expose
 
+@expose.expose(name='circle')
 def draw_circle(
-    mc:minecraft.Minecraft,
     center,
     radius,
     block=block.STONE,
     start_angle=0,
     stop_angle=np.pi*2,
-    steps = None
+    steps = None,
+    *,
+    mc=None
 ):
     """Draw a horizontal circle around center with radius"""
     x,y,z = center
@@ -29,36 +32,47 @@ def draw_circle(
         )
     ]
     for (x,y,z) in positions:
-        print([round(x),round(y),round(z)])
+        # print([round(x),round(y),round(z)])
         mc.setBlock(
             x,y,z,
             block,
         )
 
+@expose.expose(name='p_dome')
 def draw_parabolic_dome(
-    mc,
     center, 
     height, 
     relaxation=4, 
     material=block.STAINED_GLASS,
     start_angle=0,
     stop_angle=np.pi*2,
-    steps = None
+    steps = None,
+    *,
+    mc=None
 ):
-    """Draw a parabolic dome of given bottom-radius and height"""
+    """Draw a parabolic dome at given bottom-center and height
+    
+    A parabolic dome is created with:
+
+        radius = sqrt(y*relaxation)
+    
+    where each y-level is rendered with circle() and
+    with invert the whole structure to get a dome
+    instead of a cup...
+    """
     yes  = np.arange(1,height+1)
     zes = np.sqrt(yes*relaxation)
     yes = yes
     x,y,z = center
     for h,rad in zip(yes,zes):
-        draw_circle(mc,(x,y+height-h,z),rad,block=material)
+        draw_circle((x,y+height-h,z),rad,block=material,mc=mc)
 
 def main():
     mc = minecraft.Minecraft.create()
     # players = [1,2,3]
     for player in mc.getPlayerEntityIds():
         position = mc.entity.getPos(player)
-        draw_parabolic_dome(mc,position,20)
+        draw_parabolic_dome(position,20, mc=mc)
     
 if __name__ == "__main__":
     main()

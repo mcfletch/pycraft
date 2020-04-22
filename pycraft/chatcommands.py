@@ -4,61 +4,26 @@ from mcpi.vec3 import Vec3
 import threading, logging, inspect, operator
 import re, time, ast
 import contextlib, functools
+from .expose import (
+    DEFAULT_COMMANDS,
+    DEFAULT_NAMESPACE,
+    expose,
+    V,
+)
 import numpy as np
-log = logging.getLogger('chatcommands')
+log = logging.getLogger(__name__)
 COMMAND_FINDER = re.compile(
-    r'^[ ]*(?P<function>[a-zA-z][a-zA-Z0-9]*)[(](?P<args>.*)[)][ ]*$',
+    r'^[ ]*(?P<function>[a-zA-z][_a-zA-Z0-9]*)[(](?P<args>.*)[)][ ]*$',
     re.I|re.U
 )
 MC_LOCK = threading.RLock()
 @contextlib.contextmanager
-def locked():
-    MC_LOCK.acquire(True)
+def locked(mc):
+    if mc:
+        mc.lock.acquire(True)
     yield MC_LOCK
-    MC_LOCK.release()
-
-
-def V(*args,**named):
-    """Construct an mcpi Vec3 from a list, tuple or 3 values"""
-    if named:
-        return Vec3(*args,**named)
-    if len(args) == 1 and isinstance(args[0],(list,tuple,Vec3,np.ndarray)):
-        return Vec3(*args[0])
-    else:
-        return Vec3(*args)
-
-DEFAULT_NAMESPACE = {
-    'sin': np.sin,
-    'cos': np.cos,
-    'arange': np.arange,
-    'range': lambda *args,**named: list(range(*args,**named)),
-    'pi': np.pi,
-    'block': block,
-    'int': int,
-    'float': float,
-    'str': str,
-    'bool': bool,
-    'sqrt': np.sqrt,
-    'V': V,
-}
-DEFAULT_COMMANDS = {}
-def expose(command_set=None,name=None):
-    """Registers a function as being externally callable"""
-    command_set = command_set or DEFAULT_COMMANDS
-    def wrapper(function):
-        function_name = name or function.__name__
-        command_set[function_name] = function
-        return function
-    return wrapper
-
-@expose()
-def echo(message, *, user=None):
-    """Return the message to the user"""
-    return f'{user}: {message}'
-@expose()
-def help(value):
-    import inspect
-    return inspect.getdoc(value)
+    if mc:
+        mc.lock.release()
 
 class Entity(object):
     """Hold a reference to an entity id on the listener"""
@@ -83,14 +48,15 @@ class ChatListener(object):
     wanted = True
     def __init__(self, mc, commands = None):
         self.mc = mc 
-        self.namespace = commands or DEFAULT_COMMANDS
+        if self.mc:
+            self.mc.lock = threading.RLock()
         self.name_cache = {}
     
     def get_entity_name(self, entity):
         """Get username for the given user"""
         current = self.name_cache.get(entity)
         if not current:
-            with locked():
+            with locked(self.mc):
                 current = self.name_cache[entity] = self.mc.entity.getName(
                     entity
                 )
@@ -98,20 +64,20 @@ class ChatListener(object):
         return current
     def get_entity_position(self, entity):
         """Get entity position"""
-        with locked():
+        with locked(self.mc):
             return self.mc.entity.getPos(entity)
     def get_entity_tile_position(self, entity):
-        with locked():
+        with locked(self.mc):
             return self.mc.entity.getTilePos(entity)
     def get_entity_direction(self, entity):
-        with locked():
+        with locked(self.mc):
             return self.mc.entity.getDirection(entity)
 
     
     def poll(self):
         """Poll for chat messages and see if we recognise them"""
         while self.wanted:
-            with locked():
+            with locked(self.mc):
                 messages = self.mc.events.pollChatPosts()
             for message in messages:
                 match = COMMAND_FINDER.match(message.message)
@@ -143,6 +109,7 @@ class ChatListener(object):
             namespace.update(DEFAULT_COMMANDS)
             namespace['event'] = message
             namespace['user'] = sender
+            namespace['mc'] = self.mc
             return self.interpret_call(call,namespace)
         except Exception as err:
             log.exception('Failed on %s', message.message)
@@ -172,8 +139,12 @@ class ChatListener(object):
         args,named = self.get_call_args(call, namespace)
         if getattr(func,'__kwdefaults__',None):
             for key,default in func.__kwdefaults__.items():
-                if key not in named and key in namespace:
-                    named[key] = namespace[key]
+                if key not in named:
+                    if key in namespace:
+                        named[key] = namespace[key]
+                    elif key == 'namespace':
+                        named[key] = namespace
+                
         return func(*args,**named)
 
     BINOP_TO_OPERATOR = {
@@ -250,12 +221,3 @@ class ChatListener(object):
                 )
 
 
-def main():
-    mc = minecraft.Minecraft.create()
-    # players = [1,2,3]
-    listener = ChatListener(mc)
-    listener.poll()
-    
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    main()

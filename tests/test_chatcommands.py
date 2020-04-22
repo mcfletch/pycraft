@@ -1,5 +1,5 @@
 import unittest
-import chatcommands
+from pycraft import chatcommands
 import ast
 import numpy as np
 from mcpi import vec3, block
@@ -28,7 +28,6 @@ class TestChatCommands(unittest.TestCase):
             ('block.AIR',chatcommands.block.AIR),
             ('range(3)',list(range(3))),
             ('user.position+V(0,1,0)',vec3.Vec3(0,1,0)),
-            ('help(block)',block.__doc__),
             ('V(z=3)',vec3.Vec3(0,0,3)),
             # ('[sin(x) for x in [1,2,3]]',[np.sin(x) for x in [1,2,3]]),
         ]:

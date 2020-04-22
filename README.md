@@ -69,6 +69,14 @@ to get the chat window, and type one of the known
 commands. For instance:
 ```
     sin(pi)
+    dir()
+    help(p_dome)
+    p_dome(user.position,30)
+    help(bulldoze)
+    bulldoze(10,10,3)
+    echo(user.position+V(0,1,1))
+    echo(user.position+user.direction)
+    echo(user.name)
 ```
 will cause the python server to respond as `<Bot>`
 with the result of your function call. Note that

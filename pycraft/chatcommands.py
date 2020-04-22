@@ -41,6 +41,7 @@ class Entity(object):
         return self.listener.get_entity_direction(self.id)
     def set_position(self):
         return self.listener.set_entity_position(self.id)
+    name = property(get_name)
     position = property(get_position,set_position)
     direction = property(get_direction,)
 

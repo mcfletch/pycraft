@@ -1,5 +1,5 @@
 """Expose commands via chat on a minecraft instance"""
-from mcpi import minecraft, block
+from mcpi import minecraft, block, connection
 from mcpi.vec3 import Vec3
 import threading, logging, inspect, operator
 import re, time, ast
@@ -53,7 +53,11 @@ class ChatListener(object):
         empty_count = 0
         while self.wanted:
             with locked(self.mc):
-                messages = self.mc.events.pollChatPosts()
+                try:
+                    messages = self.mc.events.pollChatPosts()
+                except connection.RequestError as err:
+                    log.warning("Error on poll chat: %s", err)
+                    messages = []
             for message in messages:
                 match = COMMAND_FINDER.match(message.message)
                 if match:
@@ -153,7 +157,7 @@ class ChatListener(object):
         """Lookup a function in namespace for the given call"""
         func = self.interpret_expr(call.func,namespace)
         if not hasattr(func,'__call__'):
-            raise NameError("Sorry, %r isn't a function, it is a %s"%(function,type(function)))
+            raise NameError("Sorry, %r isn't a function, it is a %s"%(func,type(func)))
         return func
     def get_call_args(self, call, namespace):
         args,named = [],{}

@@ -17,6 +17,9 @@ def bulldoze(depth=10,width=6,height=2,material=block.AIR,*,user=None,mc=None):
     is in front of you.
     """
     x,y,z = position = user.position
+    material = expose.resolve_name(
+        material,expose.blocks.BLOCK_NAMES,
+    )
     direction = user.direction
     with lockedmc.locked(mc):
         for to_clear in uniqueblocks.unique_blocks_only(generate_blocks_ahead(

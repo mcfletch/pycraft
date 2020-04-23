@@ -157,3 +157,52 @@ class EntityAPI(object):
             b'world.removeEntity',
             entity,
         )
+
+ENTITY_NAMES = dict()
+for _key,_value in mc_entity.__dict__.items():
+    if isinstance(_value,mc_entity.Entity):
+        ENTITY_NAMES[_key] = _value
+
+ENTITY_NAMES['ITEM'] = mc_entity.Entity(1,'ITEM')
+ENTITY_NAMES['XP_ORB'] = ENTITY_NAMES['EXPERIENCE_ORB']
+ENTITY_NAMES['LEASH_KNOT'] = ENTITY_NAMES['LEASH_HITCH']
+ENTITY_NAMES['EYE_OF_ENDER_SIGNAL'] = ENTITY_NAMES['ENDER_SIGNAL']
+ENTITY_NAMES['POTION'] = mc_entity.Entity(16,'POTION')
+ENTITY_NAMES['XP_BOTTLE'] = ENTITY_NAMES['THROWN_EXP_BOTTLE']
+ENTITY_NAMES['TNT'] = ENTITY_NAMES['PRIMED_TNT']
+ENTITY_NAMES['FALLING_BLOCK'] = mc_entity.Entity(21,'FALLING_BLOCK')
+ENTITY_NAMES['FIREWORKS_ROCKET'] = mc_entity.Entity(22,'FIREWORKS_ROCKET')
+ENTITY_NAMES['EVOCATION_FANGS'] = ENTITY_NAMES['EVOKER_FANGS']
+ENTITY_NAMES['EVOCATION_ILLAGER'] = ENTITY_NAMES['EVOKER']
+ENTITY_NAMES['VINDICATION_ILLAGER'] = ENTITY_NAMES['VINDICATOR']
+ENTITY_NAMES['ILLUSION_ILLAGER'] = ENTITY_NAMES['ILLUSIONER']
+ENTITY_NAMES['COMMANDBLOCK_MINECART'] = ENTITY_NAMES['MINECART_COMMAND']
+ENTITY_NAMES['CHEST_MINECART'] = ENTITY_NAMES['MINECART_CHEST']
+ENTITY_NAMES['FURNACE_MINECART'] = ENTITY_NAMES['MINECART_FURNACE']
+ENTITY_NAMES['TNT_MINECART'] = ENTITY_NAMES['MINECART_TNT']
+ENTITY_NAMES['HOPPER_MINECART'] = ENTITY_NAMES['MINECART_HOPPER']
+ENTITY_NAMES['SPAWNER_MINECART'] = ENTITY_NAMES['MINECART_MOB_SPAWNER']
+ENTITY_NAMES['ZOMBIE_PIGMAN'] = ENTITY_NAMES['PIG_ZOMBIE']
+ENTITY_NAMES['MOOSHROOM'] = ENTITY_NAMES['MUSHROOM_COW']
+ENTITY_NAMES['VILLAGER_GOLEM'] = ENTITY_NAMES['IRON_GOLEM']
+
+
+# ENTITY_IDS = {_value.id:_key for (_key,_value) in ENTITY_NAMES.items()}
+# def check_missing_ids():
+#     missing = False
+#     for line in WIKI_DATA.splitlines():
+#         try:
+#             (_,name,_,type_id) = line.split('\t')
+#             name = name.upper()
+#             id = int(type_id)
+#             if name not in ENTITY_NAMES:
+#                 missing = True
+#                 if id in ENTITY_IDS:
+#                     print(f'ENTITY_NAMES[{repr(name)}] = ENTITY_NAMES[{repr(ENTITY_IDS[id])}]')
+#                 else:
+#                     print(f'ENTITY_NAMES[{repr(name)}] = mc_entity.Entity({id},{repr(name)})')
+#         except Exception as err:
+#             err.args += (line,)
+#             raise
+#     assert not missing
+# check_missing_ids()

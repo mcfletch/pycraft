@@ -7,7 +7,7 @@ from . import expose, uniqueblocks
 def draw_circle(
     center,
     radius,
-    block=block.STONE,
+    material=block.STONE,
     start_angle=0,
     stop_angle=np.pi*2,
     steps = None,
@@ -16,6 +16,9 @@ def draw_circle(
 ):
     """Draw a horizontal circle around center with radius"""
     x,y,z = center
+    material = expose.resolve_name(
+        material,expose.blocks.BLOCK_NAMES,
+    )
     steps = steps or radius * 20
     def coord(angle):
         return (
@@ -35,7 +38,7 @@ def draw_circle(
         # print([round(x),round(y),round(z)])
         mc.setBlock(
             x,y,z,
-            block,
+            material,
         )
 
 @expose.expose(name='p_dome')
@@ -69,8 +72,11 @@ def parabolic_dome(
     zes = np.sqrt(yes*relaxation)
     yes = yes
     x,y,z = center
+    material = expose.resolve_name(
+        material,expose.blocks.BLOCK_NAMES,
+    )
     for h,rad in zip(yes,zes):
-        draw_circle((x,y+height-h,z),rad,block=material,mc=mc)
+        draw_circle((x,y+height-h,z),rad,material=material,mc=mc)
 
 @expose.expose()
 def dome(
@@ -91,16 +97,9 @@ def dome(
     angles = np.arcsin(yes/radius)
     zes = np.cos(angles*radius)
     x,y,z = center
+    material = expose.resolve_name(
+        material,expose.blocks.BLOCK_NAMES,
+    )
     for h,rad in zip(yes,zes):
         draw_circle((x,y+height-h,z),rad,block=material,mc=mc)
 
-
-def main():
-    mc = minecraft.Minecraft.create()
-    # players = [1,2,3]
-    for player in mc.getPlayerEntityIds():
-        position = mc.entity.getPos(player)
-        draw_parabolic_dome(position,20, mc=mc)
-    
-if __name__ == "__main__":
-    main()

@@ -1,6 +1,7 @@
 """Command namespace exposure and core commands"""
 from mcpi import minecraft, block, entity as mc_entity
 from mcpi.vec3 import Vec3
+from . import blocks, entity
 import threading, logging, inspect, operator
 import re, time, ast
 import contextlib, functools
@@ -24,9 +25,10 @@ DEFAULT_NAMESPACE = {
     'sin': np.sin,
     'cos': np.cos,
     'arange': np.arange,
-    'range': range,
+    'range': np.arange,
     'pi': np.pi,
-    'block': block,
+    'block': blocks.BLOCK_NAMES,
+    'entity': entity.ENTITY_NAMES,
     'int': int,
     'float': float,
     'str': str,
@@ -75,17 +77,60 @@ def dir_(*args,namespace=None):
     else:
         return sorted(namespace.keys())
 
+def resolve_name(name,lookup_space):
+    """Fuzzy lookup of name in name-space"""
+    if hasattr(name,'id'):
+        return name.id 
+    elif isinstance(name,int):
+        return name 
+    elif isinstance(name, str):
+        name = name.upper()
+        if name in lookup_space:
+            return lookup_space[name]
+        possible = []
+        for key in lookup_space:
+            if name in key:
+                possible.append(key)
+        if len(possible) == 1:
+            return lookup_space[key]
+        elif possible:
+            raise NameError(
+                name,
+                'Possibly you meant: %s'%(
+                    ', '.join(sorted(possible))
+                )
+            )
+        else:
+            raise NameError(
+                name,'Available: %s'%(
+                ', '.join(sorted(lookup_space.keys()))
+                )
+            )
+    raise NameError(name,'Known names: %s'%(
+        sorted(lookup_space.keys())
+    ))
+
+
 @expose()
 def spawn(type_id,position=None,*,mc=None,user=None):
     """Spawn a new entity of type_id at position (default in front of user)"""
     if position is None:
-        position = user.position
-    if isinstance(type_id,str):
-        typ = getattr(mc_entity,type_id).id 
-    else:
-        typ = int(typ)
+        position = user.position + user.direction + Vec3(0,1,0)
+    typ = resolve_name(type_id,entity.ENTITY_NAMES)
     with locked(mc):
-        return mc.spawn_entity(
+        return mc.spawnEntity(
+            *position,
+            typ, 
+        )
+
+@expose()
+def block(type_id,position=None,*,mc=None,user=None):
+    """Create a block with the given type_id at position"""
+    if position is None:
+        position = user.position + user.direction + Vec3(0,1,0)
+    typ = resolve_name(type_id,blocks.BLOCK_NAMES)
+    with locked(mc):
+        return mc.setBlock(
             *position,
             typ, 
         )

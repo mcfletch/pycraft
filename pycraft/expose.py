@@ -1,9 +1,10 @@
 """Command namespace exposure and core commands"""
-from mcpi import minecraft, block
+from mcpi import minecraft, block, entity as mc_entity
 from mcpi.vec3 import Vec3
 import threading, logging, inspect, operator
 import re, time, ast
 import contextlib, functools
+from .lockedmc import locked
 import numpy as np
 
 def V(*args,**named):
@@ -74,3 +75,17 @@ def dir_(*args,namespace=None):
     else:
         return sorted(namespace.keys())
 
+@expose()
+def spawn(type_id,position=None,*,mc=None,user=None):
+    """Spawn a new entity of type_id at position (default in front of user)"""
+    if position is None:
+        position = user.position
+    if isinstance(type_id,str):
+        typ = getattr(mc_entity,type_id).id 
+    else:
+        typ = int(typ)
+    with locked(mc):
+        return mc.spawn_entity(
+            *position,
+            typ, 
+        )

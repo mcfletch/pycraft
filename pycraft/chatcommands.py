@@ -35,9 +35,9 @@ class Response(object):
         formatted = str(self.value)
         for line in formatted.splitlines():
             if self.error:
-                yield f'{self.sender}: {line}'
+                yield f'ERR {self.sender}> {line}'
             else:
-                yield f'{self.sender}: ERROR {line}'
+                yield f'{self.sender}> {line}'
 
 class ChatListener(object):
     wanted = True
@@ -97,7 +97,8 @@ class ChatListener(object):
                     request,
                 )
             else:
-                self.response_queue.put(response)
+                if response:
+                    self.response_queue.put(response)
 
     def base_namespace(self, message=None, sender=None):
         namespace = DEFAULT_NAMESPACE.copy()
@@ -125,7 +126,6 @@ class ChatListener(object):
                 log.debug("Not an expression: %r", message.message)
                 raise TypeError("Not an expression")
             result = self.interpret_expr(top,namespace=namespace)
-                # import pdb;pdb.set_trace()
             if getattr(message,'assignment',None):
                 log.info(
                     'User %s => %s = %r',
@@ -134,22 +134,27 @@ class ChatListener(object):
                     result,
                 )
                 user_namespace[message.assignment] = result
-            return result
+            if result is not None:
+                return Response(
+                    sender=sender,
+                    value=result,
+                    error=False,
+                    message=message,
+                )
         except Exception as err:
             log.exception('Failed on %s', message.message)
-            return f'{sender}: {err} on {repr(message.message)}'
+            return Response(
+                sender=sender,
+                value=err,
+                error=True,
+                message=message,
+            )
     def get_function(self, call, namespace):
         """Lookup a function in namespace for the given call"""
-        func = call.func
-        if not isinstance(func,ast.Name):
-            raise TypeError("Function not called by name")
-        name = func.id 
-        if name not in namespace:
-            raise NameError("I don't know the name %r: known %s"%( name, sorted(namespace.keys())))
-        function = namespace.get(name)
-        if not hasattr(function,'__call__'):
-            raise NameError("Sorry, %r isn't a function, it is a %s"%(name,type(function)))
-        return function
+        func = self.interpret_expr(call.func,namespace)
+        if not hasattr(func,'__call__'):
+            raise NameError("Sorry, %r isn't a function, it is a %s"%(function,type(function)))
+        return func
     def get_call_args(self, call, namespace):
         args,named = [],{}
         for arg in call.args:
@@ -191,6 +196,8 @@ class ChatListener(object):
         if isinstance(arg, ast.Expression):
             return self.interpret_expr(arg.body,namespace=namespace)
         elif isinstance(arg,ast.Name):
+            if arg.id.startswith('_'):
+                raise NameError('Names starting with _ are not allowed', arg.id)
             if arg.id in namespace:
                 return namespace[arg.id]
             raise NameError(arg.id)

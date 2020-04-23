@@ -10,108 +10,131 @@ from .expose import (
     expose,
     V,
 )
+import queue
+from .lockedmc import locked
+from . import entity
 import numpy as np
 log = logging.getLogger(__name__)
 COMMAND_FINDER = re.compile(
     r'^[ ]*(?P<function>[a-zA-z][_a-zA-Z0-9]*)[(](?P<args>.*)[)][ ]*$',
     re.I|re.U
 )
-MC_LOCK = threading.RLock()
-@contextlib.contextmanager
-def locked(mc):
-    if mc:
-        mc.lock.acquire(True)
-    yield MC_LOCK
-    if mc:
-        mc.lock.release()
+ASSIGNMENT_FINDER = re.compile(
+    r'^[ ]*(?P<name>[a-zA-z][_a-zA-Z0-9]*)[ ]*[=](?P<expr>.*)[ ]*$',
+    re.I|re.U,
+)
 
-class Entity(object):
-    """Hold a reference to an entity id on the listener"""
-    def __init__(self, listener, id):
-        self.listener = listener
-        self.id = id 
-    def __str__(self):
-        return self.get_name()
-    def get_name(self):
-        return self.listener.get_entity_name(self.id)
-    def get_position(self):
-        return self.listener.get_entity_position(self.id)
-    def get_direction(self):
-        """On Java edition, get the direction the user is facing"""
-        return self.listener.get_entity_direction(self.id)
-    def set_position(self):
-        return self.listener.set_entity_position(self.id)
-    name = property(get_name)
-    position = property(get_position,set_position)
-    direction = property(get_direction,)
+class Response(object):
+    """A response to send to the chat"""
+    def __init__(self, message, sender, value, error=False):
+        self.message = message 
+        self.sender = sender 
+        self.value = value 
+        self.error = error 
+    def chat_messages(self):
+        formatted = str(self.value)
+        for line in formatted.splitlines():
+            if self.error:
+                yield f'{self.sender}: {line}'
+            else:
+                yield f'{self.sender}: ERROR {line}'
 
 class ChatListener(object):
     wanted = True
     def __init__(self, mc, commands = None):
         self.mc = mc 
-        if self.mc:
-            self.mc.lock = threading.RLock()
-        self.name_cache = {}
-    
-    def get_entity_name(self, entity):
-        """Get username for the given user"""
-        current = self.name_cache.get(entity)
-        if not current:
-            with locked(self.mc):
-                current = self.name_cache[entity] = self.mc.entity.getName(
-                    entity
-                )
-                log.debug("Entity %s => %s", entity, current)
-        return current
-    def get_entity_position(self, entity):
-        """Get entity position"""
-        with locked(self.mc):
-            return self.mc.entity.getPos(entity)
-    def get_entity_tile_position(self, entity):
-        with locked(self.mc):
-            return self.mc.entity.getTilePos(entity)
-    def get_entity_direction(self, entity):
-        with locked(self.mc):
-            return self.mc.entity.getDirection(entity)
-
+        self.entities = entity.EntityAPI(self.mc)
+        self.request_queue = queue.Queue()
+        self.response_queue = queue.Queue()
+        self.user_namespaces = {}
     
     def poll(self):
         """Poll for chat messages and see if we recognise them"""
+        empty_count = 0
         while self.wanted:
             with locked(self.mc):
                 messages = self.mc.events.pollChatPosts()
             for message in messages:
                 match = COMMAND_FINDER.match(message.message)
                 if match:
-                    response = self.interpret(message)
-                    if response:
-                        formatted = str(response)
-                        for line in formatted.splitlines()[:6]:
-                            self.mc.postToChat('<Bot> %s'%(line,))
+                    log.debug("Request: %s", message)
+                    self.request_queue.put(message)
+                else:
+                    match = ASSIGNMENT_FINDER.match(message.message)
+                    if match:
+                        message.assignment = match.group('name')
+                        message.message = match.group('expr').strip()
+                        self.request_queue.put(message)
             if not messages:
-                time.sleep(1)
+                empty_count += 1
+            else:
+                empty_count = 0
+            if empty_count:
+                delay = min((.1*empty_count,2))
+                log.debug("Sleep for %ss",delay)
+                time.sleep(delay)
+    def responder(self):
+        """Thread that returns responses to requests via Chat"""
+        while self.wanted:
+            try:
+                response = self.response_queue.get(True,5)
+            except queue.Empty:
+                continue
+            with locked(self.mc):
+                for line in response.chat_messages():
+                    self.mc.postToChat('Bot > %s'%(line,))
+    def interpreter(self):
+        while self.wanted:
+            try:
+                request = self.request_queue.get(True,5)
+            except queue.Empty:
+                continue
+            try:
+                response = self.interpret(request)
+            except Exception as err:
+                log.exception(
+                    'Error handling %r',
+                    request,
+                )
+            else:
+                self.response_queue.put(response)
+
+    def base_namespace(self, message=None, sender=None):
+        namespace = DEFAULT_NAMESPACE.copy()
+        namespace.update(DEFAULT_COMMANDS)
+        namespace['mc'] = self.mc
+        namespace['event'] = message
+        namespace['user'] = sender
+        return namespace
+    def user_namespace(self, sender):
+        """Get the user's personal namespace"""
+        return self.user_namespaces.setdefault(sender.id,{})
     
     def interpret(self,message):
         """Interpret a command from our queue"""
-        sender = Entity(self,message.entityId)
+        sender = entity.Entity(self.entities,message.entityId)
         log.info("Call from %s", sender)
         try:
             # expr
+            namespace = self.base_namespace(message,sender)
+            user_namespace = self.user_namespace(sender)
+            log.debug('user namespace %r',user_namespace)
+            namespace.update(user_namespace)
             top = ast.parse(message.message,'chat.py','eval')
             if not isinstance(top, ast.Expression):
                 log.debug("Not an expression: %r", message.message)
                 raise TypeError("Not an expression")
-            call = top.body 
-            if not isinstance(call,ast.Call):
-                log.debug("Not a call: %r", message.message)
-                raise TypeError("Not a function call")
-            log.info('Top level call %s',ast.dump(call,True,True))
-            namespace = DEFAULT_NAMESPACE.copy()
-            namespace.update(DEFAULT_COMMANDS)
-            namespace['event'] = message
-            namespace['user'] = sender
-            namespace['mc'] = self.mc
-            return self.interpret_call(call,namespace)
+            result = self.interpret_expr(top,namespace=namespace)
+                # import pdb;pdb.set_trace()
+            if getattr(message,'assignment',None):
+                log.info(
+                    'User %s => %s = %r',
+                    sender,
+                    message.assignment,
+                    result,
+                )
+                user_namespace[message.assignment] = result
+            return result
         except Exception as err:
             log.exception('Failed on %s', message.message)
             return f'{sender}: {err} on {repr(message.message)}'

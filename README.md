@@ -84,3 +84,5 @@ only function-calls with simple names will be
 interpreted.
 
 
+All trademarks are the property of their respective
+owners.

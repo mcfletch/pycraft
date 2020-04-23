@@ -4,50 +4,55 @@ import logging
 log = logging.getLogger(__name__)
 from . import expose
 from .expose import V
+from . import entity
+from . import uniqueblocks
+from . import lockedmc
 
 @expose.expose()
 def bulldoze(depth=10,width=6,height=2,material=block.AIR,*,user=None,mc=None):
+    """Set blocks ahead of the user to the given material
+
+    This aligns the block of material with the direction
+    the user is currently facing, so it wipes out whatever
+    is in front of you.
+    """
     x,y,z = position = user.position
     direction = user.direction
+    with lockedmc.locked(mc):
+        for to_clear in uniqueblocks.unique_blocks_only(generate_blocks_ahead(
+            V(x,y+1,z),
+            direction,
+            depth,
+            width=width,
+            height=height,
+        )):
+            # log.info("Clearing: %s", to_clear)
+            mc.setBlock(*to_clear,material)
 
-    log.info("Position: %s", position)
-    log.info("Direction: %s", direction)
+def unit_vector(v):
+    length = np.linalg.norm(v)
+    if length:
+        v /= length
+    return v
 
-    for to_clear in generate_blocks_ahead(
-        V(x,y+1,z),
-        direction,
-        depth,
-        width=width,
-        height=height,
-    ):
-        # log.info("Clearing: %s", to_clear)
-        mc.setBlock(*to_clear,material)
 
-def generate_blocks_ahead(position,direction,depth,width,height):
-    dx,dy,dz = direction
-    forward = V(dx,0,dz)
-    above = V(0,1,0)
-    cross = V(dz,0,dx) # todo: properly calculate
+def generate_blocks_ahead(position,direction,depth,width,height,step=.25):
+    """Given a starting position generate point-cloud in direction"""
+    start = np.array(tuple(position),dtype='f')
+    forward = np.array(tuple(direction),dtype='f')
+    above = np.array([0,1,0],dtype='f')
 
-    for step in range(1,depth):
-        delta = forward * step
-        for c_step in range(-((width+1)//2),((width+1)//2)):
-            cdelta = cross * c_step 
-            base = position + delta + cdelta 
-            for h_step in range(height):
-                hdelta = above * h_step
-                yield base + hdelta
+    if not np.allclose(forward, above):
+        cross = unit_vector(np.cross(forward,above))
+        above = unit_vector(np.cross(forward,cross))
+    else:
+        cross = np.array(0,0,1)
 
-    # top_left = x-size,y+1+size,z+size
-    # bottom_right = x+size,y+1,z-size
-    # mc.setBlocks(*top_left,*bottom_right,block.AIR)
+    start = start + forward
+    for f_step in np.arange(0.0,depth,step):
+        forward_start = start + (forward * step)
+        for c_step in np.arange(-((width)/2),((width)/2),step):
+            cross_base = forward_start + (cross * c_step)
+            for h_step in np.arange(1.0,height+1.0,step):
+                yield cross_base + (above*h_step)
 
-def main():
-    mc = minecraft.Minecraft.create()
-    # players = [1,2,3]
-    for player in mc.getPlayerEntityIds():
-        position = mc.entity.getPos(player)
-        bulldozer(mc,position)
-    
-if __name__ == "__main__":
-    main()

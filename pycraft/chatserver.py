@@ -1,4 +1,4 @@
-import argparse, logging
+import argparse, logging, threading
 from . import (
     chatcommands, expose,
     parabolic,
@@ -39,4 +39,6 @@ def main():
     # players = [1,2,3]
     listener = chatcommands.ChatListener(mc)
     log.info("Listening to chat now")
+    threading.Thread(target=listener.interpreter,daemon=True).start()
+    threading.Thread(target=listener.responder,daemon=True).start()
     listener.poll()

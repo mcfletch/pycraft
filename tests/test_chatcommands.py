@@ -5,13 +5,21 @@ import numpy as np
 from mcpi import vec3, block
 class FakeUser(object):
     position = vec3.Vec3(0,0,0)
+class FakeMessage(object):
+    def __init__(self, attrs):
+        self.__dict__.update(attrs)
+class FakeEntities(object):
+    def get_entity_name(self, id):
+        return 'Moo'
+    def get_entity_position(self, id):
+        return vec3.Vec3(42,42,42)
 
 class TestChatCommands(unittest.TestCase):
     def setUp(self):
         self.listener = chatcommands.ChatListener(None)
-        self.namespace = chatcommands.DEFAULT_NAMESPACE.copy()
-        self.namespace.update(chatcommands.DEFAULT_COMMANDS)
+        self.namespace = self.listener.base_namespace()
         self.namespace['user'] = FakeUser()
+        self.listener.entities = FakeEntities()
     def test_expressions(self):
         for statement,expected in [
             ("'this'",'this'),
@@ -78,4 +86,18 @@ class TestChatCommands(unittest.TestCase):
             ),
         ]):
             assert result==expected,(i,result,expected)
-        
+    
+    def test_assignment(self):
+        message = FakeMessage({
+            'message': '3',
+            'entityId': 4,
+            'assignment': 'a',
+        })
+        self.listener.interpret(message)
+        assert self.listener.user_namespaces == {
+            4: {'a':3},
+        }
+        assert self.listener.interpret(FakeMessage({
+            'message': 'echo(a)',
+            'entityId': 4,
+        })) == 'Moo: 3'

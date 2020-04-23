@@ -3,3 +3,4 @@ mcpi
 numpy
 pillow
 requests 
+pyyaml

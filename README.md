@@ -1,12 +1,26 @@
-# PyCraft: Python API to Minecraft(TM) Java Edition Setup
+# PyCraft: Python API to Minecraft Java Edition Setup
 
 This repository includes the following:
 
-* a dockerised setup to allow you to easily create a 
+* dockerised setup to allow developers to easily create a 
   Minecraft Java Edition Server that includes the 
-  RaspberryJuice remote API
+  [RaspberryJuice](https://github.com/zhuowei/RaspberryJuice) 
+  remote API that follows the Minecraft Pi Edition API
+* dockerised setup to allow BedRock clients (that is,
+  tablet, game console, pocket edition, and Windows native
+  clients) to be proxied into the game using
+  [DragonProxy](https://github.com/DragonetMC/DragonProxy)
 * a bunch of sample code for using the mcpi python
   library to construct simple tools
+* a sample daemon `pycraft-chat-server` that lets you
+  write simple scripts that users can call from the
+  text chat in-game
+
+## WARNING
+
+THE SERVER IS INSECURE BY DEFAULT. It is intended for 
+developers to work with the API. It is *not* configured
+such that it should be exposed on the internet!
 
 ## Creating a Minecraft Java Edition Server with API
 
@@ -16,20 +30,22 @@ anyone to connect. Particularly if you are going
 to allow API access you should not allow untrusted
 users to connect.
 
-On your linux machine:
+On your (Ubuntu) Linux machine:
 
 ```
-apt-get install docker
+apt-get install docker python3
 git clone https://github.com/mcfletch/pycraft.git
 cd pycraft
-git submodule update --init --remote
-# NOTE: the following declares that you agree to
-# the Minecraft Server API EULA
-./run.sh
+virtualenv -p python3 .env
+source .env/bin/activate
+pip install -r requirements.txt
+# NOTE: -e declares that you accept the server EULA
+# NOTE: -b creates a DragonProxy to allow BedRock clients to connect
+./run.py -e -b
 ```
 
-At this point, you have a vanilla server running in docker
-with the RaspberryJuice API bridge installed.
+At this point, you have a vanilla Bukkit server running 
+in docker with the RaspberryJuice API bridge installed.
 
 You can connect to your server by choosing Multiuser
 in Minecraft Java Edition and typing in the 
@@ -42,13 +58,19 @@ on your docker host.
 
 The `DragonProxy` subdirectory contains an experimental
 setup for letting `BedRock` or `Pocket` editions
-of Minecraft connect to a Java Edition server (as)
-we just setup.
+of Minecraft connect to a Java Edition server.
+The `-b` flag to the top-level `run.py` runs the
+DragonProxy setup in such a way that it *should*
+be configured to talk to the Minecraft server 
+and be exposed on the default BedRock server port.
+
+To manually run or restart the DragonProxy instance,
+for instance, to choose a minecraft server other than
+the one running in docker as `minecraft`:
 
 ```
 cd DragonProxy
-./build.sh
-./run.sh
+./run.py -t 192.168.15.32
 ```
 
 Will run the server with UDP Port 19132 exposed on
@@ -57,29 +79,27 @@ your docker host.
 ## Talking to Minecraft from Python
 
 The requirements for the demo scripts are declared
-in the `requirements.txt` file. Use standard Python
-setup to create a Python 3.6+ virtualenv and
-`pip install -r requirements.txt` into that 
-environment.
+in the `requirements.txt` file you installed above.
 
-See the files in the `scripts` directory which include
-simple stand-alone commands that can be run with:
-
+To run a demo script:
 ```
-source venv/bin/activate
+source .env/bin/activate
+# install pycraft itself...
+python3 setup.py develop 
+# run your script
 python3 scripts/helloworld.py
 ```
 
 ## Talking to Python from Minecraft
 
-The `pycraft.chatcommands` script is a larger example
+The `pycraft-chat-server` script is a larger example
 of using the `mcpi` API. It allows you to expose 
 commands to users on your server (remember, keep your
 server away from the public).
 
 To run the server:
 ```
-source venv/bin/activate
+source .env/bin/activate
 python3 setup.py develop
 pycraft-chat-server
 ```
@@ -102,6 +122,5 @@ with the result of your function call. Note that
 only function-calls with simple names will be 
 interpreted.
 
-
-All trademarks are the property of their respective
-owners.
+Note: 
+  All trademarks are the property of their respective owners.

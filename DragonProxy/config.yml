@@ -14,14 +14,14 @@ bind-address: '0.0.0.0'
 bind-port: 19132
 
 # The MOTD that will be shown on the MCPE server list
-motd: 'DragonProxy'
-motd2: 'https://github.com/DragonetMC/DragonProxy'
+motd: 'Welcome to the Party'
+motd2: 'Please be respectful to other players'
 
 # The maximum amount of players that can join the proxy
 max-players: 1
 
 # The IP and port of the remote server to connect to
-remote-address: '127.0.0.1'
+remote-address: 'minecraft'
 remote-port: 25565
 
 # The authentication method used for connecting to the remote server.

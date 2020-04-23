@@ -35,6 +35,25 @@ You can connect to your server by choosing Multiuser
 in Minecraft Java Edition and typing in the 
 IP of your docker host as the server to join.
 
+The server is running on TCP and UDP on port 25565
+on your docker host.
+
+## Letting Pocket/iOS/Android/XBox/Windows Editions Connect
+
+The `DragonProxy` subdirectory contains an experimental
+setup for letting `BedRock` or `Pocket` editions
+of Minecraft connect to a Java Edition server (as)
+we just setup.
+
+```
+cd DragonProxy
+./build.sh
+./run.sh
+```
+
+Will run the server with UDP Port 19132 exposed on
+your docker host.
+
 ## Talking to Minecraft from Python
 
 The requirements for the demo scripts are declared

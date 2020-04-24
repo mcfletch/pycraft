@@ -1,7 +1,16 @@
 """Draw a parabolic dome over the user"""
 from mcpi import block, minecraft
 import numpy as np
+import logging
 from . import expose, uniqueblocks
+log = logging.getLogger(__name__)
+
+def random_stained_glass():
+    """Random stained glass"""
+    log.info("Random call")
+    import random
+    return block.Block(95,random.randint(0,15))
+
 
 @expose.expose(name='circle')
 def draw_circle(
@@ -19,6 +28,9 @@ def draw_circle(
     material = expose.resolve_name(
         material,expose.blocks.BLOCK_NAMES,
     )
+    if not hasattr(material,'__call__'):
+        material_value = material
+        material = lambda: material_value
     steps = steps or radius * 20
     def coord(angle):
         return (
@@ -38,7 +50,7 @@ def draw_circle(
         # print([round(x),round(y),round(z)])
         mc.setBlock(
             x,y,z,
-            material,
+            material(),
         )
 
 @expose.expose(name='p_dome')
@@ -46,7 +58,7 @@ def parabolic_dome(
     center=None, 
     height=10, 
     relaxation=4, 
-    material=block.STAINED_GLASS,
+    material=random_stained_glass,
     start_angle=0,
     stop_angle=np.pi*2,
     steps = None,
@@ -78,11 +90,12 @@ def parabolic_dome(
     for h,rad in zip(yes,zes):
         draw_circle((x,y+height-h,z),rad,material=material,mc=mc)
 
+
 @expose.expose()
 def dome(
     center=None,
     radius=10, 
-    material=block.STAINED_GLASS,
+    material=random_stained_glass,
     start_angle=0,
     stop_angle=np.pi*2,
     steps = None,

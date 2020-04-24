@@ -77,6 +77,18 @@ def dir_(*args,namespace=None):
     else:
         return sorted(namespace.keys())
 
+def as_constant(name):
+    """Convert the name to a python constant"""
+    return name.upper().replace(' ','_').replace('-','_')
+
+def similar_names(name, lookup_space,first=False):
+    """Look for all names similar to name in namespace"""
+    if name in lookup_space:
+        yield name
+    for key in lookup_space:
+        if name in key:
+            yield key
+
 def resolve_name(name,lookup_space):
     """Fuzzy lookup of name in name-space"""
     if hasattr(name,'__call__'):
@@ -86,15 +98,13 @@ def resolve_name(name,lookup_space):
     elif isinstance(name,int):
         return name 
     elif isinstance(name, str):
-        name = name.upper()
-        if name in lookup_space:
-            return lookup_space[name]
-        possible = []
-        for key in lookup_space:
-            if name in key:
-                possible.append(key)
+        test = as_constant(name)
+        if test in lookup_space:
+            return lookup_space[test]
+        else:
+            possible = list(similar_names(test,lookup_space))
         if len(possible) == 1:
-            return lookup_space[key]
+            return lookup_space[possible[0]]
         elif possible:
             raise NameError(
                 name,
@@ -104,13 +114,14 @@ def resolve_name(name,lookup_space):
             )
         else:
             raise NameError(
-                name,'Available: %s'%(
-                ', '.join(sorted(lookup_space.keys()))
-                )
+                name,'Did not find any names like that'
             )
-    raise NameError(name,'Known names: %s'%(
-        sorted(lookup_space.keys())
-    ))
+        raise TypeError(
+        "Expected an integer, Block/Entity, or string name, got %r"
+        %(
+            name,
+        )
+    )
 
 
 @expose()
@@ -136,11 +147,16 @@ def block(type_id,position=None,*,mc=None,user=None):
             *position,
             typ, 
         )
+@expose()
+def as_block(type_id):
+    """Try to find a single block-type of the given name"""
+    return resolve_name(type_id,blocks.BLOCK_NAMES)
 
 @expose()
-def find_blocks(type_id):
-    """Try to find blocks that match type_id"""
-    return resolve_name(type_id,blocks.BLOCK_NAMES)
+def find_blocks(name):
+    """Find blocks whose name matches the given name
+    """
+    return similar_names(as_constant(name,blocks.BLOCK_NAMES))
 
 @expose()
 def clear(distance=100,*,user=None):

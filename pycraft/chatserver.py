@@ -32,7 +32,7 @@ def get_options():
         '--hot-reload',
         default=False,
         action='store_true',
-        help ='If specified, watch the pychart directory for changes and reload it seen',
+        help ='If specified, watch the pychart directory for changes and reload when seen (requires inotify-tools package)',
     )
     return parser
 
@@ -45,16 +45,25 @@ def main():
     mc = minecraft.Minecraft.create()
     # players = [1,2,3]
     listener = chatcommands.ChatListener(mc)
-    log.info("Listening to chat now")
+    def shutdown():
+        listener.wanted = False
+        try:
+            log.info("Closing chat socket")
+            listener.mc.socket.close()
+        except Exception as err:
+            pass
     threading.Thread(target=listener.interpreter,daemon=True).start()
     threading.Thread(target=listener.responder,daemon=True).start()
     if options.hot_reload:
+        # raise RuntimeError('Not yet working')
         from . import hotreload
-        threading.Thread(
+        t = threading.Thread(
             target=hotreload.hot_reload(
-
-            )
-        ).start()
+                callback = shutdown,
+            ),
+        )
+        t.start()
+    log.info("Listening to chat now")
     listener.poll()
 
     

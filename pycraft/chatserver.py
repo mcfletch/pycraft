@@ -3,6 +3,7 @@ from . import (
     chatcommands, expose,
     parabolic,
     bulldozer,
+    buildings,
 )
 from mcpi import minecraft
 log = logging.getLogger(__name__)

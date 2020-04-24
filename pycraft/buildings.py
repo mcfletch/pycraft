@@ -1,9 +1,10 @@
 """Draw a parabolic dome over the user"""
 from mcpi import block, minecraft, vec3
 import numpy as np
-import random
+import random, os
 import logging
 from . import expose, blocks, uniqueblocks
+HERE = os.path.dirname(os.path.abspath(__file__))
 log = logging.getLogger(__name__)
 
 @expose.expose()
@@ -29,7 +30,7 @@ def pyramid(
     """
     if position is None:
         position = user.position + vec3.Vec3(0,0,depth//2 + 1)
-    material = expose.find_blocks(material)
+    material = expose.as_block(material)
     x,y,z = [int(c) for c in position]
     startx = x-width//2
     endx = startx+width
@@ -76,10 +77,11 @@ def hall(
     back = front + depth 
     bottom = y-1
     top = y+height
-    floor_material = expose.find_blocks(floor_material)
-    carpet_material = expose.find_blocks(carpet_material)
-    wall_material = expose.find_blocks(wall_material)
-    roof_material = expose.find_blocks(roof_material)
+    floor_material = expose.as_block(floor_material)
+    carpet_material = expose.as_block(carpet_material)
+    wall_material = expose.as_block(wall_material)
+    roof_material = expose.as_block(roof_material)
+
     # clear 
     mc.setBlocks(
         left+1,bottom+1,front+1,
@@ -188,3 +190,78 @@ def hall(
                 block.STAINED_GLASS.id,
                 random.randint(0,15),
             )
+
+@expose.expose()
+def from_template(template,*,mc=None):
+    """Load a template file from disk and render as blocks"""
+    # Your code here...
+
+
+def load_template(template, abbreviations=None):
+    """Find template file, load it into memory as block-names
+
+    Templates as in `CSV` format, which is a 
+    plain-text format that looks like this:
+
+        S,S,D,S,S
+        S, , , ,S
+        S,S,G,S,S
+        -
+        S,S,D,S,S
+        S, , , ,S
+        S,S,G,S,S
+
+    where a bunch of abbreviations are available
+    for common types, but full block-names can
+    be used as well.
+
+    CSV is a common format, find pre-existing code
+    (a module) for reading the CSV information.
+
+    To read the template, you'll need to find the 
+    file on disk. Given a filename `filename`, the
+    final location would be:
+
+        os.path.join(HERE,'templates',os.path.basename(filename))
+    
+    You will need to pass the CSV module a `file` object
+    which you get by calling `open` on the filename
+    above.
+
+    The csv module will give you a sequence of rows from
+    your spreadsheet, like `['S','S','D','S','S']` which
+    you can iterate over with a `for` loop.
+
+    You will need to separate the rows into layers by
+    looking for the `-` value in the first column
+    of the row (`row[0]`). How will you gather the
+    rows into layers?
+
+    You will need to translate abbreviations into
+    full block-names to pass them to the server.
+    To do that, you'll need to setup a `mapping`
+    from each abbreviation to its full block-name.
+
+    Mappings in Python are generally written with
+    `{}` characters and are called `dicts`. So a 
+    mapping might look like:
+
+        abbreviations = {
+            'S': 'STONE',
+            'G': 'WHITE_STAINED_GLASS',
+        }
+
+    You can find `_blocknames.py` in this project
+    which includes all of the block names that are
+    currently known to work with the server.
+    
+    return should be [
+        layer,
+        layer,
+        layer,
+    ]
+    layer being [
+        [name,name,name],
+        [name,name,name],
+    ]
+    """

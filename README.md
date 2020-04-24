@@ -119,6 +119,8 @@ commands. For instance:
     echo(user.position+V(0,1,1))
     echo(user.position+user.direction)
     echo(user.name)
+    pyramid()
+    hall() 
 ```
 will cause the python server to respond as `<Bot>`
 with the result of your function call. Note that

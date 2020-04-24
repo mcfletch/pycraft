@@ -181,7 +181,3 @@ def hall(
                 block.STAINED_GLASS.id,
                 random.randint(0,15),
             )
-        
-
-
-    # Facilities...

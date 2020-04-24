@@ -3,3 +3,5 @@ __pycache__
 DragonProxy/data
 data
 .vscode
+raspberryjuice-*.jar
+pycraft/items.tsv

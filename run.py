@@ -3,7 +3,7 @@ import os, requests, subprocess, argparse, logging, shutil
 HERE = os.path.abspath(os.path.dirname(__file__))
 DATA = os.path.join(HERE,'data')
 URL = 'https://github.com/zhuowei/RaspberryJuice/raw/a2d49279de9396a56fbb3f10c477192d5b5ba28a/jars/raspberryjuice-1.12.1.jar'
-PLUGINS = os.path.join(DATA,'plugins')
+PLUGINS = os.path.join('plugins')
 JARFILE = os.path.join(PLUGINS,'raspberryjuice-1.12.1.jar')
 log = logging.getLogger('pycraft-setup')
 docker_name = 'minecraft'
@@ -31,28 +31,43 @@ def get_options():
         action = 'store_true',
         help = 'If specified, authenticate against Minecraft.net servers (requires BedRock players to have their password handy)',
     )
+    parser.add_argument(
+        '-d','--data',
+        default=DATA,
+        help='Override the default server to run (e.g. to use a scratch server/dataset)',
+    )
+    parser.add_argument(
+        '-n','--name',
+        default=docker_name,
+        help='Override the default docker name',
+    )
     return parser
 
-def install_raspberry_juice():
+def install_raspberry_juice(data):
     """Install extension to allow for mcpi coding"""
-    if not os.path.exists(PLUGINS):
-        os.makedirs(PLUGINS)
-    if not os.path.exists(JARFILE):
+    plugins = os.path.join(data,PLUGINS)
+    if not os.path.exists(plugins):
+        os.makedirs(plugins)
+    jarfile = os.path.join(data,JARFILE)
+    cache = os.path.join(HERE, os.path.basename(JARFILE))
+    if not os.path.exists(cache):
         log.info("Downloading RaspberryJuice plugin")
-        response = requests.get(url)
+        response = requests.get(URL)
         response.raise_for_status()
-        with open(JARFILE,'wb') as fh:
+        with open(cache,'wb') as fh:
             for chunk in response.iter_content(MEGA):
                 fh.write(chunk)
-def update_config():
+    if not os.path.exists(jarfile):
+        shutil.copy(cache,jarfile)
+def update_config(data):
     # target = target_ip()
-    if not os.path.exists(DATA):
-        os.makedirs(DATA)
+    if not os.path.exists(data):
+        os.makedirs(data)
     for filename in [
         'server.properties',
         'whitelist.json',
     ]:
-        source,target = os.path.join(HERE,filename),os.path.join(DATA,filename)
+        source,target = os.path.join(HERE,filename),os.path.join(data,filename)
         if os.path.exists(source):
             log.info("Copying %s to %s", source, target)
             shutil.copy(
@@ -63,15 +78,19 @@ def update_config():
 def main():
     parser = get_options()
     options = parser.parse_args()
+    docker_name = options.name
     if not options.eula:
         parser.error('You have not accepted the EULA (-e) flag')
         return
-    install_raspberry_juice()
+    data = os.path.abspath(options.data)
+    install_raspberry_juice(data)
+    update_config(data)
     subprocess.call(['docker','stop',docker_name])
     subprocess.call(['docker','rm',docker_name])
+    subprocess.check_call(['docker','pull','itzg/minecraft-server'])
     command = [
         'docker','run','-d','-p4711:4711','-p25565:25565',
-        f'-v{HERE}/data:/data',
+        f'-v{data}:/data',
         '-e','TYPE=BUKKIT',
         '-eEULA=TRUE',
         '--name',docker_name,
@@ -84,6 +103,7 @@ def main():
         command = [
             'python',
             os.path.join('DragonProxy','run.py'),
+            '-t',docker_name,
         ]
         if options.authentication:
             command.append('-a')

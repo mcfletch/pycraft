@@ -28,6 +28,12 @@ def get_options():
         help = 'If specified, do verbose API logging',
         action='store_true',
     )
+    parser.add_argument(
+        '--hot-reload',
+        default=False,
+        action='store_true',
+        help ='If specified, watch the pychart directory for changes and reload it seen',
+    )
     return parser
 
 def main():
@@ -42,4 +48,13 @@ def main():
     log.info("Listening to chat now")
     threading.Thread(target=listener.interpreter,daemon=True).start()
     threading.Thread(target=listener.responder,daemon=True).start()
+    if options.hot_reload:
+        from . import hotreload
+        threading.Thread(
+            target=hotreload.hot_reload(
+
+            )
+        ).start()
     listener.poll()
+
+    

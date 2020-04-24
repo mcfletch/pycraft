@@ -19,7 +19,14 @@ def pyramid(
     user=None,
     mc=None 
 ):
-    """Create pyramid centered at position in material"""
+    """Create pyramid centered at position in material
+    
+    position -- center of the pyramid
+    width -- size in the x direction
+    depth -- size in the y direction
+    material -- name of the material to use 
+    zstep -- 1 for upward, -1 for downward
+    """
     if position is None:
         position = user.position + vec3.Vec3(0,0,depth//2 + 1)
     material = expose.find_blocks(material)

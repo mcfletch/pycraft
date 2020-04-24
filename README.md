@@ -12,6 +12,9 @@ This repository includes the following:
   [DragonProxy](https://github.com/DragonetMC/DragonProxy)
 * a bunch of sample code for using the mcpi python
   library to construct simple tools
+* a nice image-to-maze tool that lets children draw a 
+  low-resolution maze on paper and turn it into a 3D
+  maze/building
 * a sample daemon `pycraft-chat-server` that lets you
   write simple scripts that users can call from the
   text chat in-game

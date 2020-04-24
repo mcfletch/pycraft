@@ -79,6 +79,8 @@ def dir_(*args,namespace=None):
 
 def resolve_name(name,lookup_space):
     """Fuzzy lookup of name in name-space"""
+    if hasattr(name,'__call__'):
+        return name
     if hasattr(name,'id'):
         return name.id 
     elif isinstance(name,int):
@@ -134,3 +136,12 @@ def block(type_id,position=None,*,mc=None,user=None):
             *position,
             typ, 
         )
+
+@expose()
+def find_blocks(type_id):
+    """Try to find blocks that match type_id"""
+    return resolve_name(type_id,blocks.BLOCK_NAMES)
+
+@expose()
+def clear(distance=100,*,user=None):
+    user.remove_nearby_entities(distance=distance)

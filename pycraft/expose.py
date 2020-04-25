@@ -107,7 +107,9 @@ def block(type_id,position=None,*,mc=None,user=None):
 
 @expose()
 def find_blocks(name):
-    """Find blocks whose name matches the given name
+    """Find blocks with names similar to the given name
+
+        find_blocks('granite') => ['GRANITE','POLISHED_GRANITE']
     """
     return sorted(fuzzymatch.similar_names(
         fuzzymatch.as_constant(
@@ -117,6 +119,10 @@ def find_blocks(name):
     ))
 @expose()
 def find_entities(name):
+    """Find entities with names similar to name
+
+        find_entities( 'creep' ) => ['CREEPER']
+    """
     return sorted(fuzzymatch.similar_names(
         fuzzymatch.as_constant(
             name,
@@ -125,8 +131,20 @@ def find_entities(name):
     ))
 
 @expose()
-def clear(distance=100,*,user=None):
-    user.remove_nearby_entities(distance=distance)
+def clear(type=-1,distance=100,*,user=None) -> 'List[str]':
+    """Clear all entities near the user of given type
+
+        clear( 'creeper', 200 ) => ['CREEPER','CREEPER']
+
+    if type == -1 then *all* entities are cleared, including
+    things such as cats, dogs, mine-carts, etc.
+    
+    returns a list of the names of the removed entities
+    """
+    user.remove_nearby_entities(
+        type_id=type,
+        distance=distance,
+    )
 
 @expose()
 def users(*,user=None):

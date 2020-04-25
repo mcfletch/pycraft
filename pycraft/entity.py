@@ -103,20 +103,20 @@ class Entity(object):
     position = property(get_position,set_position)
     direction = property(get_direction,set_direction)
     rotation = property(get_rotation,set_rotation)
-    def get_nearby_entities(self, distance:int=10, type_id:int=-1):
+    def get_nearby_entities(self, type_id:int=-1, distance:int=10 ):
         """Get the entities near this entity (e.g. Player)"""
         return self.api.get_nearby_entities(
             self.id,
             distance=distance,
             type_id=type_id,
         )
-    def remove_nearby_entities(self, distance:int=10, type_id:int=-1):
+    def remove_nearby_entities(self, type_id:int=-1, distance:int=10):
         """Destroy all entities within distance blocks of the given type"""
-        return self.api.remove_nearby_entities(
-            self.id,
-            distance=distance,
-            type_id=type_id,
-        )
+        removed = []
+        for entity in self.get_nearby_entities(type_id=type_id,distance=distance):
+            removed.append(entity.name)
+            self.api.remove_entity(entity.id)
+        return removed
 
 
 class EntityAPI(object):
@@ -173,6 +173,10 @@ class EntityAPI(object):
     @with_lock_held
     def get_nearby_entities(self, entity:int, distance: int=10, type_id=-1):
         """Return the set of entities near given entity"""
+        if type_id != -1:
+            type_id = Entity.as_instance(
+                type_id,
+            )
         records = self.mc.entity.getEntities(
             entity,
             int(distance),
@@ -180,10 +184,11 @@ class EntityAPI(object):
         )
         entities = [
             Entity(
-                self,id,
+                id=id,
                 type_id=type_id,
                 type_name=type_name,
                 position=vec3.Vec3(x,y,z),
+                api=self,
             )
             for (id,type_id,type_name,x,y,z) in records
         ]
@@ -191,6 +196,10 @@ class EntityAPI(object):
 
     @with_lock_held
     def remove_nearby_entities(self, entity:int, distance:int=10, type_id:int=-1):
+        if type_id != -1:
+            type_id = Entity.as_instance(
+                type_id,
+            )
         return self.mc.entity.removeEntities(entity,distance,type_id)
 
     @with_lock_held

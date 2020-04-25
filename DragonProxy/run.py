@@ -36,8 +36,25 @@ def get_options():
     )
     return parser
 
+def guess_target(target):
+    if not target:
+        log.info("No listen specified, looking up route to the internet")
+        try:
+            target = subprocess.check_output([
+                'ip','route','get','8.8.8.8',
+            ]).decode('latin-1').split()[2]
+        except Exception as err:
+            parser.error(
+                'Unable to determine the default ipv4 route to the internet'
+            )
+            raise
+        else:
+            log.info('  Using %s as listen',target)
+    return target
 
-def update_config(target='minecraft',auth=False):
+
+def update_config(target=None,auth=False):
+    target = guess_target(target)
     conf = yaml.safe_load(open(os.path.join(HERE,'config.yml')))
     conf['remote-address'] = target
     conf['remote-auth'] = 'credentials' if auth else 'offline'
@@ -62,7 +79,11 @@ def start_docker():
         '/opt/java/openjdk/bin/java','-jar','/code/DragonProxy.jar',
     ]
     subprocess.check_call(command)
-    log.info("BedRock proxy on port: %s", 19132)
+    log.info(
+        "BedRock proxy running on port: %s => %s",
+        19132,
+        conf['remote-address'],
+    )
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

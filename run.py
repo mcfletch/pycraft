@@ -20,18 +20,6 @@ def get_options():
         help = 'You must specify this argument to indicate that you have read the EULA',
     )
     parser.add_argument(
-        '-b','--bedrock',
-        default = False,
-        action = 'store_true',
-        help = 'If specified, start a Bedrock/Pocket edition proxy (DragonProxy)',
-    )
-    parser.add_argument(
-        '-a','--authentication',
-        default = False,
-        action = 'store_true',
-        help = 'If specified, authenticate against Minecraft.net servers (requires BedRock players to have their password handy)',
-    )
-    parser.add_argument(
         '-d','--data',
         default=DATA,
         help='Override the default server to run (e.g. to use a scratch server/dataset)',
@@ -40,6 +28,23 @@ def get_options():
         '-n','--name',
         default=docker_name,
         help='Override the default docker name',
+    )
+    parser.add_argument(
+        '-b','--bedrock',
+        default = False,
+        action = 'store_true',
+        help = 'If specified, start a Bedrock/Pocket edition proxy (DragonProxy/run.py)',
+    )
+    parser.add_argument(
+        '-l','--listen',
+        default = None,
+        help='Specify the ip address to advertise to the BedRock proxy server (if we are starting it)',
+    )
+    parser.add_argument(
+        '-a','--authentication',
+        default = False,
+        action = 'store_true',
+        help = 'If specified, authenticate against Minecraft.net servers (requires BedRock players to have their password handy)',
     )
     return parser
 
@@ -80,8 +85,9 @@ def main():
     options = parser.parse_args()
     docker_name = options.name
     if not options.eula:
-        parser.error('You have not accepted the EULA (-e) flag')
+        parser.error('You have not accepted the EULA (read and add the -e) flag')
         return
+    target = options.listen
     data = os.path.abspath(options.data)
     install_raspberry_juice(data)
     update_config(data)
@@ -103,12 +109,14 @@ def main():
         command = [
             'python',
             os.path.join('DragonProxy','run.py'),
-            '-t',docker_name,
         ]
+        if target:
+            options.extend(['-t',target])
         if options.authentication:
             command.append('-a')
         subprocess.check_call(command)
     
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()
 

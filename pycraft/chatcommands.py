@@ -31,6 +31,8 @@ class Response(object):
         self.sender = sender 
         self.value = value 
         self.error = error 
+    def __eq__(self, rhs):
+        return self.value == rhs
     def chat_messages(self):
         formatted = str(self.value)
         for line in formatted.splitlines():

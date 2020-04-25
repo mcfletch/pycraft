@@ -1,22 +1,15 @@
 """Draw a parabolic dome over the user"""
-from mcpi import block, minecraft
+from mcpi import minecraft
 import numpy as np
 import logging
-from . import expose, uniqueblocks
+from . import expose, uniqueblocks, blocks
 log = logging.getLogger(__name__)
-
-def random_stained_glass():
-    """Random stained glass"""
-    log.info("Random call")
-    import random
-    return block.Block(95,random.randint(0,15))
-
 
 @expose.expose(name='circle')
 def draw_circle(
     center,
     radius,
-    material=block.STONE,
+    material=blocks.STONE,
     start_angle=0,
     stop_angle=np.pi*2,
     steps = None,
@@ -25,9 +18,7 @@ def draw_circle(
 ):
     """Draw a horizontal circle around center with radius"""
     x,y,z = center
-    material = expose.resolve_name(
-        material,expose.blocks.BLOCK_NAMES,
-    )
+    material = blocks.Block.as_instance(material)
     if not hasattr(material,'__call__'):
         material_value = material
         material = lambda: material_value
@@ -58,7 +49,7 @@ def parabolic_dome(
     center=None, 
     height=10, 
     relaxation=4, 
-    material=random_stained_glass,
+    material=blocks.WHITE_STAINED_GLASS.random_subtype(),
     start_angle=0,
     stop_angle=np.pi*2,
     steps = None,
@@ -84,9 +75,7 @@ def parabolic_dome(
     zes = np.sqrt(yes*relaxation)
     yes = yes
     x,y,z = center
-    material = expose.resolve_name(
-        material,expose.blocks.BLOCK_NAMES,
-    )
+    material = blocks.Block.as_instance(material)
     for h,rad in zip(yes,zes):
         draw_circle((x,y+height-h,z),rad,material=material,mc=mc)
 
@@ -95,7 +84,7 @@ def parabolic_dome(
 def dome(
     center=None,
     radius=10, 
-    material=random_stained_glass,
+    material=blocks.WHITE_STAINED_GLASS.random_subtype(),
     start_angle=0,
     stop_angle=np.pi*2,
     steps = None,
@@ -110,9 +99,7 @@ def dome(
     angles = np.arcsin(yes/radius)
     zes = np.cos(angles*radius)
     x,y,z = center
-    material = expose.resolve_name(
-        material,expose.blocks.BLOCK_NAMES,
-    )
+    material = blocks.Block.as_instance(material)
     for h,rad in zip(yes,zes):
         draw_circle((x,y+height-h,z),rad,block=material,mc=mc)
 

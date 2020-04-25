@@ -1,7 +1,7 @@
 """Command namespace exposure and core commands"""
-from mcpi import minecraft, block, entity as mc_entity
+from mcpi import minecraft, entity as mc_entity
 from mcpi.vec3 import Vec3
-from . import blocks, entity
+from . import blocks as _blocks, entity
 import threading, logging, inspect, operator
 import re, time, ast
 import contextlib, functools
@@ -21,14 +21,24 @@ def range(*args):
     """Produce sequences of integers args [start],stop,[step]"""
     return list(_range(*args))
 
+class FuzzyNamespace(object):
+    def __init__(self, source):
+        self.source = source
+    def __getattr__(self,key):
+        return resolve_name(key, self.source)
+
+blocks = FuzzyNamespace(_blocks.BLOCK_NAMES)
+entities = FuzzyNamespace(entity.ENTITY_NAMES)
+
+
 DEFAULT_NAMESPACE = {
     'sin': np.sin,
     'cos': np.cos,
     'arange': np.arange,
     'range': np.arange,
     'pi': np.pi,
-    'block': blocks.BLOCK_NAMES,
-    'entity': entity.ENTITY_NAMES,
+    'blocks': blocks,
+    'entities': entities,
     'int': int,
     'float': float,
     'str': str,
@@ -94,7 +104,7 @@ def resolve_name(name,lookup_space):
     if hasattr(name,'__call__'):
         return name
     if hasattr(name,'id'):
-        return name.id 
+        return name
     elif isinstance(name,int):
         return name 
     elif isinstance(name, str):
@@ -123,7 +133,6 @@ def resolve_name(name,lookup_space):
         )
     )
 
-
 @expose()
 def spawn(type_id,position=None,*,mc=None,user=None):
     """Spawn a new entity of type_id at position (default in front of user)"""
@@ -141,7 +150,7 @@ def block(type_id,position=None,*,mc=None,user=None):
     """Create a block with the given type_id at position"""
     if position is None:
         position = user.position + user.direction + Vec3(0,1,0)
-    typ = resolve_name(type_id,blocks.BLOCK_NAMES)
+    typ = resolve_name(type_id,_blocks.BLOCK_NAMES)
     with locked(mc):
         return mc.setBlock(
             *position,
@@ -150,7 +159,7 @@ def block(type_id,position=None,*,mc=None,user=None):
 @expose()
 def as_block(type_id):
     """Try to find a single block-type of the given name"""
-    return resolve_name(type_id,blocks.BLOCK_NAMES)
+    return resolve_name(type_id,_blocks.BLOCK_NAMES)
 
 @expose()
 def find_blocks(name):

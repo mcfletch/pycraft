@@ -18,7 +18,7 @@ motd: 'Welcome to the Party'
 motd2: 'Please be respectful to other players'
 
 # The maximum amount of players that can join the proxy
-max-players: 1
+max-players: 20
 
 # The IP and port of the remote server to connect to
 remote-address: 'minecraft'

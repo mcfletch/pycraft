@@ -70,6 +70,8 @@ class Entity(object):
                     self.id,
                     self.type_id,
                     self.type_name,
+                    self.position,
+                    self.get_name(),
                 ]
             ])
         )

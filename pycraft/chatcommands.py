@@ -33,9 +33,10 @@ class ChatListener(object):
         self.response_queue = queue.Queue()
         if interpreter is None:
             from . import interpreter as default_interpreter
-            self.interpreter = default_interpreter.Interpreter(
+            interpreter = default_interpreter.Interpreter(
                 self.mc,
             )
+        self.commands = interpreter
     
     def poll(self):
         """Poll for chat messages and see if we recognise them"""
@@ -83,7 +84,7 @@ class ChatListener(object):
             except queue.Empty:
                 continue
             try:
-                response = self.interpreter.interpret(request)
+                response = self.commands.interpret(request)
             except Exception as err:
                 log.exception(
                     'Error handling %r',

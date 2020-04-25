@@ -40,7 +40,7 @@ class Interpreter(object):
             type_name='Player',
             api=self.entities
         )
-        log.info("Call from %s", sender)
+        log.info("Call from %s: %r", sender, message)
         try:
             # expr
             namespace = self.base_namespace(message,sender)

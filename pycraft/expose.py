@@ -119,3 +119,7 @@ def find_blocks(name):
 @expose()
 def clear(distance=100,*,user=None):
     user.remove_nearby_entities(distance=distance)
+
+@expose()
+def users(*,user=None):
+    return user.api.players()

@@ -58,9 +58,11 @@ def main():
         # raise RuntimeError('Not yet working')
         from . import hotreload
         t = threading.Thread(
-            target=hotreload.hot_reload(
+            target=hotreload.hot_reload,
+            kwargs=dict(
                 callback = shutdown,
             ),
+            daemon=True,
         )
         t.start()
     log.info("Listening to chat now")

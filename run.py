@@ -46,6 +46,12 @@ def get_options():
         action = 'store_true',
         help = 'If specified, authenticate against Minecraft.net servers (requires BedRock players to have their password handy)',
     )
+    parser.add_argument(
+        '--wipe-config',
+        default=False,
+        action='store_true',
+        help='If specified overwrite the data-directory\'s server.properties and whitelist.json with those in this directory',
+    )
     return parser
 
 def install_raspberry_juice(data):
@@ -64,7 +70,7 @@ def install_raspberry_juice(data):
                 fh.write(chunk)
     if not os.path.exists(jarfile):
         shutil.copy(cache,jarfile)
-def update_config(data):
+def update_config(data, overwrite=True):
     # target = target_ip()
     if not os.path.exists(data):
         os.makedirs(data)
@@ -74,11 +80,12 @@ def update_config(data):
     ]:
         source,target = os.path.join(HERE,filename),os.path.join(data,filename)
         if os.path.exists(source):
-            log.info("Copying %s to %s", source, target)
-            shutil.copy(
-                source,
-                target,
-            )
+            if overwrite or not os.path.exists(target):
+                log.info("Copying %s to %s", source, target)
+                shutil.copy(
+                    source,
+                    target,
+                )
 
 def main():
     parser = get_options()
@@ -90,7 +97,7 @@ def main():
     target = options.listen
     data = os.path.abspath(options.data)
     install_raspberry_juice(data)
-    update_config(data)
+    update_config(data, overwrite=options.wipe)
     subprocess.call(['docker','stop',docker_name])
     subprocess.call(['docker','rm',docker_name])
     subprocess.check_call(['docker','pull','itzg/minecraft-server'])

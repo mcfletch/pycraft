@@ -1,7 +1,7 @@
 """Command namespace exposure and core commands"""
 from mcpi import minecraft, entity as mc_entity
 from mcpi.vec3 import Vec3
-from . import blocks as _blocks, entity
+from . import blocks, entity, fuzzymatch
 import threading, logging, inspect, operator
 import re, time, ast
 import contextlib, functools
@@ -21,15 +21,8 @@ def range(*args):
     """Produce sequences of integers args [start],stop,[step]"""
     return list(_range(*args))
 
-class FuzzyNamespace(object):
-    def __init__(self, source):
-        self.source = source
-    def __getattr__(self,key):
-        return resolve_name(key, self.source)
-
-blocks = FuzzyNamespace(_blocks.BLOCK_NAMES)
-entities = FuzzyNamespace(entity.ENTITY_NAMES)
-
+BLOCK_NAMESPACE = fuzzymatch.FuzzyNamespace(blocks.BLOCK_NAMES)
+ENTITY_NAMESPACE = fuzzymatch.FuzzyNamespace(entity.ENTITY_NAMES)
 
 DEFAULT_NAMESPACE = {
     'sin': np.sin,
@@ -37,8 +30,8 @@ DEFAULT_NAMESPACE = {
     'arange': np.arange,
     'range': np.arange,
     'pi': np.pi,
-    'blocks': blocks,
-    'entities': entities,
+    'blocks': BLOCK_NAMESPACE,
+    'entities': ENTITY_NAMESPACE,
     'int': int,
     'float': float,
     'str': str,
@@ -59,7 +52,7 @@ def expose(command_set=None,name=None):
 @expose()
 def echo(message, *, user=None):
     """Return the message to the user"""
-    return f'{user}: {message}'
+    return message
 @expose()
 def help(value):
     """Try to get help about the object"""
@@ -87,58 +80,13 @@ def dir_(*args,namespace=None):
     else:
         return sorted(namespace.keys())
 
-def as_constant(name):
-    """Convert the name to a python constant"""
-    return name.upper().replace(' ','_').replace('-','_')
-
-def similar_names(name, lookup_space,first=False):
-    """Look for all names similar to name in namespace"""
-    if name in lookup_space:
-        yield name
-    for key in lookup_space:
-        if name in key:
-            yield key
-
-def resolve_name(name,lookup_space):
-    """Fuzzy lookup of name in name-space"""
-    if hasattr(name,'__call__'):
-        return name
-    if hasattr(name,'id'):
-        return name
-    elif isinstance(name,int):
-        return name 
-    elif isinstance(name, str):
-        test = as_constant(name)
-        if test in lookup_space:
-            return lookup_space[test]
-        else:
-            possible = list(similar_names(test,lookup_space))
-        if len(possible) == 1:
-            return lookup_space[possible[0]]
-        elif possible:
-            raise NameError(
-                name,
-                'Possibly you meant: %s'%(
-                    ', '.join(sorted(possible))
-                )
-            )
-        else:
-            raise NameError(
-                name,'Did not find any names like that'
-            )
-        raise TypeError(
-        "Expected an integer, Block/Entity, or string name, got %r"
-        %(
-            name,
-        )
-    )
 
 @expose()
 def spawn(type_id,position=None,*,mc=None,user=None):
     """Spawn a new entity of type_id at position (default in front of user)"""
     if position is None:
         position = user.position + user.direction + Vec3(0,1,0)
-    typ = resolve_name(type_id,entity.ENTITY_NAMES)
+    typ = entity.Entity.as_instance(type_id)
     with locked(mc):
         return mc.spawnEntity(
             *position,
@@ -150,22 +98,23 @@ def block(type_id,position=None,*,mc=None,user=None):
     """Create a block with the given type_id at position"""
     if position is None:
         position = user.position + user.direction + Vec3(0,1,0)
-    typ = resolve_name(type_id,_blocks.BLOCK_NAMES)
+    typ = blocks.Block.as_instance(type_id)
     with locked(mc):
         return mc.setBlock(
             *position,
             typ, 
         )
-@expose()
-def as_block(type_id):
-    """Try to find a single block-type of the given name"""
-    return resolve_name(type_id,_blocks.BLOCK_NAMES)
 
 @expose()
 def find_blocks(name):
     """Find blocks whose name matches the given name
     """
-    return similar_names(as_constant(name,blocks.BLOCK_NAMES))
+    return fuzzymatch.similar_names(
+        fuzzymatch.as_constant(
+            name,
+            blocks.BLOCK_NAMES,
+        )
+    )
 
 @expose()
 def clear(distance=100,*,user=None):

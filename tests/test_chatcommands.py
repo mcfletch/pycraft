@@ -1,7 +1,8 @@
 import unittest
-from pycraft import chatcommands
-from pycraft import expose
+from pycraft import interpreter
+from pycraft import expose  
 from pycraft import blocks
+from pycraft import entity
 import ast
 import numpy as np
 from mcpi import vec3
@@ -16,12 +17,12 @@ class FakeEntities(object):
     def get_entity_position(self, id):
         return vec3.Vec3(42,42,42)
 
-class TestChatCommands(unittest.TestCase):
+class TestInterpreter(unittest.TestCase):
     def setUp(self):
-        self.listener = chatcommands.ChatListener(None)
-        self.namespace = self.listener.base_namespace()
+        self.interpreter = interpreter.Interpreter(None)
+        self.namespace = self.interpreter.base_namespace()
         self.namespace['user'] = FakeUser()
-        self.listener.entities = FakeEntities()
+        self.interpreter.entities = FakeEntities()
     def test_expressions(self):
         for statement,expected in [
             ("'this'",'this'),
@@ -36,7 +37,7 @@ class TestChatCommands(unittest.TestCase):
             ('[1,2,3,4][::2]',[1,3]),
             ('[sin(2)+1,3]',[np.sin(2)+1,3]),
             ('blocks.AIR',blocks.AIR),
-            ('entities.ENDER_C',expose.entities.ENDER_CRYSTAL),
+            ('entities.ENDER_C',expose.ENTITY_NAMESPACE.ENDER_CRYSTAL),
             ('range(3)',np.arange(3)),
             ('user.position+V(0,1,0)',vec3.Vec3(0,1,0)),
             ('V(z=3)',vec3.Vec3(0,0,3)),
@@ -48,7 +49,7 @@ class TestChatCommands(unittest.TestCase):
                 'eval',
             )
             print(ast.dump(parsed))
-            result = self.listener.interpret_expr(parsed, self.namespace)
+            result = self.interpreter.interpret_expr(parsed, self.namespace)
             if isinstance(expected, np.ndarray):
                 assert np.allclose(result,expected)
             else:
@@ -67,12 +68,12 @@ class TestChatCommands(unittest.TestCase):
                     'eval',
                 )
                 print(ast.dump(parsed))
-                result = self.listener.interpret_expr(parsed, self.namespace)
+                result = self.interpreter.interpret_expr(parsed, self.namespace)
                 assert False, "Should have raised an error"
             except Exception as err:
                 assert isinstance(err, expected), (statement, err)
     def test_V(self):
-        V = chatcommands.V
+        V = expose.V
         for i,(result,expected) in enumerate([
             (
                 V([1,2,3]),
@@ -99,20 +100,20 @@ class TestChatCommands(unittest.TestCase):
             'entityId': 4,
             'assignment': 'a',
         })
-        self.listener.interpret(message)
-        assert self.listener.user_namespaces == {
+        self.interpreter.interpret(message)
+        assert self.interpreter.user_namespaces == {
             4: {'a':3},
         }
-        assert self.listener.interpret(FakeMessage({
+        assert self.interpreter.interpret(FakeMessage({
             'message': 'echo(a)',
             'entityId': 4,
-        })) == 'Moo: 3'
+        })) == 3
     def test_resolve(self):
         for name,expected in [
             ('bed',blocks.BED),
             ('CRACKED_STONE_BRICKS',blocks.CRACKED_STONE_BRICKS),
             ('white concrete',blocks.WHITE_CONCRETE)
         ]:
-            result = expose.as_block(name)
+            result = getattr(expose.BLOCK_NAMESPACE,name)
             assert result == expected, (name,result)
         

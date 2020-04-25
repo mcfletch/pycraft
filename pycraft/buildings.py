@@ -30,7 +30,7 @@ def pyramid(
     """
     if position is None:
         position = user.position + vec3.Vec3(0,0,depth//2 + 1)
-    material = expose.as_block(material)
+    material = blocks.Block.as_instance(material)
     x,y,z = [int(c) for c in position]
     startx = x-width//2
     endx = startx+width

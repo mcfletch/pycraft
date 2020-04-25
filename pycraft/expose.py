@@ -109,12 +109,20 @@ def block(type_id,position=None,*,mc=None,user=None):
 def find_blocks(name):
     """Find blocks whose name matches the given name
     """
-    return fuzzymatch.similar_names(
+    return sorted(fuzzymatch.similar_names(
         fuzzymatch.as_constant(
             name,
-            blocks.BLOCK_NAMES,
-        )
-    )
+        ),
+        blocks.BLOCK_NAMES,
+    ))
+@expose()
+def find_entities(name):
+    return sorted(fuzzymatch.similar_names(
+        fuzzymatch.as_constant(
+            name,
+        ),
+        entity.ENTITY_NAMES,
+    ))
 
 @expose()
 def clear(distance=100,*,user=None):

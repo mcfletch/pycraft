@@ -97,7 +97,7 @@ def main():
     target = options.listen
     data = os.path.abspath(options.data)
     install_raspberry_juice(data)
-    update_config(data, overwrite=options.wipe)
+    update_config(data, overwrite=options.wipe_config)
     subprocess.call(['docker','stop',docker_name])
     subprocess.call(['docker','rm',docker_name])
     subprocess.check_call(['docker','pull','itzg/minecraft-server'])

@@ -2,6 +2,7 @@
 import functools, types, logging, typing
 from mcpi import minecraft, vec3, connection, entity as mc_entity
 from .lockedmc import with_lock_held
+import numpy as np
 log = logging.getLogger(__name__)
 
 class Entity(object):
@@ -60,6 +61,8 @@ class Entity(object):
         """On Java edition, set the entity's position"""
         self.api.set_entity_position(self.id, position)
         self._position = position
+    def get_rotation(self):
+        return self.api.get_entity_rotation(self.id)
     name = property(get_name)
     position = property(get_position,set_position)
     direction = property(get_direction,)
@@ -122,6 +125,9 @@ class EntityAPI(object):
     @with_lock_held
     def get_entity_direction(self, entity: int) -> vec3.Vec3:
         return self.mc.entity.getDirection(entity)
+    @with_lock_held
+    def get_entity_rotation(self, entity: int) -> float:
+        return self.mc.entity.getRotation(entity)/360*(np.pi*2)
 
     @with_lock_held
     def get_nearby_entities(self, entity:int, distance: int=10, type_id=-1):

@@ -11,11 +11,15 @@ def as_constant(name):
 
 def similar_names(name, lookup_space,first=False):
     """Look for all names similar to name in namespace"""
+    seen = set()
     if name in lookup_space:
+        seen.add(name)
         yield name
     for key in lookup_space:
         if name in key:
-            yield key
+            if key not in seen:
+                seen.add(key)
+                yield key
 
 def resolve_name(name,lookup_space):
     """Fuzzy lookup of name in name-space"""

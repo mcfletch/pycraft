@@ -85,7 +85,7 @@ def hall(
     # clear 
     mc.setBlocks(
         left+1,bottom+1,front+1,
-        right-1,top-1,back-1,
+        right-1,top,back-1,
         blocks.AIR,
     )
     # subfloor...

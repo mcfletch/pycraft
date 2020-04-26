@@ -15,7 +15,7 @@ from . import entity
 import numpy as np
 log = logging.getLogger(__name__)
 COMMAND_FINDER = re.compile(
-    r'^[ ]*(?P<function>[a-zA-z][_a-zA-Z0-9]*)[(](?P<args>.*)[)][ ]*$',
+    r'^[ ]*(?P<function>[a-zA-z][_.a-zA-Z0-9]*)[(](?P<args>.*)[)][ ]*$',
     re.I|re.U
 )
 ASSIGNMENT_FINDER = re.compile(
@@ -47,6 +47,9 @@ class Listener(object):
                 except connection.RequestError as err:
                     log.warning("Error on poll chat: %s", err)
                     messages = []
+                except ValueError as err:
+                    log.exception("Unhandled error in mcpi, ignoring")
+                    messages = []
             for message in messages:
                 match = COMMAND_FINDER.match(message.message)
                 if match:
@@ -75,7 +78,7 @@ class Listener(object):
                 continue
             with locked(self.mc):
                 for line in response.chat_messages():
-                    self.mc.postToChat('Bot > %s'%(line,))
+                    self.mc.postToChat(line)
     def interpreter(self):
         while self.wanted:
             try:

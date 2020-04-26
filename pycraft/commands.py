@@ -81,6 +81,26 @@ def click_delete(*,clicks=None,mc=None,user=None):
             typ
         )
     return clicks.register_user(user,on_click)
+
+# @expose()
+# def click_describe(*,clicks=None,mc=None,user=None):
+#     def on_click(event):
+#         try:
+#             target = event.pos
+#             description = 'Unavailable'
+#             for i in range(2):
+#                 try:
+#                     description = mc.getBlockWithData(event.pos)
+#                 except Exception as err:
+#                     pass 
+#             print('Block at %s => %s'%(
+#                 event.pos,
+#                 description,
+#             ))
+#         except Exception as err:
+#             print("Failed: %s", err)
+#     return clicks.register_user(user,on_click)
+
 @expose()
 def click_cancel(*,clicks=None,user=None):
     """Cancel click operations"""
@@ -153,8 +173,18 @@ def last_hit(index=-1,*,mc=None,user=None,clicks=None):
     If we don't have that click, will return None
     """
     try:
-        import ipdb;ipdb.set_trace()
         click = clicks.user_clicks(user)[index]
         return click
     except IndexError:
         return None
+
+@expose()
+def bed(position=None,*,user=None,mc=None):
+    if position is None:
+        position = user.position + user.direction + V(0,1,0)
+    x,y,z = position
+    # Bed can only be put together from matching
+    # directional pieces, here a N/S bed
+    mc.setBlock(x,y,z+1, blocks.BED.id,8)
+    mc.setBlock(x,y,z, blocks.BED.id,0)
+

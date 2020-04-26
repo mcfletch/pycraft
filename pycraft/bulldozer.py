@@ -1,9 +1,10 @@
+"""Clear (create) a set of blocks in front of the user"""
 from mcpi import minecraft, vec3
 import numpy as np
 import logging
 log = logging.getLogger(__name__)
 from . import expose
-from .expose import V
+from .commands import V
 from . import entity
 from . import uniqueblocks
 from . import blocks
@@ -12,7 +13,7 @@ from . import blocks
 def bulldoze(depth=10,width=6,height=2,material=blocks.AIR,*,user=None,mc=None):
     """Set blocks ahead of the user to the given material
 
-    This aligns the block of material with the direction
+    This (loosely) aligns the block of material with the direction
     the user is currently facing, so it wipes out whatever
     is in front of you.
     """

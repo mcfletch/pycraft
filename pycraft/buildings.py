@@ -1,4 +1,4 @@
-"""Draw a parabolic dome over the user"""
+"""Create building-like structures for users"""
 from mcpi import minecraft, vec3
 import numpy as np
 import random, os
@@ -20,7 +20,7 @@ def pyramid(
     user=None,
     mc=None 
 ):
-    """Create pyramid centered at position in material
+    """Create a pyramid centered at position in material
     
     position -- center of the pyramid
     width -- size in the x direction
@@ -90,15 +90,15 @@ def hall(
     )
     # subfloor...
     mc.setBlocks(
-        left,bottom,front,
+        left,bottom-1,front,
         right,bottom,back,
         floor_material,
     )
     if width > 4 and depth > 4:
         # Carpet on top...
         mc.setBlocks(
-            left+2,y,front+2,
-            right-2,y,back-2,
+            left+2,bottom,front+2,
+            right-2,bottom,back-2,
             carpet_material,
         )
     # walls...

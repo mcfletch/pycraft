@@ -8,7 +8,6 @@ from .expose import (
     DEFAULT_COMMANDS,
     DEFAULT_NAMESPACE,
     expose,
-    V,
 )
 import queue
 from .lockedmc import locked

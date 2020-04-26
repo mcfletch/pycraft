@@ -1,6 +1,8 @@
 import argparse, logging, threading
 from . import (
-    chatcommands, expose,
+    chatcommands, 
+    expose,
+    commands,
     parabolic,
     bulldozer,
     buildings,

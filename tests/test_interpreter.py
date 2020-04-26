@@ -3,6 +3,7 @@ from pycraft import interpreter
 from pycraft import expose  
 from pycraft import blocks
 from pycraft import entity
+from pycraft import commands
 import ast
 import numpy as np
 from mcpi import vec3
@@ -41,6 +42,13 @@ class TestInterpreter(unittest.TestCase):
             ('range(3)',np.arange(3)),
             ('user.position+V(0,1,0)',vec3.Vec3(0,1,0)),
             ('V(z=3)',vec3.Vec3(0,0,3)),
+            ('[x*2 for x in range(3)]',[0,2,4]),
+            ('[(z,y,x) for (x,y,z) in [(2,3,4)]]', [(4,3,2)]),
+            ('[(z,y,x,r) for (x,y,z) in [(2,3,4)] for r in [1,2]]', [(4,3,2,1),(4,3,2,2)]),
+            ('[x for y in range(3) for x in range(y)]',[0,0,1]),
+            ('tuple(x*2 for x in range(3))',(0,2,4)),
+            ('{ x:y for (x,y) in [(1,2),(3,4)]}',{1:2,3:4}),
+            ('{ x for (x,y) in [(1,2),(3,4)]}',{1,3}),
             # ('[sin(x) for x in [1,2,3]]',[np.sin(x) for x in [1,2,3]]),
         ]:
             parsed = ast.parse(
@@ -58,7 +66,6 @@ class TestInterpreter(unittest.TestCase):
     def test_failures(self):
         for statement,expected in [
             ('[32',SyntaxError),
-            ('[int(i) for i in [1,2,3]]',ValueError),
             ('[1,2,3].__module__',ValueError),
         ]:
             try:
@@ -73,7 +80,7 @@ class TestInterpreter(unittest.TestCase):
             except Exception as err:
                 assert isinstance(err, expected), (statement, err)
     def test_V(self):
-        V = expose.V
+        V = commands.V
         for i,(result,expected) in enumerate([
             (
                 V([1,2,3]),

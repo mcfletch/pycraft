@@ -1,7 +1,7 @@
 from mcpi import minecraft, block, connection
 from mcpi.vec3 import Vec3
 import threading, logging, inspect, operator
-import re, time, ast
+import re, time, ast, traceback
 import contextlib, functools
 from .expose import (
     DEFAULT_COMMANDS,
@@ -46,7 +46,24 @@ class Interpreter(object):
             user_namespace = self.user_namespace(sender)
             log.debug('user namespace %r',user_namespace)
             namespace.update(user_namespace)
-            top = ast.parse(message.message,'chat.py','eval')
+            try:
+                top = ast.parse(message.message,'chat.py','eval')
+            except SyntaxError as err:
+                if err.offset >= len(err.text):
+                    return Response(
+                        error = True,
+                        message = message,
+                        value = f"Something missing at the end here...\n{err.text}",
+                        sender=sender,
+                    )
+                else:
+                    spaced = (' '*(err.offset-1))+'^'
+                    return Response(
+                        error = True,
+                        message = message,
+                        value = f"This doesn't seem right\n{err.text}\n{spaced}",
+                        sender=sender,
+                    )
             if not isinstance(top, ast.Expression):
                 log.debug("Not an expression: %r", message.message)
                 raise TypeError("Not an expression")
@@ -161,6 +178,14 @@ class Interpreter(object):
         elif isinstance(arg,ast.Tuple):
             value = tuple([self.interpret_expr(a,namespace) for a in arg.elts])
             return value
+        elif isinstance(arg,ast.GeneratorExp):
+            return self.interpret_generator(arg,namespace)
+        elif isinstance(arg,ast.ListComp):
+            return self.interpret_listcomp(arg,namespace)
+        elif isinstance(arg, ast.DictComp):
+            return self.interpret_dictcomp(arg, namespace)
+        elif isinstance(arg, ast.SetComp):
+            return self.interpret_setcomp(arg, namespace)
         elif isinstance(arg, ast.List):
             value = [self.interpret_expr(a,namespace) for a in arg.elts]
             return value
@@ -175,6 +200,82 @@ class Interpreter(object):
                         ast.dump(arg)
                     )
                 )
+    def iterate_generator(self, gen, namespace):
+        """Iterate a single ast generator evalulation within a namespace"""
+        source = self.interpret_expr(gen.iter, namespace)
+        log.info('Source %s', source)
+        for item in source:
+            passes = True
+            update = self.unpack_target(gen.target,item)
+            namespace.update(update)
+            if gen.ifs:
+                for test in gen.ifs:
+                    if not self.interpret_expr(test,namespace):
+                        passes = False
+                        break 
+            if passes:
+                yield update
+
+    def unpack_target(self,target,value):
+        """Unpack ast generator target into a namespace update from value"""
+        if isinstance(target,ast.Name):
+            return {target.id:value}
+        elif isinstance(target,ast.Tuple):
+            if len(value) != len(target.elts):
+                raise TypeError(
+                    value,
+                    'Expected value with %s items, got %s'
+                    %(
+                        len(value),
+                        len(target.elts)
+                    )
+                )
+            update = {}
+            for subtarget,subitem in zip(target.elts,value):
+                update.update(self.unpack_target(subtarget,subitem))
+            return update
+        else:
+            raise ValueError(
+                'Unsupported list comprehension target type',
+                ast.dump(target),
+            )
+
+    def interpret_generator(self, gen, namespace):
+        """Iterate over a set of generators from a comprehension"""
+        working = namespace.copy()
+        dc = isinstance(gen,ast.DictComp)
+        for update in self.iterate_generator_updates(gen.generators, namespace):
+            log.info("Update %s", update)
+            working.update(update)
+            if dc:
+                yield (
+                    self.interpret_expr(gen.key, working),
+                    self.interpret_expr(gen.value, working),
+                )
+            else:
+                yield self.interpret_expr(gen.elt, working)
+
+    def iterate_generator_updates(self, generators, namespace):
+        if generators:
+            # import ipdb;ipdb.set_trace()
+            this,rest = generators[0],generators[1:]
+            working = namespace.copy()
+            for update in self.iterate_generator(generators[0],working):
+                # log.info("Update: %s", update)
+                working.update(update)
+                if rest:
+                    for subupdate in self.iterate_generator_updates(rest,working):
+                        update.update(subupdate)
+                        yield update
+                else:
+                    yield update
+
+    def interpret_dictcomp(self, dc, namespace):
+        return dict(self.interpret_generator(dc,namespace))
+    def interpret_listcomp(self, lc, namespace):
+        return list(self.interpret_generator(lc,namespace))
+    def interpret_setcomp(self, sc, namespace):
+        return set(self.interpret_generator(sc,namespace))
 
 class Response(object):
     """A response to send to the chat"""
@@ -189,9 +290,9 @@ class Response(object):
         formatted = str(self.value)
         for line in formatted.splitlines():
             if self.error:
-                yield f'ERR {self.sender}> {line}'
+                yield f'ERR> {line}'
             else:
-                yield f'{self.sender}> {line}'
+                yield f'Out> {line}'
 
     def __repr__(self):
         return '%r (%s)'%(

@@ -2,23 +2,25 @@ from mcpi import minecraft, block, connection
 from mcpi.vec3 import Vec3
 import threading, logging, inspect, operator
 import re, time, ast, traceback
+from collections import deque
 import contextlib, functools
 from .expose import (
     DEFAULT_COMMANDS,
     DEFAULT_NAMESPACE,
     expose,
 )
-import queue
+import queue, time
 from . import entity
 import numpy as np
 log = logging.getLogger(__name__)
 
 class Interpreter(object):
     """Provide basic python expression interpretation"""
-    def __init__(self, mc):
+    def __init__(self, mc ):
         self.mc = mc
         self.entities = entity.EntityAPI(self.mc)
         self.user_namespaces = {}
+        self.clicks = ClickTracker()
 
     def base_namespace(self, message=None, sender=None, **kwargs):
         namespace = DEFAULT_NAMESPACE.copy()
@@ -26,10 +28,15 @@ class Interpreter(object):
         namespace['mc'] = self.mc
         namespace['event'] = message
         namespace['user'] = sender
+        namespace['clicks'] = self.clicks
         return namespace
     def user_namespace(self, sender):
         """Get the user's personal namespace"""
-        return self.user_namespaces.setdefault(sender.id,{})
+        current = self.user_namespaces.get(sender.id)
+        if current is None:
+            self.user_namespaces[sender.id] = current = {
+            }
+        return current
     
     def interpret(self,message):
         """Interpret a command from our queue"""
@@ -39,6 +46,16 @@ class Interpreter(object):
             type_name='Player',
             api=self.entities
         )
+        if isinstance(message,minecraft.BlockEvent):
+            message.sender = sender 
+            log.info(
+                "%s clicked on %s (%s)",
+                message.sender,
+                message.pos,
+                message.face,
+            )
+            responses = list(self.clicks.notify(message))
+            return responses
         log.info("Call from %s: %r", sender, message)
         try:
             # expr
@@ -299,3 +316,120 @@ class Response(object):
             self.value,
             self.value.__class__,
         )
+class ClickTracker(object):
+    """Track clicks by all users"""
+    MAX_LENGTH = 200
+    DIRECTION_MAP = {
+        # Maps face-id to the direction of the block on that side
+
+        0: Vec3(0,-1,0,),
+        1: Vec3(0,1,0),
+        2: Vec3(0,0,-1),
+        3: Vec3(0,0,1),
+        4: Vec3(-1,0,0),
+        5: Vec3(1,0,0),
+    }
+    def __init__(self):
+        self.clicks = list()
+        self.handlers = {}
+    def user_clicks(self, user):
+        """Get the user's clicks in reverse order"""
+        id = getattr(user,'id',user)
+        return [
+            click for click in self.clicks 
+            if click.entityId == user
+        ]
+    def any_clicks(self):
+        """Get any click by any user"""
+        return self.clicks 
+    def dispatch(self, event):
+        """Dispatch event to any handlers"""
+        for typ,handlerset in self.handlers.items():
+            keyfunc = handlerset.get(None)
+            key = keyfunc(event)
+            handlers = handlerset.get(key,())
+            if handlers:
+                to_handle = handlers[:]
+                for handler in to_handle:
+                    try:
+                        result = handler(event)
+                    except Exception as err:
+                        yield Response(
+                            message=event,
+                            sender=event.sender,
+                            value=err,
+                            error=True,
+                            handler=handler,
+                        )
+                    else:
+                        if result is not None:
+                            yield Response(
+                                message=event,
+                                sender=event.sender,
+                                value=result,
+                                error=True,
+                                handler=handler,
+                            )
+                handlers[:len(to_handle)] = [
+                    h for h in to_handle if not h.one_shot
+                ]
+
+    def notify(self, event):
+        """Record and notify handlers about events"""
+        self.clicks.insert(0,event)
+        event.direction = self.DIRECTION_MAP.get(event.face)
+        del self.clicks[self.MAX_LENGTH:]
+        for response in self.dispatch(event):
+            yield response
+
+    def pos_key(self, event):
+        return tuple(event.pos)
+    def user_key(self,event):
+        return int(event.entityId)
+
+    def register_block(self, position, callback, *, one_shot=False):
+        """Register the given block for a callback operation"""
+        return self.register(
+            'pos',
+            tuple(position),
+            callback,
+            one_shot=one_shot,
+            key_func=self.pos_key,
+        )
+    def register_user(self, user, callback, *, one_shot=False):
+        """Register the given block for a callback operation"""
+        return self.register(
+            'user',
+            int(getattr(user,'id',user)),
+            callback,
+            one_shot=one_shot,
+            key_func=self.user_key,
+        )
+    def register(self, type, key, callback, *, one_shot=False,key_func=None):
+        """Register a generic callback for event clicks"""
+        if key is None:
+            raise ValueError("Cannot register for an even with a key of None")
+        registry = self.handlers.get(type)
+        if callback is None:
+            if registry:
+                try:
+                    del registry[key]
+                except KeyError:
+                    pass
+            return
+        if registry is None:
+            self.handlers[type] = registry = {None:key_func}
+        handler = Handler(type,key,callback,one_shot=one_shot)
+        # for now, we're just going to allow one handler per user or block
+        registry[key] = [handler]
+        return handler
+
+class Handler(object):
+    def __init__(self, type, key, callback, one_shot=False):
+        self.type=type
+        self.key = key 
+        self.callback = callback
+        self.one_shot = one_shot 
+    def __call__(self, event):
+        event.current_handler = self # TODO: yuck
+        return self.callback(event)

@@ -60,6 +60,32 @@ def block(type_id,position=None,*,mc=None,user=None):
             *position,
             typ, 
         )
+@expose()
+def click_create(type_id,*,clicks=None,mc=None,user=None):
+    """When you right-click with a sword, create block-type there"""
+    typ = blocks.Block.as_instance(type_id)
+    def on_click(event):
+        target = V(event.pos) + V(event.direction)
+        mc.setBlock(
+            *target,
+            typ
+        )
+    return clicks.register_user(user,on_click)
+@expose()
+def click_delete(*,clicks=None,mc=None,user=None):
+    typ = blocks.Block.as_instance('AIR')
+    def on_click(event):
+        target = V(event.pos)
+        mc.setBlock(
+            *target,
+            typ
+        )
+    return clicks.register_user(user,on_click)
+@expose()
+def click_cancel(*,clicks=None,user=None):
+    """Cancel click operations"""
+    clicks.register_user(user,None)
+
 
 @expose()
 def find_blocks(name):
@@ -119,3 +145,16 @@ def V(*args,**named):
         return Vec3(*args[0])
     else:
         return Vec3(*args)
+
+@expose()
+def last_hit(index=-1,*,mc=None,user=None,clicks=None):
+    """Return the index-th last click by the sending user
+    
+    If we don't have that click, will return None
+    """
+    try:
+        import ipdb;ipdb.set_trace()
+        click = clicks.user_clicks(user)[index]
+        return click
+    except IndexError:
+        return None

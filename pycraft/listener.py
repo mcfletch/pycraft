@@ -45,11 +45,20 @@ class Listener(object):
                 try:
                     messages = self.mc.events.pollChatPosts()
                 except connection.RequestError as err:
-                    log.warning("Error on poll chat: %s", err)
+                    log.warning("Error on chat poll: %s", err)
                     messages = []
                 except ValueError as err:
                     log.exception("Unhandled error in mcpi, ignoring")
                     messages = []
+                try:
+                    click_messages = self.mc.events.pollBlockHits()
+                except connection.RequestError as err:
+                    log.warning("Error on hit poll: %s", err)
+                    click_messages = []
+                except ValueError as err:
+                    log.exception("Unhandled error in mcpi, ignoring")
+                    click_messages = []
+
             for message in messages:
                 match = COMMAND_FINDER.match(message.message)
                 if match:
@@ -61,7 +70,10 @@ class Listener(object):
                         message.assignment = match.group('name')
                         message.message = match.group('expr').strip()
                         self.request_queue.put(message)
-            if not messages:
+            for click in click_messages:
+                log.info("Click message: %s", click)
+                self.request_queue.put(click)
+            if not messages and not click_messages:
                 empty_count += 1
             else:
                 empty_count = 0
@@ -94,6 +106,10 @@ class Listener(object):
                 )
             else:
                 if response:
-                    self.response_queue.put(response)
+                    if isinstance(response,list):
+                        for r in response:
+                            self.response_queue.put(r)
+                    else:
+                        self.response_queue.put(response)
 
 

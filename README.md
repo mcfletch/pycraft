@@ -39,8 +39,8 @@ On your (Ubuntu) Linux machine:
 apt-get install docker python3
 git clone https://github.com/mcfletch/pycraft.git
 cd pycraft
-virtualenv -p python3 .env
-source .env/bin/activate
+virtualenv -p python3 env
+source env/bin/activate
 pip install -r requirements.txt
 # NOTE: -e declares that you accept the server EULA
 # NOTE: -b creates a DragonProxy to allow BedRock clients to connect
@@ -86,7 +86,7 @@ in the `requirements.txt` file you installed above.
 
 To run a demo script:
 ```
-source .env/bin/activate
+source env/bin/activate
 # install pycraft itself...
 python3 setup.py develop 
 # run your script
@@ -102,25 +102,39 @@ server away from the public).
 
 To run the server:
 ```
-source .env/bin/activate
-python3 setup.py develop
+virtualenv -p python3 env
+source env/bin/activate
+pip install -r requirements.txt -e .
 pycraft-chat-server
 ```
 Then from within your minecraft client, press `T`
 to get the chat window, and type one of the known
 commands. For instance:
 ```
-    sin(pi)
-    dir()
-    help(p_dome)
-    p_dome(user.position,30)
-    help(bulldoze)
-    bulldoze(10,10,3)
-    echo(user.position+V(0,1,1))
-    echo(user.position+user.direction)
-    echo(user.name)
-    pyramid()
-    hall() 
+  players() # shows all current players
+
+  dir() # Tells you what commands are defined
+  bulldoze() # clears blocks in front of you
+  pyramid(material='type') # creates a pyramid of blocks of given type
+  block('iron_ore') # create a block in front of you
+  hall() # creates a dining hall for a party
+  p_dome() # creates a parabolic dome out of stained glass
+
+  echo( 2+3 ) # evaluates the thing you types and returns it
+  echo( user.position ) # show's the calling user's position
+  echo( user.get_nearby_entities() ) # show entities near you
+  echo( user.remove_nearby_entities('creeper'))
+  find_blocks('redstone')
+  find_entities('creep')
+
+  echo(user.position+V(0,1,1)) # position at waist-height in front of user
+```
+You can also assign variables and use them later, 
+for instance:
+```
+  pos = user.position
+  # walk around for a bit...
+  echo( 'You were standing at'% pos)
 ```
 will cause the python server to respond as `<Bot>`
 with the result of your function call. Note that

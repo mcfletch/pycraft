@@ -24,7 +24,7 @@ ASSIGNMENT_FINDER = re.compile(
 )
 
 
-class ChatListener(object):
+class Listener(object):
     wanted = True
     def __init__(self, mc, interpreter=None):
         self.mc = mc 

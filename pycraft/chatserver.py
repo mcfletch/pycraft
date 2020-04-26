@@ -1,6 +1,6 @@
 import argparse, logging, threading
 from . import (
-    chatcommands, 
+    listener, 
     expose,
     commands,
     parabolic,
@@ -46,7 +46,7 @@ def main():
         logging.basicConfig(level=logging.INFO)
     mc = minecraft.Minecraft.create()
     # players = [1,2,3]
-    listener = chatcommands.ChatListener(mc)
+    listener = listener.Listener(mc)
     def shutdown():
         listener.wanted = False
         try:

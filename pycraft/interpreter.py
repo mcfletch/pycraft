@@ -55,6 +55,7 @@ class Interpreter(object):
                 message.face,
             )
             responses = list(self.clicks.notify(message))
+            log.debug('Responses to click: %s', responses)
             return responses
         log.info("Call from %s: %r", sender, message)
         try:
@@ -296,11 +297,12 @@ class Interpreter(object):
 
 class Response(object):
     """A response to send to the chat"""
-    def __init__(self, message, sender, value, error=False):
+    def __init__(self, message, sender, value, error=False, handler=None):
         self.message = message
         self.sender = sender
         self.value = value
         self.error = error
+        self.handler = handler
     def __eq__(self, rhs):
         return self.value == rhs
     def chat_messages(self):
@@ -367,12 +369,13 @@ class ClickTracker(object):
                                 message=event,
                                 sender=event.sender,
                                 value=result,
-                                error=True,
+                                error=False,
                                 handler=handler,
                             )
-                handlers[:len(to_handle)] = [
+                remaining = [
                     h for h in to_handle if not h.one_shot
                 ]
+                handlers[:len(to_handle)] = remaining
 
     def notify(self, event):
         """Record and notify handlers about events"""

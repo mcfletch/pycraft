@@ -3,7 +3,7 @@ from mcpi import minecraft, vec3
 import numpy as np
 import random, os
 import logging
-from . import expose, blocks, uniqueblocks
+from . import expose, blocks, uniqueblocks, commands
 HERE = os.path.dirname(os.path.abspath(__file__))
 log = logging.getLogger(__name__)
 
@@ -131,11 +131,11 @@ def hall(
     )
     mc.setBlock(
         doorleft,bottom+1,front,
-        blocks.DARK_OAK_DOOR_BLOCK,
+        (197,1) # facing North
     )
     mc.setBlock(
         doorleft,bottom+2,front,
-        blocks.DARK_OAK_DOOR_BLOCK,
+        (197,8) # upper part
     )
     # Cornice...
     roofstart,roofstop = left-1,right+1
@@ -198,3 +198,7 @@ def hall(
                 glass_material,
             )
 
+    commands.bed(
+        (left+1,bottom,back-3),
+        mc = mc,
+    )

@@ -46,16 +46,16 @@ def main():
         logging.basicConfig(level=logging.INFO)
     mc = minecraft.Minecraft.create()
     # players = [1,2,3]
-    listener = listener.Listener(mc)
+    listen = listener.Listener(mc)
     def shutdown():
-        listener.wanted = False
+        listen.wanted = False
         try:
             log.info("Closing chat socket")
-            listener.mc.socket.close()
+            listen.mc.socket.close()
         except Exception as err:
             pass
-    threading.Thread(target=listener.interpreter,daemon=True).start()
-    threading.Thread(target=listener.responder,daemon=True).start()
+    threading.Thread(target=listen.interpreter,daemon=True).start()
+    threading.Thread(target=listen.responder,daemon=True).start()
     if options.hot_reload:
         # raise RuntimeError('Not yet working')
         from . import hotreload
@@ -68,6 +68,6 @@ def main():
         )
         t.start()
     log.info("Listening to chat now")
-    listener.poll()
+    listen.poll()
 
     

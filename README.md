@@ -126,6 +126,10 @@ commands. For instance:
   echo( user.remove_nearby_entities('creeper'))
   find_blocks('redstone')
   find_entities('creep')
+  
+  click_create('stone') # a sort of fake creative mode as long as you are holding a swort
+  click_delete() # one-click removal
+  click_cancel() # stop drawing with stone
 
   echo(user.position+V(0,1,1)) # position at waist-height in front of user
 ```

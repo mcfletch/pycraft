@@ -1,3 +1,4 @@
 [submodule "mcpi"]
 	path = mcpi
 	url = https://github.com/martinohanlon/mcpi.git
+	branch = master

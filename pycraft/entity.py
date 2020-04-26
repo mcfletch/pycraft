@@ -99,19 +99,31 @@ class Entity(object):
     def set_rotation(self,radians):
         """Set current rotation in radians"""
         self.api.set_entity_rotation(self.id,radians)
+    def get_tile_position(self):
+        return self.api.get_entity_tile_position(self.id)
+    def set_tile_position(self, position):
+        return self.api.set_entity_tile_position(self.id,position)
+
     name = property(get_name)
     position = property(get_position,set_position)
     direction = property(get_direction,set_direction)
     rotation = property(get_rotation,set_rotation)
+    tile_position = property(get_tile_position,set_tile_position)
     def get_nearby_entities(self, type_id:int=-1, distance:int=10 ):
-        """Get the entities near this entity (e.g. Player)"""
+        """Get the entities near this entity (e.g. Player)
+        
+        type_id of -1 means "all entities"
+        """
         return self.api.get_nearby_entities(
             self.id,
             distance=distance,
             type_id=type_id,
         )
     def remove_nearby_entities(self, type_id:int=-1, distance:int=10):
-        """Destroy all entities within distance blocks of the given type"""
+        """Destroy all entities within distance blocks of the given type
+        
+        type_id of -1 means "all entities"
+        """
         removed = []
         for entity in self.get_nearby_entities(type_id=type_id,distance=distance):
             removed.append(entity.name)
@@ -149,26 +161,34 @@ class EntityAPI(object):
         )
         log.debug("Entity %s => %s", entity, current)
         return current
+
     @with_lock_held
-    def get_entity_position(self, entity: int):
+    def get_entity_position(self, entity: int) -> vec3.Vec3:
         """Get entity position"""
         return self.mc.entity.getPos(entity)
     @with_lock_held
     def set_entity_position(self, entity: int, position: vec3.Vec3):
         """Get entity position"""
         return self.mc.entity.setPos(entity, position)
+
     @with_lock_held
     def get_entity_tile_position(self, entity: int) -> vec3.Vec3:
         return self.mc.entity.getTilePos(entity)
     @with_lock_held
+    def set_entity_tile_position(self, entity:int, position: vec3.Vec3):
+        return self.mc.entity.setTilePos(entity, position)
+
+    @with_lock_held
     def get_entity_direction(self, entity: int) -> vec3.Vec3:
         return self.mc.entity.getDirection(entity)
+
     @with_lock_held
     def get_entity_rotation(self, entity: int) -> float:
         return self.mc.entity.getRotation(entity)/360*(np.pi*2)
     @with_lock_held
     def set_entity_rotation(self, entity: int, rotation:float):
         return self.mc.entity.setRotation(entity,rotation/(np.pi*2)*360)
+            
 
     @with_lock_held
     def get_nearby_entities(self, entity:int, distance: int=10, type_id=-1):

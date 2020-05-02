@@ -2,7 +2,7 @@
 from mcpi import minecraft
 import numpy as np
 import logging
-from . import expose, uniqueblocks, blocks
+from . import expose, uniqueblocks, blocks, bulldozer
 log = logging.getLogger(__name__)
 
 @expose.expose(name='circle')
@@ -102,4 +102,29 @@ def dome(
     material = blocks.Block.as_instance(material)
     for h,rad in zip(yes,zes):
         draw_circle((x,y+height-h,z),rad,block=material,mc=mc)
+
+@expose.expose()
+def solid_circle(center=None,radius=10,material=blocks.GRANITE,*,mc=None,user=None):
+    """Draw a solid circle around center"""
+    # make block solid *iff* it's center is inside the circle
+    # a point is inside the circle if sin(x)
+    if center is None:
+        forward = bulldozer.roughly_forward(user.direction)
+        center = user.position + (forward * radius)
+    material = blocks.Block.as_instance(material)
+    for coord in circle_coords(center,radius):
+        mc.setBlock(
+            *coord,
+            material,
+        )
+    
+def circle_coords(center, radius=10):
+    """Generate set of center-coords around the middle of the center block"""
+    cx,cy,cz = [int(i)+.5 for i in center]
+    for z in np.arange(cz-radius,cz+radius+.1,1.0):
+        for x in np.arange(cx-radius,cx+radius+.1,1.0):
+            delta = np.array((x-cx,z-cz),dtype='f')
+            distance = np.sqrt(np.sum(delta*delta))
+            if distance < radius:
+                yield (x,cy,z)
 

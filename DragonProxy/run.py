@@ -78,6 +78,7 @@ def start_docker():
         'adoptopenjdk/maven-openjdk8:latest',
         '/opt/java/openjdk/bin/java','-jar','/code/DragonProxy.jar',
     ]
+    print(' '.join(command))
     subprocess.check_call(command)
     log.info(
         "BedRock proxy running on port: %s => %s",

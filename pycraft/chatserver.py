@@ -6,6 +6,7 @@ from . import (
     parabolic,
     bulldozer,
     buildings,
+    farm,
 )
 from mcpi import minecraft
 log = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
-    mc = minecraft.Minecraft.create()
+    mc = minecraft.Minecraft.create(options.host)
     # players = [1,2,3]
     listen = listener.Listener(mc)
     def shutdown():

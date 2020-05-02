@@ -131,11 +131,11 @@ def hall(
     )
     mc.setBlock(
         doorleft,bottom+1,front,
-        (197,1) # facing North
+        (197,3) # facing North
     )
     mc.setBlock(
         doorleft,bottom+2,front,
-        (197,8) # upper part
+        (197,3|8) # upper part
     )
     # Cornice...
     roofstart,roofstop = left-1,right+1
@@ -201,4 +201,17 @@ def hall(
     commands.bed(
         (left+1,bottom,back-3),
         mc = mc,
+    )
+    crafting = left+(width//2)
+    mc.setBlock(
+        crafting,bottom,back-1,
+        blocks.CRAFTING_TABLE,
+    )
+    mc.setBlock(
+        crafting-1,bottom,back-1,
+        blocks.FURNACE,
+    )
+    mc.setBlock(
+        crafting+1,bottom,back-1,
+        blocks.CHEST,
     )

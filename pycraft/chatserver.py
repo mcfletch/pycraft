@@ -23,8 +23,8 @@ def get_options():
     parser.add_argument(
         '-p','--port',
         type=int,
-        help='Host (server) port to which to connect, default 25565',
-        default=25565,
+        help='Host (server) port to which to connect, default 4711',
+        default=4711,
     )
     parser.add_argument(
         '-v','--verbose',
@@ -46,7 +46,10 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
-    mc = minecraft.Minecraft.create(options.host,port=options.port)
+    mc = minecraft.Minecraft.create(
+        options.host,
+        port=options.port
+    )
     # players = [1,2,3]
     listen = listener.Listener(mc)
     def shutdown():

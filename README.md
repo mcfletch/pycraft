@@ -59,6 +59,16 @@ on your docker host.
 
 ## Letting Pocket/iOS/Android/XBox/Windows Editions Connect
 
+NOTE: Nintendo Switch editions of Minecraft cannot connect
+to servers not on the Nintendo realms service, so you will
+likely *not* be able to use Switch devices on your local
+server.
+
+NOTE: We are running an experimental DragonProxy here, do 
+not expect it to be particularly robust/stable. Expect that
+you may need to delete the data directory and restart 
+a few times.
+
 The `DragonProxy` subdirectory contains an experimental
 setup for letting `BedRock` or `Pocket` editions
 of Minecraft connect to a Java Edition server.
@@ -140,7 +150,7 @@ for instance:
   # walk around for a bit...
   echo( 'You were standing at'% pos)
 ```
-will cause the python server to respond as `<Bot>`
+will cause the python server to respond with `ERR>` or `OUT>`
 with the result of your function call. Note that
 only function-calls with simple names will be 
 interpreted.

@@ -63,6 +63,9 @@ class Interpreter(object):
             namespace = self.base_namespace(message,sender)
             user_namespace = self.user_namespace(sender)
             log.debug('user namespace %r',user_namespace)
+            def user_storage():
+                return user_namespace
+            namespace['user_storage'] = user_storage
             namespace.update(user_namespace)
             try:
                 top = ast.parse(message.message,'chat.py','eval')

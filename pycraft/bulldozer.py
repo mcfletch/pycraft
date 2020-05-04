@@ -25,8 +25,22 @@ def roughly_forward(direction):
                 forward = vec3.Vec3(0,0,1)
             else:
                 forward = vec3.Vec3(0,0,-1)
+    elif dx:
+        if dx < 0:
+            return vec3.Vec3(-1,0,0)
+        else:
+            return vec3.Vec3(1,0,0)
+    elif dz:
+        if dz < 0:
+            return vec3.Vec3(0,0,-1)
+        else:
+            return vec3.Vec3(0,0,1)
+        return direction
     else:
-        forward = vec3.Vec3(0,1,0)
+        if dy > 0:
+            forward = vec3.Vec3(0,1,0)
+        else:
+            forward = vec3.Vec3(0,-1,0)
     return forward
 
 @expose.expose()

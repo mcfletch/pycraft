@@ -7,6 +7,7 @@ from . import (
     bulldozer,
     buildings,
     farm,
+    tunnels,
 )
 from mcpi import minecraft
 log = logging.getLogger(__name__)

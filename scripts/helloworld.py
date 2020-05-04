@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # Minecraft api reference
 #  https://www.stuffaboutcode.com/p/minecraft-api-reference.html
 

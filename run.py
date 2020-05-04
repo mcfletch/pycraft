@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 import os, requests, subprocess, argparse, logging, shutil
 HERE = os.path.abspath(os.path.dirname(__file__))
 DATA = os.path.join(HERE,'data')

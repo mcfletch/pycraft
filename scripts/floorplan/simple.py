@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from mcpi.minecraft import Minecraft
 from PIL import Image

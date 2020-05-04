@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """Query the server to pull all entity types/names"""
 from mcpi import minecraft, entity
 def main():

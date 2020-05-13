@@ -118,7 +118,7 @@ def main():
             os.path.join('DragonProxy','run.py'),
         ]
         if target:
-            options.extend(['-t',target])
+            command.extend(['-t',target])
         if options.authentication:
             command.append('-a')
         subprocess.check_call(command)

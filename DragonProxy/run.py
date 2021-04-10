@@ -4,14 +4,19 @@ import shutil, tempfile, time
 HERE = os.path.abspath(os.path.dirname(__file__))
 DATA = os.path.join(HERE,'data')
 JARFILE = os.path.join(HERE,'DragonProxy.jar')
+GEYSERFILE = os.path.join(HERE,'Geyser-Bukkit.jar')
 log = logging.getLogger('dragon-proxy-setup')
 
 url = 'https://ci.codemc.io/job/DragonetMC/job/DragonProxy/lastSuccessfulBuild/artifact/bootstrap/standalone/target/DragonProxy.jar'
+geyser_url = 'https://ci.nukkitx.com/job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/bukkit/target/Geyser-Bukkit.jar'
 docker_name = 'mc-dragon-proxy'
 MEGA = 1024*1024
 def acquire_jar(data=DATA):
     if not os.path.exists(data):
         os.makedirs(data)
+    # for jarname,url in [
+
+    # ]
     if not os.path.exists(JARFILE):
         log.info("Downloading DragonProxy")
         response = requests.get(url)
@@ -109,7 +114,7 @@ def common_args(data=DATA):
 def start_docker():
     options = get_options().parse_args()
     acquire_jar()
-    conf = update_config()
+    conf = update_config(options.target)
     container_name = 'mc-dragon-proxy'
     subprocess.call(['docker','stop',docker_name])
     subprocess.call(['docker','rm',docker_name])

@@ -3,8 +3,10 @@ import os, requests, subprocess, argparse, logging, shutil
 HERE = os.path.abspath(os.path.dirname(__file__))
 DATA = os.path.join(HERE,'data')
 URL = 'https://github.com/zhuowei/RaspberryJuice/raw/a2d49279de9396a56fbb3f10c477192d5b5ba28a/jars/raspberryjuice-1.12.1.jar'
+GEYSER_URL = 'https://ci.opencollab.dev/job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/target/Geyser-Spigot.jar'
 PLUGINS = os.path.join('plugins')
-JARFILE = os.path.join(PLUGINS,'raspberryjuice-1.12.1.jar')
+JARFILE = URL.split('/')[-1]
+GEYSER_JARFILE = GEYSER_URL.split('/')[-1]
 log = logging.getLogger('pycraft-setup')
 docker_name = 'minecraft'
 MEGA = 1024*1024
@@ -59,17 +61,24 @@ def install_raspberry_juice(data):
     plugins = os.path.join(data,PLUGINS)
     if not os.path.exists(plugins):
         os.makedirs(plugins)
-    jarfile = os.path.join(data,JARFILE)
-    cache = os.path.join(HERE, os.path.basename(JARFILE))
-    if not os.path.exists(cache):
-        log.info("Downloading RaspberryJuice plugin")
-        response = requests.get(URL)
-        response.raise_for_status()
-        with open(cache,'wb') as fh:
-            for chunk in response.iter_content(MEGA):
-                fh.write(chunk)
-    if not os.path.exists(jarfile):
-        shutil.copy(cache,jarfile)
+
+    for url in [
+        URL, 
+        GEYSER_URL,
+    ]:
+        base = url.split('/')[-1]
+        cache = os.path.join(HERE,base)
+        jarfile = os.path.join(plugins,JARFILE)
+        if not os.path.exists(cache):
+            log.info("Downloading %s plugin", base)
+            response = requests.get(URL)
+            response.raise_for_status()
+            with open(cache,'wb') as fh:
+                for chunk in response.iter_content(MEGA):
+                    fh.write(chunk)
+        log.info("Copying %s to plugins", base)
+        if not os.path.exists(jarfile):
+            shutil.copy(cache,jarfile)
 def update_config(data, overwrite=True):
     # target = target_ip()
     if not os.path.exists(data):
@@ -102,26 +111,30 @@ def main():
     subprocess.call(['docker','rm',docker_name])
     subprocess.check_call(['docker','pull','itzg/minecraft-server'])
     command = [
-        'docker','run','-d','-p4711:4711','-p25565:25565',
+        'docker','run',
+        '-d',
+        '-p4711:4711',
+        '-p25565:25565',
+        "-p19132:19132/udp",
         f'-v{data}:/data',
-        '-e','TYPE=BUKKIT',
+        '-e','TYPE=SPIGOT',
         '-eEULA=TRUE',
         '--name',docker_name,
         'itzg/minecraft-server',
     ]
     subprocess.check_output(command)
     log.info("Java Edition server on port: %s", 25565)
-    if options.bedrock:
-        log.info("Starting DragonProxy plugin installation")
-        command = [
-            'python',
-            os.path.join('DragonProxy','run.py'),
-        ]
-        if target:
-            command.extend(['-t',target])
-        if options.authentication:
-            command.append('-a')
-        subprocess.check_call(command)
+    # if options.bedrock:
+    #     log.info("Starting DragonProxy plugin installation")
+    #     command = [
+    #         'python',
+    #         os.path.join('DragonProxy','run.py'),
+    #     ]
+    #     if target:
+    #         command.extend(['-t',target])
+    #     if options.authentication:
+    #         command.append('-a')
+    #     subprocess.check_call(command)
     
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

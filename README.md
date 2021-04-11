@@ -9,7 +9,7 @@ This repository includes the following:
 * dockerised setup to allow BedRock clients (that is,
   tablet, game console, pocket edition, and Windows native
   clients) to be proxied into the game using
-  [DragonProxy](https://github.com/DragonetMC/DragonProxy)
+  [Geyser](https://geysermc.org/)
 * a bunch of sample code for using the mcpi python
   library to construct simple tools
 * a nice image-to-maze tool that lets children draw a 
@@ -17,7 +17,7 @@ This repository includes the following:
   maze/building
 * a sample daemon `pycraft-chat-server` that lets you
   write simple scripts that users can call from the
-  text chat in-game
+  text chat in-game via "magic commands"
 
 ## WARNING
 
@@ -36,15 +36,15 @@ users to connect.
 On your (Ubuntu) Linux machine:
 
 ```
-apt-get install docker python3
+apt-get install docker python3 git
 git clone https://github.com/mcfletch/pycraft.git
 cd pycraft
 virtualenv -p python3 env
 source env/bin/activate
 pip install -r requirements.txt
 # NOTE: -e declares that you accept the server EULA
-# NOTE: -b creates a DragonProxy to allow BedRock clients to connect
-./run.py -e -b
+# NOTE: -b installs the Geyser plugin to allow BedRock clients to connect
+./run.py -e -b -d YOURWORLDDIRECTORY
 ```
 
 At this point, you have a vanilla Bukkit server running 

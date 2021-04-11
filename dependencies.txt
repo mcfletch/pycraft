@@ -1,2 +1,4 @@
 docker
 inotify-tools
+python3
+git

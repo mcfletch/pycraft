@@ -69,6 +69,10 @@ stable, and you should expect to have to restart the server,
 particularly if a user lets their tablet/device go to sleep
 while connected to the server.
 
+By default the Geyser plugin will be installed and run from
+within the Minecraft server. If you do not want it to run,
+you need to pass `--no-bedrock` to the `./run.py` script.
+
 ## Talking to Minecraft from Python
 
 The requirements for the demo scripts are declared

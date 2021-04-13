@@ -35,7 +35,7 @@ def tunnel(
     material -- name of the material to use
     zstep -- 1 for upward, -1 for downward
     """
-    log.info("Psition %s direction %s", position, direction)
+    log.info("Position %s direction %s", position, direction)
 
     if direction is None and position is None:
         storage = user_storage()

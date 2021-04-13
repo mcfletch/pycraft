@@ -13,30 +13,32 @@ import queue
 from .lockedmc import locked
 from . import entity
 import numpy as np
+
 log = logging.getLogger(__name__)
 COMMAND_FINDER = re.compile(
-    r'^[ ]*(?P<function>[a-zA-z][_.a-zA-Z0-9]*)[(](?P<args>.*)[)][ ]*$',
-    re.I|re.U
+    r'^[ ]*(?P<function>[a-zA-z][_.a-zA-Z0-9]*)[(](?P<args>.*)[)][ ]*$', re.I | re.U
 )
 ASSIGNMENT_FINDER = re.compile(
     r'^[ ]*(?P<name>[a-zA-z][_a-zA-Z0-9]*)[ ]*[=](?P<expr>.*)[ ]*$',
-    re.I|re.U,
+    re.I | re.U,
 )
 
 
 class Listener(object):
     wanted = True
+
     def __init__(self, mc, interpreter=None):
-        self.mc = mc 
+        self.mc = mc
         self.request_queue = queue.Queue()
         self.response_queue = queue.Queue()
         if interpreter is None:
             from . import interpreter as default_interpreter
+
             interpreter = default_interpreter.Interpreter(
                 self.mc,
             )
         self.commands = interpreter
-    
+
     def poll(self):
         """Poll for chat messages and see if we recognise them"""
         empty_count = 0
@@ -78,27 +80,30 @@ class Listener(object):
             else:
                 empty_count = 0
             if empty_count:
-                delay = min((.1*empty_count,2))
-                log.debug("Sleep for %ss",delay)
+                delay = min((0.1 * empty_count, 2))
+                log.debug("Sleep for %ss", delay)
                 time.sleep(delay)
+
     def responder(self):
         """Thread that returns responses to requests via Chat"""
         while self.wanted:
             try:
-                response = self.response_queue.get(True,5)
+                response = self.response_queue.get(True, 5)
             except queue.Empty:
                 continue
             with locked(self.mc):
                 for line in response.chat_messages():
                     self.mc.postToChat(line)
+
     def interpreter(self):
         while self.wanted:
             try:
-                request = self.request_queue.get(True,5)
+                request = self.request_queue.get(True, 5)
             except queue.Empty:
                 continue
             try:
-                response = self.commands.interpret(request)
+                with locked(self.mc):
+                    response = self.commands.interpret(request)
             except Exception as err:
                 log.exception(
                     'Error handling %r',
@@ -106,10 +111,8 @@ class Listener(object):
                 )
             else:
                 if response:
-                    if isinstance(response,list):
+                    if isinstance(response, list):
                         for r in response:
                             self.response_queue.put(r)
                     else:
                         self.response_queue.put(response)
-
-

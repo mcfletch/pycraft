@@ -64,30 +64,10 @@ to servers not on the Nintendo realms service, so you will
 likely *not* be able to use Switch devices on your local
 server.
 
-NOTE: We are running an experimental DragonProxy here, do 
-not expect it to be particularly robust/stable. Expect that
-you may need to delete the data directory and restart 
-a few times.
-
-The `DragonProxy` subdirectory contains an experimental
-setup for letting `BedRock` or `Pocket` editions
-of Minecraft connect to a Java Edition server.
-The `-b` flag to the top-level `run.py` runs the
-DragonProxy setup in such a way that it *should*
-be configured to talk to the Minecraft server 
-and be exposed on the default BedRock server port.
-
-To manually run or restart the DragonProxy instance,
-for instance, to choose a minecraft server other than
-the one running in docker as `minecraft`:
-
-```
-cd DragonProxy
-./run.py -t 192.168.15.32
-```
-
-Will run the server with UDP Port 19132 exposed on
-your docker host.
+NOTE: We are running a Geyser Proxy Plugin here, it is not
+stable, and you should expect to have to restart the server,
+particularly if a user lets their tablet/device go to sleep
+while connected to the server.
 
 ## Talking to Minecraft from Python
 
@@ -121,14 +101,18 @@ Then from within your minecraft client, press `T`
 to get the chat window, and type one of the known
 commands. For instance:
 ```
-  players() # shows all current players
+  help() # shows all available commands with summary of purpose
+  help('list-entities') # show all available entity names
+  help('list-blocks') # show all available block types
+  users() # get a python list of entities for each user
 
-  dir() # Tells you what commands are defined
   bulldoze() # clears blocks in front of you
   pyramid(material='type') # creates a pyramid of blocks of given type
   block('iron_ore') # create a block in front of you
   hall() # creates a dining hall for a party
   p_dome() # creates a parabolic dome out of stained glass
+  tunnel() # creates a tunnel with windows, torches and a rail track
+  fr() # create a fast (powered) rail tunnel on the floor ahead
 
   echo( 2+3 ) # evaluates the thing you types and returns it
   echo( user.position ) # show's the calling user's position
@@ -137,11 +121,15 @@ commands. For instance:
   find_blocks('redstone')
   find_entities('creep')
   
-  click_create('stone') # a sort of fake creative mode as long as you are holding a swort
+  click_create('stone') # a sort of fake creative mode as long as you are holding a sword
   click_delete() # one-click removal
   click_cancel() # stop drawing with stone
 
   echo(user.position+V(0,1,1)) # position at waist-height in front of user
+
+  # NOTE: the following are *extremely* slow due to working block-by-block
+  copy(name='stamp',depth=5,width=5,height=5) # copy 5x5x5 block in front of you as a template named stamp
+  paste(name='stamp') # paste back the template from a copy
 ```
 You can also assign variables and use them later, 
 for instance:

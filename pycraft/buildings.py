@@ -4,38 +4,40 @@ import numpy as np
 import random, os
 import logging
 from . import expose, blocks, uniqueblocks, commands
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 log = logging.getLogger(__name__)
+
 
 @expose.expose()
 def pyramid(
     position=None,
     width=15,
     depth=15,
-    material=blocks.GRANITE, 
+    material=blocks.GRANITE,
     xstep=1,
     zstep=1,
     ystep=1,
-    *, 
+    *,
     user=None,
-    mc=None 
+    mc=None,
 ):
     """Create a pyramid centered at position in material
-    
+
     position -- center of the pyramid
     width -- size in the x direction
     depth -- size in the y direction
-    material -- name of the material to use 
+    material -- name of the material to use
     zstep -- 1 for upward, -1 for downward
     """
     if position is None:
-        position = user.position + vec3.Vec3(0,0,depth//2 + 1)
+        position = user.position + vec3.Vec3(0, 0, depth // 2 + 1)
     material = blocks.Block.as_instance(material)
-    x,y,z = [int(c) for c in position]
-    startx = x-width//2
-    endx = startx+width
-    startz = z-depth//2
-    endz = startz+depth 
+    x, y, z = [int(c) for c in position]
+    startx = x - width // 2
+    endx = startx + width
+    startz = z - depth // 2
+    endz = startz + depth
     cury = y
     while startx <= endx and startz <= endz:
         mc.setBlocks(
@@ -49,10 +51,11 @@ def pyramid(
         )
         cury += ystep
         startx += xstep
-        startz += zstep 
-        endx -= xstep 
-        endz -= zstep 
+        startz += zstep
+        endx -= xstep
+        endz -= zstep
     return position
+
 
 @expose.expose()
 def hall(
@@ -70,43 +73,55 @@ def hall(
 ):
     if position is None:
         position = user.position
-    x,y,z = [int(c) for c in position]
-    left = x - width//2
-    right = left + width 
-    front = z - depth //2
-    back = front + depth 
-    bottom = y-1
-    top = y+height
+    x, y, z = [int(c) for c in position]
+    left = x - width // 2
+    right = left + width
+    front = z - depth // 2
+    back = front + depth
+    bottom = y - 1
+    top = y + height
     floor_material = blocks.Block.as_instance(floor_material)
     carpet_material = blocks.Block.as_instance(carpet_material)
     wall_material = blocks.Block.as_instance(wall_material)
     roof_material = blocks.Block.as_instance(roof_material)
 
-    # clear 
+    # clear
     mc.setBlocks(
-        left+1,bottom+1,front+1,
-        right-1,top,back-1,
+        left + 1,
+        bottom + 1,
+        front + 1,
+        right - 1,
+        top,
+        back - 1,
         blocks.AIR,
     )
     # subfloor...
     mc.setBlocks(
-        left,bottom-1,front,
-        right,bottom,back,
+        left,
+        bottom - 1,
+        front,
+        right,
+        bottom,
+        back,
         floor_material,
     )
     if width > 4 and depth > 4:
         # Carpet on top...
         mc.setBlocks(
-            left+2,bottom,front+2,
-            right-2,bottom,back-2,
+            left + 2,
+            bottom,
+            front + 2,
+            right - 2,
+            bottom,
+            back - 2,
             carpet_material,
         )
     # walls...
-    for start,stop in [
-        ((left,bottom,front),(right,top,front)),
-        ((left,bottom,front),(left,top,back)),
-        ((left,bottom,back),(right,top,back)),
-        ((right,bottom,front),(right,top,back)),
+    for start, stop in [
+        ((left, bottom, front), (right, top, front)),
+        ((left, bottom, front), (left, top, back)),
+        ((left, bottom, back), (right, top, back)),
+        ((right, bottom, front), (right, top, back)),
     ]:
         mc.setBlocks(
             *start,
@@ -121,97 +136,145 @@ def hall(
     else:
         doorwidth = 2
     log.info("Width of %s means door width is %s", width, doorwidth)
-    delta = (front_blocks - doorwidth)//2
+    delta = (front_blocks - doorwidth) // 2
     log.info("delta %s", delta)
-    doorleft = left+delta+1
+    doorleft = left + delta + 1
     mc.setBlocks(
-        doorleft,bottom+1,front,
-        doorleft+(doorwidth-1),bottom+2,front,
+        doorleft,
+        bottom + 1,
+        front,
+        doorleft + (doorwidth - 1),
+        bottom + 2,
+        front,
         blocks.AIR,
     )
-    mc.setBlock(
-        doorleft,bottom+1,front,
-        (197,3) # facing North
-    )
-    mc.setBlock(
-        doorleft,bottom+2,front,
-        (197,3|8) # upper part
-    )
+    mc.setBlock(doorleft, bottom + 1, front, (197, 3))  # facing North
+    mc.setBlock(doorleft, bottom + 2, front, (197, 3 | 8))  # upper part
     # Cornice...
-    roofstart,roofstop = left-1,right+1
+    roofstart, roofstop = left - 1, right + 1
     roofy = top
     while roofstart <= roofstop:
         mc.setBlocks(
-            roofstart,roofy,front-1,
-            roofstart,roofy,back+1,
+            roofstart,
+            roofy,
+            front - 1,
+            roofstart,
+            roofy,
+            back + 1,
             roof_material,
         )
         mc.setBlocks(
-            roofstop,roofy,front-1,
-            roofstop,roofy,back+1,
+            roofstop,
+            roofy,
+            front - 1,
+            roofstop,
+            roofy,
+            back + 1,
             roof_material,
         )
         mc.setBlocks(
-            roofstart+1,roofy,front,
-            roofstop-1,roofy,front,
+            roofstart + 1,
+            roofy,
+            front,
+            roofstop - 1,
+            roofy,
+            front,
             wall_material,
         )
         mc.setBlocks(
-            roofstart+1,roofy,back,
-            roofstop-1,roofy,back,
+            roofstart + 1,
+            roofy,
+            back,
+            roofstop - 1,
+            roofy,
+            back,
             wall_material,
         )
         roofstart += 1
         roofstop -= 1
         roofy += 1
-    
+
     # Torches...
     torches = []
-    for step in range(front+2,back-2,3):
+    for step in range(front + 2, back - 2, 3):
         torches.append(step)
         mc.setBlock(
-            left+1,bottom+3,step,
+            left + 1,
+            bottom + 3,
+            step,
             blocks.TORCH.id,
             1,
         )
         mc.setBlock(
-            right-1,bottom+3,step,
+            right - 1,
+            bottom + 3,
+            step,
             blocks.TORCH.id,
             2,
         )
         mc.setBlocks(
-            left+1,top+1,step,
-            right-1,top+1,step,
+            left + 1,
+            top + 1,
+            step,
+            right - 1,
+            top + 1,
+            step,
             blocks.WOODEN_SLAB,
         )
     glass_material = blocks.WHITE_STAINED_GLASS.random_subtype()
-    for step in range(front+1,back-1):
+    for step in range(front + 1, back - 1):
         if not step in torches:
             mc.setBlocks(
-                left,bottom+1,step,
-                left,top-1,step,
+                left,
+                bottom + 1,
+                step,
+                left,
+                top - 1,
+                step,
                 glass_material,
             )
             mc.setBlocks(
-                right,bottom+1,step,
-                right,top-1,step,
+                right,
+                bottom + 1,
+                step,
+                right,
+                top - 1,
+                step,
                 glass_material,
             )
 
     commands.bed(
-        (left+1,bottom,back-3),
-        mc = mc,
+        (left + 1, bottom, back - 3),
+        mc=mc,
     )
-    crafting = left+(width//2)
+    crafting = left + (width // 2)
     mc.setBlock(
-        crafting,bottom,back-1,
+        crafting,
+        bottom,
+        back - 1,
         blocks.CRAFTING_TABLE,
     )
     mc.setBlock(
-        crafting-1,bottom,back-1,
+        crafting - 1,
+        bottom,
+        back - 1,
         blocks.FURNACE,
     )
     mc.setBlock(
-        crafting+1,bottom,back-1,
+        crafting + 1,
+        bottom,
+        back - 1,
         blocks.CHEST,
+    )
+    mc.setBlock(
+        crafting + 2,
+        bottom,
+        back - 1,
+        blocks.ENCHANTMENT_TABLE,
+    )
+    mc.setBlock(
+        crafting - 2,
+        bottom,
+        back - 1,
+        blocks.BREWING_STAND,
     )

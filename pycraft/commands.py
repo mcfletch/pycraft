@@ -82,7 +82,7 @@ def block(type_id, position=None, *, mc=None, user=None):
     with locked(mc):
         return mc.setBlock(
             *position,
-            typ,
+            typ.id,
         )
 
 

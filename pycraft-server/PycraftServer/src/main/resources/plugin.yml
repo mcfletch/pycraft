@@ -1,0 +1,8 @@
+main: com.vrplumber.pycraft.bukkitserver.PycraftServerPlugin
+name: PycraftServer
+version: 1.0.0
+description: Provides a Python API via Pycraft for server automation
+api-version: 1.16
+author: mcfletch
+website: https://github.com/mcfletch/pycraft/
+prefix: PY

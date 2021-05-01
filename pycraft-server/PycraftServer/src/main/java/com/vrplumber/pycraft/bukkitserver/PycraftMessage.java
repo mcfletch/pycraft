@@ -12,18 +12,26 @@ public class PycraftMessage {
 
   static private Pattern headerPattern =
       Pattern.compile("^(\\d+),([a-zA-Z0-9.]+),(.*)$");
-  static private Pattern intPattern = Pattern.compile("([-+]*[0-9]+)[,]?");
+  static private Pattern intPattern = Pattern.compile("^([-+]*[0-9]+)[,]?");
   static private Pattern stringPattern =
       //   Pattern.compile("[\"]"
       //                   + "(([\\\\][n\"]|[^\\\"])*)"
       //                   + "[\"][,]?");
-      Pattern.compile("\"([^\"\\\\]*(?:\\\\.|[^\"\\\\]*)*)\"[,]?");
+      Pattern.compile("^\"([^\"\\\\]*(?:\\\\.|[^\"\\\\]*)*)\"[,]?");
 
 
-  Integer messageId = 0;
-  String method = "";
-  String payload = "";
-  MessageHandler implementation = null;
+  public Integer messageId = 0;
+  public String method = "";
+  public String payload = "";
+  public MessageHandler implementation = null;
+
+  public void setImplementation(MessageHandler handler) {
+    if (implementation == null) {
+      implementation = handler;
+    } else {
+      throw new InvalidParameterException("Handler is already set on this message");
+    }
+  }
 
   static public PycraftMessage parseHeader(String line, PycraftAPI api) {
     /* Parse message header from the raw over-the-wire line */
@@ -45,27 +53,36 @@ public class PycraftMessage {
     List<Object> result = new ArrayList<Object>();
     List<List<Object>> stack = new ArrayList<List<Object>>();
     stack.add(result);
-    Matcher match;
+    Matcher intMatch;
+    Matcher stringMatch;
+    Integer consumed = 0;
     while (line.length() > 0) {
-      match = intPattern.matcher(line);
-      if (match.find()) {
-        result.add(Integer.parseInt(match.group(1)));
+      intMatch = intPattern.matcher(line);
+      if (intMatch.find()) {
+        result.add(Integer.parseInt(intMatch.group(1)));
+        consumed = intMatch.end();
       } else {
-        match = stringPattern.matcher(line);
-        if (match.find()) {
-          String rawString = match.group(1);
+        stringMatch = stringPattern.matcher(line);
+        if (stringMatch.find()) {
+          String rawString = stringMatch.group(1);
           result.add(rawString.replace("\\n", "\n").replace("\\\"", "\""));
+          consumed = stringMatch.end();
         } else {
           if (line.startsWith("[")) {
-            result = new ArrayList<Object>();
+            System.out.printf("Starting array: %s", line);
+            List<Object> child = new ArrayList<Object>();
+            result.add(child);
+            result = child;
             stack.add(result);
-            line = line.substring(1);
+            consumed = 1;
           } else if (line.startsWith("]")) {
+            consumed = 1;
             if (stack.size() > 1) {
+              System.out.printf("Finished array: %s", line);
               stack.remove(result);
               result = stack.get(stack.size() - 1);
-              line = line.substring(1);
             } else {
+              System.out.printf("Unable to pop array: %s", stack);
               throw new InvalidParameterException(String.format(
                   "Malformed list, more closing brackets then opening ones"));
             }
@@ -75,32 +92,15 @@ public class PycraftMessage {
           }
         }
       }
-      if (match != null) {
-        line = line.substring(match.end());
-        match = null;
+      if (consumed != 0) {
+        line = line.substring(consumed);
+      } else {
+        throw new InvalidParameterException(
+          String.format("Unexpected content at %s", line)
+        );
       }
     }
     return stack.get(0);
   }
 
-  public void dispatch(PycraftAPI api) {
-    /* Lookup our implementation and ask it to handle us */
-    MessageHandler implementation = implementations.get(method);
-    if (implementation == null) {
-      api.sendResponse(messageId,
-                       String.format("\"error\",\"no-method\",\"%s\"", method));
-      return;
-    } else {
-      this.implementation = implementation;
-      try {
-        implementation.handle(api, this);
-        return;
-      } catch (Exception err) {
-        api.sendResponse(messageId,
-                         String.format("\"error\",\"%s\"",
-                                       err.toString().replace("\n", "\\n")));
-        return;
-      }
-    }
-  }
 }

@@ -11,16 +11,16 @@ public class PycraftServerPlugin extends JavaPlugin {
 
 
   private APIServer endpoint;
-  private HandlerRegistry registry;
+  private IHandlerRegistry registry;
 
 
   @Override
   public void onEnable() {
     getLogger().info("Hello, SpigotMC!");
-    endpoint = new APIServer();
-    endpoint.setPlugin(this);
     registry = HandlerRegistry.getInstance();
     registry.registerHandlers();
+    endpoint = new APIServer(registry);
+    endpoint.setPlugin(this);
   }
   @Override
   public void onDisable() {

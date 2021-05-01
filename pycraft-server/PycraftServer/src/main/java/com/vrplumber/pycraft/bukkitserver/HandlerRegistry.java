@@ -3,13 +3,14 @@ import com.vrplumber.pycraft.bukkitserver.APIServer;
 import com.vrplumber.pycraft.bukkitserver.EchoHandler;
 import com.vrplumber.pycraft.bukkitserver.MessageHandler;
 import com.vrplumber.pycraft.bukkitserver.PycraftMessage;
+import com.vrplumber.pycraft.bukkitserver.IHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.HashMap;
 import java.util.logging.Handler;
 
-class HandlerRegistry {
+class HandlerRegistry implements IHandlerRegistry {
     private static List<Class> handlers;
 
     static { 
@@ -31,7 +32,7 @@ class HandlerRegistry {
     }
 
 
-    void registerImplementation(String name, MessageHandler payload) {
+    public void registerImplementation(String name, MessageHandler payload) {
       implementations.put(name, payload);
     }
   

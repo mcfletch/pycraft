@@ -1,6 +1,9 @@
 package com.vrplumber.pycraft.bukkitserver;
 
 import com.vrplumber.pycraft.bukkitserver.PycraftServerPlugin;
+import com.vrplumber.pycraft.bukkitserver.IHandlerRegistry;
+import com.vrplumber.pycraft.bukkitserver.IPycraftAPI;
+import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -29,6 +32,11 @@ public class APIServer implements Runnable {
   public Thread serverThread;
   public List<PycraftAPI> clients;
   public List<Thread> clientThreads;
+  public IHandlerRegistry handlerRegistry;
+
+  public APIServer(IHandlerRegistry registry) {
+    handlerRegistry = registry;
+  }
 
   public void createServer() {
     serverThread = new Thread(this);
@@ -51,7 +59,7 @@ public class APIServer implements Runnable {
           InputStream is = socket.getInputStream();
           BufferedReader br =
               new BufferedReader(new InputStreamReader(is, "UTF-8"));
-          PycraftAPI handler = new PycraftAPI(this, socket);
+          PycraftAPI handler = new PycraftAPI(this, socket, handlerRegistry);
           clients.add(handler);
           Thread clientThread = new Thread(handler);
           clientThreads.add(clientThread);

@@ -10,10 +10,6 @@ public class EchoHandler extends BaseHandler {
   public String getMethod() { return "echo"; }
   public void handle(PycraftAPI api, PycraftMessage message) {
     List<Object> args = PycraftMessage.parseArgs(message.payload);
-    String response = "\"content\"";
-    for (Object arg : args) {
-      response += arg.toString().replace("\n", "\\n").replace("\"", "\\\"");
-    }
-    api.sendResponse(message.messageId, response);
+    api.sendResponse(message.messageId, args);
   };
 }

@@ -9,7 +9,7 @@ public class EchoHandler extends BaseHandler {
   /* Interface for things which need to handle messages */
   public String getMethod() { return "echo"; }
   public void handle(PycraftAPI api, PycraftMessage message) {
-    List<Object> args = PycraftMessage.parseArgs(message.payload);
+    List<Object> args = message.payload;
     api.sendResponse(message.messageId, args);
   };
 }

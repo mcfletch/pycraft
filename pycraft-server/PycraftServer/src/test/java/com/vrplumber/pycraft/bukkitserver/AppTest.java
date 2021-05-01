@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.vrplumber.pycraft.bukkitserver.PycraftMessage;
 import com.vrplumber.pycraft.bukkitserver.HandlerRegistry;
+import com.vrplumber.pycraft.bukkitserver.PycraftEncoder;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,7 +34,8 @@ public class AppTest {
 
   @Test
   public void testParseInts() {
-    List<Object> result = PycraftMessage.parseArgs("1,2");
+    PycraftEncoder encoder = new PycraftEncoder();
+    List<Object> result = encoder.decode("1,2");
     assertEquals(result.size(), 2);
     Object first = result.get(0);
     assertTrue(first instanceof Integer);
@@ -44,7 +46,8 @@ public class AppTest {
   }
   @Test
   public void testParseSimpleString() {
-    List<Object> result = PycraftMessage.parseArgs("\"this\",\"those\"");
+    PycraftEncoder encoder = new PycraftEncoder();
+    List<Object> result = encoder.decode("\"this\",\"those\"");
     assertEquals(result.size(), 2);
     Object first = result.get(0);
     assertTrue(first instanceof String);
@@ -55,9 +58,9 @@ public class AppTest {
   }
   @Test
   public void testParseStringEscapes() {
+    PycraftEncoder encoder = new PycraftEncoder();
     String test = "this\"\n";
-    List<Object> result = PycraftMessage.parseArgs(
-        "\"" + test.replace("\n", "\\n").replace("\"", "\\\"") + "\"");
+    List<Object> result = encoder.decode("\"" + test.replace("\n", "\\n").replace("\"", "\\\"") + "\"");
     assertEquals(result.size(), 1);
     Object first = result.get(0);
     assertTrue(first instanceof String);
@@ -66,8 +69,9 @@ public class AppTest {
 
   @Test
   public void testParseList() {
+    PycraftEncoder encoder = new PycraftEncoder();
     String test = "[1,2,3]";
-    List<Object> result = PycraftMessage.parseArgs(test);
+    List<Object> result = encoder.decode(test);
     assertEquals(result.size(), 1);
     Object first = result.get(0);
     assertTrue(first instanceof ArrayList<?>);
@@ -104,10 +108,11 @@ public class AppTest {
 
   @Test
   public void echoTestArray() {
+    PycraftEncoder encoder = new PycraftEncoder();
 
     PycraftAPI api = getMockApi();
     List<Integer> response = new ArrayList<Integer>(Arrays.asList(1,2,3));
-    assertEquals("[1,2,3]", api.encodeMessage(response));
+    assertEquals("[1,2,3]", encoder.encode(response));
     
     api.dispatch("0,echo,[1,2,3]");
 
@@ -117,10 +122,11 @@ public class AppTest {
 
   @Test
   public void encodeMap() {
+    PycraftEncoder encoder = new PycraftEncoder();
     PycraftAPI api = getMockApi();
     HashMap<String,Object> response = new HashMap<String,Object>();
     response.put("testing","Value");
-    assertEquals("{\"testing\":\"Value\"}", api.encodeMessage(response));
+    assertEquals("{\"testing\":\"Value\"}", encoder.encode(response));
   }
 
 

@@ -2,6 +2,7 @@ package com.vrplumber.pycraft.bukkitserver;
 
 import com.vrplumber.pycraft.bukkitserver.IPycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.APIServer;
+import com.vrplumber.pycraft.bukkitserver.PycraftEncoder;
 import com.vrplumber.pycraft.bukkitserver.IHandlerRegistry;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -31,6 +32,7 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
   public Socket socket;
   public BufferedWriter sender;
   public BufferedReader reader;
+  public PycraftEncoder encoder;
 
   public String lastResponse;
 
@@ -48,11 +50,14 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
     }
   }
   public String sendResponse(Integer request, Object message) {
-    return sendResponse(request, encodeMessage(message));
+    return sendResponse(request, encoder.encode(message));
   }
   public String sendResponse(Integer request, String formatted) {
     /* Send a response to the particular request */
     return sendError(request,0,formatted);
+  }
+  public String sendError(Integer request, Integer errCode, Object message) {
+    return sendError(request, errCode, encoder.encode(message));
   }
   public String sendError(Integer request, Integer errCode, String formatted) {
     /* Send a response to the particular request */
@@ -67,6 +72,7 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
     this.server = server;
     this.socket = socket;
     this.registry = registry;
+    this.encoder = new PycraftEncoder();
     try {
       InputStream is = socket.getInputStream();
       OutputStream os = socket.getOutputStream();
@@ -114,40 +120,7 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
   //   }
   //   return String.format("[%s]",String.join(",",content));
   // }
-  public String encodeMessage(Object message) {
-    if (message instanceof Integer || message instanceof Double || message instanceof Float) {
-      return message.toString();
-    } else if (message instanceof String) {
-      return String.format("\"%s\"",((String)message).replace("\\", "\\\\")
-        .replace("\t", "\\t")
-        .replace("\b", "\\b")
-        .replace("\n", "\\n")
-        .replace("\r", "\\r")
-        .replace("\f", "\\f")
-        .replace("\'", "\\'")
-        .replace("\"", "\\\""));
-    } else if (message instanceof List<?>) {
-      List<Object> asArray = (List<Object>) message;
-      List<String> content = new ArrayList<String>();
-      for (Object item: asArray) {
-        content.add(encodeMessage(item));
-      }
-      return String.format("[%s]",String.join(",",content));
-    } else if (message instanceof Map<?,?>) {
-      Map<String,Object> asMap = (Map<String,Object>) message;
-      List<String> content = new ArrayList<String>();
-      Iterator it = asMap.entrySet().iterator();
-      while (it.hasNext()) {
-        Map.Entry<String,Object> entry = (Map.Entry<String,Object>) it.next();
-        content.add(String.format("%s:%s",
-          encodeMessage(entry.getKey()),
-          encodeMessage(entry.getValue())
-        ));
-      }
-      return String.format("{%s}",String.join(",",content));
-    }
-    return (String)"null";
-  }
+
 
   public void dispatch(String line) {
     /* Given an incoming string line, parse into a message and handle if possible */
@@ -164,7 +137,7 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
       this.sendError(
         message.messageId,
         1,
-        encodeMessage(response)
+        response
       );
     }
   }

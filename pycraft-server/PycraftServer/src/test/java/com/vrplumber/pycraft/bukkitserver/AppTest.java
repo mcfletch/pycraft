@@ -185,6 +185,22 @@ public class AppTest {
     assertEquals("1,0,\"sample-world\"", api.lastResponse);
   }
 
+  @Test
+  public void getBlock() {
+
+    PycraftAPI api = getMockApi();
+    api.dispatch("1,World.getBlock,[[0,0,0]]");
+    assertEquals("1,0,\"sample-world\"", api.lastResponse);
+  }
+
+  @Test
+  public void setBlock() {
+
+    PycraftAPI api = getMockApi();
+    api.dispatch("1,World.setBlock,[[0,0,0],\"air\"]");
+    assertEquals("1,0,\"sample-world\"", api.lastResponse);
+  }
+
   // @Test
   // public void loadJson() {
   // JsonValue value = Json.parse("[\"this\",23,null,false,true,[],{}]");

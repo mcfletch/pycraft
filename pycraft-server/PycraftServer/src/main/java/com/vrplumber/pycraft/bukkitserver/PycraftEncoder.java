@@ -10,6 +10,12 @@ import java.util.Iterator;
 import java.util.Arrays;
 import java.util.Map;
 
+import org.bukkit.World;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.Block;
+import org.bukkit.Location;
+import org.bukkit.util.Vector;
+
 public class PycraftEncoder {
     /* Encodes/Decodes a subset of JSON */
 
@@ -19,7 +25,7 @@ public class PycraftEncoder {
             // + "(([\\\\][n\"]|[^\\\"])*)"
             // + "[\"][,]?");
             Pattern.compile("^\"([^\"\\\\]*(?:\\\\.|[^\"\\\\]*)*)\"[,]?");
-    static private Pattern whiteSpace = Pattern.compile("^[ \\t\\n\\r]+");
+    static private Pattern whiteSpace = Pattern.compile("^[ \\t\\n\\r,]+");
 
     public List<Object> decode(String line) {
         if (!(line.startsWith("[") && line.endsWith("]"))) {
@@ -105,6 +111,25 @@ public class PycraftEncoder {
                 content.add(String.format("%s:%s", encode(entry.getKey()), encode(entry.getValue())));
             }
             return String.format("{%s}", String.join(",", content));
+        } else if (message instanceof World) {
+            return encode(((World) message).getName());
+        } else if (message instanceof BlockData) {
+            return encode(((BlockData) message).getAsString());
+        } else if (message instanceof Block) {
+            org.bukkit.block.Block asBlock = (Block) message;
+            Location loc = asBlock.getLocation();
+            Map<String, Object> asMap = new HashMap<String, Object>();
+            asMap.put("loc", loc);
+            asMap.put("mat", asBlock.getBlockData());
+            return encode(asMap);
+        } else if (message instanceof Location) {
+            Location loc = (Location) message;
+            List<Double> asList = Arrays.asList((Double) loc.getX(), (Double) loc.getY(), (Double) loc.getZ());
+            return encode(asList);
+        } else if (message instanceof Vector) {
+            Vector vec = (Vector) message;
+            List<Double> asList = Arrays.asList((Double) vec.getX(), (Double) vec.getY(), (Double) vec.getZ());
+            return encode(asList);
         }
         return (String) "null";
     }

@@ -201,6 +201,14 @@ public class AppTest {
     assertEquals("1,0,\"sample-world\"", api.lastResponse);
   }
 
+  @Test
+  public void getGameRules() {
+
+    PycraftAPI api = getMockApi();
+    api.dispatch("1,World.getGameRules,[]");
+    assertEquals("1,0,\"sample-world\"", api.lastResponse);
+  }
+
   // @Test
   // public void loadJson() {
   // JsonValue value = Json.parse("[\"this\",23,null,false,true,[],{}]");

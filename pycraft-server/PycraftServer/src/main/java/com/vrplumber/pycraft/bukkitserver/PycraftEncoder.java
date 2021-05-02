@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.security.InvalidParameterException;
+import java.lang.Iterable;
 import java.util.Iterator;
 import java.util.Arrays;
 import java.util.Map;
@@ -111,6 +112,14 @@ public class PycraftEncoder {
                 content.add(String.format("%s:%s", encode(entry.getKey()), encode(entry.getValue())));
             }
             return String.format("{%s}", String.join(",", content));
+        } else if (message instanceof String[] || message instanceof Object[] || message instanceof Integer[]
+                || message instanceof Double[] || message instanceof Float[]) {
+            List<String> content = new ArrayList<String>();
+            Object[] asArray = (Object[]) message;
+            for (int i = 0; i < asArray.length; i++) {
+                content.add(encode((Object) asArray[i]));
+            }
+            return String.format("[%s]", String.join(",", content));
         } else if (message instanceof World) {
             return encode(((World) message).getName());
         } else if (message instanceof BlockData) {

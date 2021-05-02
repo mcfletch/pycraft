@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.security.InvalidParameterException;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Arrays;
@@ -74,18 +75,20 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
 
   public String lastResponse;
 
-  public void send(String formatted) {
+  public boolean send(String formatted) {
     /* Send a fully formatted message to sender */
     lastResponse = formatted;
     if (wanted && sender != null) {
       try {
         sender.write(formatted);
         sender.newLine();
+        return true;
       } catch (IOException err) {
         err.printStackTrace();
         wanted = false;
       }
     }
+    return false;
   }
 
   public String sendResponse(Integer request, Object message) {
@@ -177,7 +180,14 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
     MessageHandler handler = registry.getHandler(message.method.get(0));
     if (handler != null) {
       message.addImplementation(handler);
-      handler.handle(this, message);
+      try {
+        Object response = handler.handle(this, message);
+        this.sendResponse(message.messageId, response);
+      } catch (InvalidParameterException e) {
+        e.printStackTrace();
+        List<String> response = Arrays.asList("error", e.getMessage());
+        this.sendError(message.messageId, 1, response);
+      }
     } else {
       List<String> response = Arrays.asList("unknown-method", message.method.get(0));
       this.sendError(message.messageId, 1, response);

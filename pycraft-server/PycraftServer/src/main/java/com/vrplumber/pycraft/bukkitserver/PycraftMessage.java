@@ -18,6 +18,7 @@ public class PycraftMessage {
   public List<String> method = null;
   public List<Object> payload = null;
   public List<MessageHandler> implementation = null;
+  public Object instance = null;
 
   public void addImplementation(MessageHandler handler) {
     if (implementation == null) {

@@ -38,6 +38,7 @@ class HandlerRegistry implements IHandlerRegistry {
 
     public void registerImplementation(String name, MessageHandler payload) {
         implementations.put(name, payload);
+        payload.register(this);
     }
 
     public void registerHandlers() {

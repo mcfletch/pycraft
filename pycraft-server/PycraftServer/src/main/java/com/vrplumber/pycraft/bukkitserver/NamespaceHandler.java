@@ -21,7 +21,12 @@ public abstract class NamespaceHandler implements MessageHandler {
         subcommands.put(name, handler);
     };
 
-    public void handle(PycraftAPI api, PycraftMessage message) {
+    public MessageHandler getHandler(String name) {
+        /* Find our sub-handler by name */
+        return subcommands.get(name);
+    }
+
+    public Object handle(PycraftAPI api, PycraftMessage message) {
         String name = message.nextName();
         MessageHandler subHandler = null;
         if (name != null) {

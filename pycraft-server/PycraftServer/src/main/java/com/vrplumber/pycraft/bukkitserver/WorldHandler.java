@@ -138,25 +138,52 @@ public class WorldHandler extends NamespaceHandler {
         return loc.getBlock();
     }
 
-    public void handle(PycraftAPI api, PycraftMessage message) {
+    public void register(HandlerRegistry registry) {
+        /* Called when we are registered with the registry (api likely not up yet) */
+        for (MessageHandler handler : MethodHandler.forClass(World.class)) {
+            this.addHandler(handler.getMethod(), handler);
+        }
+
+    }
+
+    public Object handle(PycraftAPI api, PycraftMessage message) {
         String name = message.nextName();
         Object result = null;
+        boolean handled = false;
         if (name.equals("getWorlds")) {
             result = getWorlds(api, message);
+            handled = true;
         } else if (name.equals("setWorld")) {
             result = setWorld(api, message);
+            handled = true;
         } else if (name.equals("getWorld")) {
             result = getWorld(api, message);
+            handled = true;
         } else if (name.equals("getBlock")) {
             result = getBlock(api, message);
+            handled = true;
         } else if (name.equals("setBlock")) {
             result = setBlock(api, message);
-        }
-        if (result != null) {
-            api.sendResponse(message.messageId, result);
+            handled = true;
         } else {
-            List<String> response = Arrays.asList("unknown-method", name);
-            api.sendError(message.messageId, 1, response);
+            /* Registered method on the current World */
+            MessageHandler subHandler = getHandler(name);
+            if (subHandler != null) {
+                if (subHandler instanceof MethodHandler) {
+                    MethodHandler subMethod = (MethodHandler) subHandler;
+                    if (subMethod.cls == World.class) {
+                        message.instance = api.getWorld();
+                    }
+                }
+                result = subHandler.handle(api, message);
+                handled = true;
+            }
+        }
+        if (handled) {
+            // api.sendResponse(message.messageId, result);
+            return result;
+        } else {
+            throw new InvalidParameterException(String.format("unnown-method %s", name));
         }
     };
 }

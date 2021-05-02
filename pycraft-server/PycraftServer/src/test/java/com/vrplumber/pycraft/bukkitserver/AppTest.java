@@ -86,7 +86,7 @@ public class AppTest {
   @Test
   public void testParseInts() {
     PycraftEncoder encoder = new PycraftEncoder();
-    List<Object> result = encoder.decode("1,2");
+    List<Object> result = encoder.decode("[1,2]");
     assertEquals(result.size(), 2);
     Object first = result.get(0);
     assertTrue(first instanceof Integer);
@@ -99,7 +99,7 @@ public class AppTest {
   @Test
   public void testParseSimpleString() {
     PycraftEncoder encoder = new PycraftEncoder();
-    List<Object> result = encoder.decode("\"this\",\"those\"");
+    List<Object> result = encoder.decode("[\"this\",\"those\"]");
     assertEquals(result.size(), 2);
     Object first = result.get(0);
     assertTrue(first instanceof String);
@@ -113,7 +113,7 @@ public class AppTest {
   public void testParseStringEscapes() {
     PycraftEncoder encoder = new PycraftEncoder();
     String test = "this\"\n";
-    List<Object> result = encoder.decode("\"" + test.replace("\n", "\\n").replace("\"", "\\\"") + "\"");
+    List<Object> result = encoder.decode("[\"" + test.replace("\n", "\\n").replace("\"", "\\\"") + "\"]");
     assertEquals(result.size(), 1);
     Object first = result.get(0);
     assertTrue(first instanceof String);
@@ -125,12 +125,9 @@ public class AppTest {
     PycraftEncoder encoder = new PycraftEncoder();
     String test = "[1,2,3]";
     List<Object> result = encoder.decode(test);
-    assertEquals(result.size(), 1);
-    Object first = result.get(0);
-    assertTrue(first instanceof ArrayList<?>);
-    ArrayList<Object> arg = (ArrayList<Object>) first;
+    assertEquals(result.size(), 3);
     ArrayList<Object> expected = new ArrayList<Object>(Arrays.asList(1, 2, 3));
-    assertEquals(arg, expected);
+    assertEquals(result, expected);
   }
 
   @Test
@@ -151,7 +148,7 @@ public class AppTest {
 
     api.dispatch("0,echo,[1,2,3]");
 
-    assertEquals("0,0,[[1,2,3]]", api.lastResponse);
+    assertEquals("0,0,[1,2,3]", api.lastResponse);
 
   }
 
@@ -170,6 +167,22 @@ public class AppTest {
     PycraftAPI api = getMockApi();
     api.dispatch("1,World.getWorlds,[]");
     assertEquals("1,0,[\"sample-world\"]", api.lastResponse);
+  }
+
+  @Test
+  public void getWorld() {
+
+    PycraftAPI api = getMockApi();
+    api.dispatch("1,World.getWorld,[]");
+    assertEquals("1,0,\"sample-world\"", api.lastResponse);
+  }
+
+  @Test
+  public void setWorld() {
+
+    PycraftAPI api = getMockApi();
+    api.dispatch("1,World.setWorld,[\"sample-world\"]");
+    assertEquals("1,0,\"sample-world\"", api.lastResponse);
   }
 
   // @Test

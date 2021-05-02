@@ -22,6 +22,10 @@ public class PycraftEncoder {
     static private Pattern whiteSpace = Pattern.compile("^[ \\t\\n\\r]+");
 
     public List<Object> decode(String line) {
+        if (!(line.startsWith("[") && line.endsWith("]"))) {
+            throw new InvalidParameterException(String.format("Parameters must be wrapped with [] characters", line));
+        }
+        line = line.substring(1, line.length() - 1);
         List<Object> result = new ArrayList<Object>();
         List<List<Object>> stack = new ArrayList<List<Object>>();
         stack.add(result);

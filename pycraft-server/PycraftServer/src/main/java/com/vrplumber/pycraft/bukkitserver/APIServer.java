@@ -21,11 +21,20 @@ import javax.net.ServerSocketFactory;
 public class APIServer implements Runnable {
   private int port = 4712;
   private boolean wanted = true;
-  public void setWanted(boolean wanted) { this.wanted = wanted; }
+
+  public void setWanted(boolean wanted) {
+    this.wanted = wanted;
+  }
+
   private PycraftServerPlugin plugin;
 
-  public void setPlugin(PycraftServerPlugin plugin) { this.plugin = plugin; }
-  public PycraftServerPlugin getPlugin() { return this.plugin; }
+  public void setPlugin(PycraftServerPlugin plugin) {
+    this.plugin = plugin;
+  }
+
+  public PycraftServerPlugin getPlugin() {
+    return this.plugin;
+  }
 
   public ServerSocket serverSocket;
 
@@ -42,6 +51,7 @@ public class APIServer implements Runnable {
     serverThread = new Thread(this);
     serverThread.start();
   }
+
   public void run() {
     ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
     serverSocket = null;
@@ -57,8 +67,7 @@ public class APIServer implements Runnable {
         try {
           socket = serverSocket.accept();
           InputStream is = socket.getInputStream();
-          BufferedReader br =
-              new BufferedReader(new InputStreamReader(is, "UTF-8"));
+          BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
           PycraftAPI handler = new PycraftAPI(this, socket, handlerRegistry);
           clients.add(handler);
           Thread clientThread = new Thread(handler);

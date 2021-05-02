@@ -4,6 +4,10 @@ import com.vrplumber.pycraft.bukkitserver.IPycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.APIServer;
 import com.vrplumber.pycraft.bukkitserver.PycraftEncoder;
 import com.vrplumber.pycraft.bukkitserver.IHandlerRegistry;
+
+import org.bukkit.Server;
+import org.bukkit.World;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -25,10 +29,39 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
     return this.server.getPlugin();
   }
 
+  public Server getServer() {
+    return this.getPlugin().getServer();
+  }
+
   private boolean wanted = true;
+  private World world = null;
 
   public void setWanted(boolean wanted) {
     this.wanted = wanted;
+  }
+
+  public World setWorld(String name) {
+    /* Set our target world via name */
+    World temp = this.getPlugin().getServer().getWorld(name);
+    if (temp != null) {
+      if (world != null) {
+        /* Do any cleanup here */
+      }
+      world = temp;
+    }
+    return temp;
+
+  }
+
+  public World getWorld() {
+    /* Get target world, defaulting to the first returned from getWorlds() */
+    if (world == null) {
+      for (World on_server : getServer().getWorlds()) {
+        world = on_server;
+        break;
+      }
+    }
+    return world;
   }
 
   private IHandlerRegistry registry;

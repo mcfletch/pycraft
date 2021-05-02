@@ -278,3 +278,9 @@ def hall(
         back - 1,
         blocks.BREWING_STAND,
     )
+    mc.setBlock(
+        crafting - 2,
+        bottom,
+        back - 2,
+        blocks.ANVIL,
+    )

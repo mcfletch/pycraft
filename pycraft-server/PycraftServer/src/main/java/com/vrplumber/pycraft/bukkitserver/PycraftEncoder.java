@@ -1,4 +1,5 @@
 package com.vrplumber.pycraft.bukkitserver;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,15 +15,12 @@ public class PycraftEncoder {
 
     static private Pattern intPattern = Pattern.compile("^([-+]*[0-9]+)[,]?");
     static private Pattern stringPattern =
-        //   Pattern.compile("[\"]"
-        //                   + "(([\\\\][n\"]|[^\\\"])*)"
-        //                   + "[\"][,]?");
-        Pattern.compile("^\"([^\"\\\\]*(?:\\\\.|[^\"\\\\]*)*)\"[,]?");
-    static private Pattern whiteSpace = Pattern.compile("^\s+");
-    
-    String stripLeadingWS(String line) {
-    }
-  
+            // Pattern.compile("[\"]"
+            // + "(([\\\\][n\"]|[^\\\"])*)"
+            // + "[\"][,]?");
+            Pattern.compile("^\"([^\"\\\\]*(?:\\\\.|[^\"\\\\]*)*)\"[,]?");
+    static private Pattern whiteSpace = Pattern.compile("^[ \\t\\n\\r]+");
+
     public List<Object> decode(String line) {
         List<Object> result = new ArrayList<Object>();
         List<List<Object>> stack = new ArrayList<List<Object>>();
@@ -33,7 +31,7 @@ public class PycraftEncoder {
             consumed = 0;
             match = whiteSpace.matcher(line);
             if (match.find()) {
-                consumed=match.end();
+                consumed = match.end();
             } else {
                 match = intPattern.matcher(line);
                 if (match.find()) {
@@ -42,9 +40,9 @@ public class PycraftEncoder {
                 } else {
                     match = stringPattern.matcher(line);
                     if (match.find()) {
-                    String rawString = match.group(1);
-                    result.add(rawString.replace("\\n", "\n").replace("\\\"", "\""));
-                    consumed = match.end();
+                        String rawString = match.group(1);
+                        result.add(rawString.replace("\\n", "\n").replace("\\\"", "\""));
+                        consumed = match.end();
                     } else {
                         if (line.startsWith("[")) {
                             System.out.printf("Starting array: %s", line);
@@ -56,17 +54,16 @@ public class PycraftEncoder {
                         } else if (line.startsWith("]")) {
                             consumed = 1;
                             if (stack.size() > 1) {
-                            System.out.printf("Finished array: %s", line);
-                            stack.remove(result);
-                            result = stack.get(stack.size() - 1);
+                                System.out.printf("Finished array: %s", line);
+                                stack.remove(result);
+                                result = stack.get(stack.size() - 1);
                             } else {
-                            System.out.printf("Unable to pop array: %s", stack);
-                            throw new InvalidParameterException(String.format(
-                                "Malformed list, more closing brackets then opening ones"));
+                                System.out.printf("Unable to pop array: %s", stack);
+                                throw new InvalidParameterException(
+                                        String.format("Malformed list, more closing brackets then opening ones"));
                             }
                         } else {
-                            throw new InvalidParameterException(
-                                String.format("Unknown data-format for %s", line));
+                            throw new InvalidParameterException(String.format("Unknown data-format for %s", line));
                         }
                     }
                 }
@@ -74,9 +71,7 @@ public class PycraftEncoder {
             if (consumed != 0) {
                 line = line.substring(consumed);
             } else {
-                throw new InvalidParameterException(
-                String.format("Unexpected content at %s", line)
-                );
+                throw new InvalidParameterException(String.format("Unexpected content at %s", line));
             }
         }
         return stack.get(0);
@@ -84,37 +79,30 @@ public class PycraftEncoder {
 
     public String encode(Object message) {
         if (message instanceof Integer || message instanceof Double || message instanceof Float) {
-        return message.toString();
+            return message.toString();
         } else if (message instanceof String) {
-        return String.format("\"%s\"",((String)message).replace("\\", "\\\\")
-            .replace("\t", "\\t")
-            .replace("\b", "\\b")
-            .replace("\n", "\\n")
-            .replace("\r", "\\r")
-            .replace("\f", "\\f")
-            .replace("\'", "\\'")
-            .replace("\"", "\\\""));
+            return String.format("\"%s\"",
+                    ((String) message).replace("\\", "\\\\").replace("\t", "\\t").replace("\b", "\\b")
+                            .replace("\n", "\\n").replace("\r", "\\r").replace("\f", "\\f").replace("\'", "\\'")
+                            .replace("\"", "\\\""));
         } else if (message instanceof List<?>) {
-        List<Object> asArray = (List<Object>) message;
-        List<String> content = new ArrayList<String>();
-        for (Object item: asArray) {
-            content.add(encode(item));
+            List<Object> asArray = (List<Object>) message;
+            List<String> content = new ArrayList<String>();
+            for (Object item : asArray) {
+                content.add(encode(item));
+            }
+            return String.format("[%s]", String.join(",", content));
+        } else if (message instanceof Map<?, ?>) {
+            Map<String, Object> asMap = (Map<String, Object>) message;
+            List<String> content = new ArrayList<String>();
+            Iterator it = asMap.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<String, Object> entry = (Map.Entry<String, Object>) it.next();
+                content.add(String.format("%s:%s", encode(entry.getKey()), encode(entry.getValue())));
+            }
+            return String.format("{%s}", String.join(",", content));
         }
-        return String.format("[%s]",String.join(",",content));
-        } else if (message instanceof Map<?,?>) {
-        Map<String,Object> asMap = (Map<String,Object>) message;
-        List<String> content = new ArrayList<String>();
-        Iterator it = asMap.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<String,Object> entry = (Map.Entry<String,Object>) it.next();
-            content.add(String.format("%s:%s",
-            encode(entry.getKey()),
-            encode(entry.getValue())
-            ));
-        }
-        return String.format("{%s}",String.join(",",content));
-        }
-        return (String)"null";
+        return (String) "null";
     }
 
 }

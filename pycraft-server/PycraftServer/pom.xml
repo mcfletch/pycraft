@@ -18,6 +18,17 @@
     <jetty.version>9.3.7.v20160115</jetty.version>
   </properties>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>5.7.1</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>org.spigotmc</groupId>
@@ -26,11 +37,11 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.11</version>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
+
     <!-- <dependency>
       <groupId>com.eclipsesource.minimal-json</groupId>
       <artifactId>minimal-json</artifactId>
@@ -40,6 +51,12 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
       <version>1.8.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.seeseemelk</groupId>
+      <artifactId>MockBukkit-v1.16</artifactId>
+      <version>0.34.1</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -78,6 +95,11 @@
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.22.1</version>
+          <configuration>
+            <additionalClasspathElements>
+              <additionalClasspathElement>${basedir}/target/dependency/MockBukkit-v1.16-0.34.1.jar</additionalClasspathElement>
+            </additionalClasspathElements>
+          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>

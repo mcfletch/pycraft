@@ -4,6 +4,7 @@ import com.vrplumber.pycraft.bukkitserver.NamespaceHandler;
 import com.vrplumber.pycraft.bukkitserver.MessageHandler;
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.PycraftMessage;
+import java.lang.Math;
 import java.util.List;
 import java.util.Arrays;
 import java.security.InvalidParameterException;
@@ -14,6 +15,9 @@ import org.bukkit.util.Vector;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 
 public class WorldHandler extends NamespaceHandler {
     /* Interface for things which need to handle messages */
@@ -26,76 +30,6 @@ public class WorldHandler extends NamespaceHandler {
         return response;
     }
 
-    private String expectString(PycraftMessage message, Integer index) throws InvalidParameterException {
-        if (index < 0 || index >= message.payload.size()) {
-            throw new InvalidParameterException(String.format("Missing String at argument %d", index));
-        }
-        Object item = message.payload.get(index);
-        if (item == null) {
-            throw new InvalidParameterException(String.format("Expected String at argument %d", index));
-        }
-        if (item instanceof String) {
-            return (String) item;
-        }
-        throw new InvalidParameterException(String.format("Non-String at argument %d", index));
-    }
-
-    private Integer expectInteger(PycraftMessage message, Integer index) throws InvalidParameterException {
-        if (index < 0 || index >= message.payload.size()) {
-            throw new InvalidParameterException(String.format("Missing Integer at argument %d", index));
-        }
-        Object item = message.payload.get(index);
-        if (item == null) {
-            throw new InvalidParameterException(String.format("Expected Integer at argument %d", index));
-        }
-        if (item instanceof Integer) {
-            return (Integer) item;
-        }
-        throw new InvalidParameterException(String.format("Non-Integer at argument %d", index));
-    }
-
-    private Double getNumber(List<Object> items, Integer index) {
-        Object item = items.get(index);
-        if (item instanceof Integer) {
-            return ((Integer) item).doubleValue();
-        } else if (item instanceof Double) {
-            return (Double) item;
-        } else if (item instanceof Float) {
-            return ((Float) item).doubleValue();
-        } else {
-            throw new InvalidParameterException(
-                    String.format("Vector value %d is not a number %s", index, item.toString()));
-        }
-    }
-
-    private Vector expectVector(PycraftMessage message, Integer index) throws InvalidParameterException {
-        if (index < 0 || index >= message.payload.size()) {
-            throw new InvalidParameterException(String.format("Missing Vector at argument %d", index));
-        }
-        Object item = message.payload.get(index);
-        if (item == null) {
-            throw new InvalidParameterException(String.format("Expected Vector at argument %d", index));
-        }
-        if (!(item instanceof List<?>)) {
-            throw new InvalidParameterException(String.format("Did not get a list at argument %d", index));
-        }
-        List<Object> asList = (List<Object>) item;
-        if (asList.size() != 3) {
-            throw new InvalidParameterException(String.format("Did not get 3 items in list at argument %d", index));
-        }
-        Vector asVector = new Vector();
-        asVector.setX(getNumber(asList, 0));
-        asVector.setY(getNumber(asList, 1));
-        asVector.setZ(getNumber(asList, 2));
-        return asVector;
-    }
-
-    private BlockData expectBlockData(PycraftAPI api, PycraftMessage message, Integer index)
-            throws InvalidParameterException {
-        String description = expectString(message, index);
-        return api.getServer().createBlockData(description);
-    }
-
     public Object getWorlds(PycraftAPI api, PycraftMessage message) {
         List<String> names = new ArrayList<String>();
         for (World world : api.getPlugin().getServer().getWorlds()) {
@@ -106,7 +40,7 @@ public class WorldHandler extends NamespaceHandler {
 
     public Object setWorld(PycraftAPI api, PycraftMessage message) {
         /* Set the world on which we will operate */
-        String name = expectString(message, 0);
+        String name = api.expectString(message, 0);
         if (name != null) {
             api.setWorld(name);
         }
@@ -125,17 +59,55 @@ public class WorldHandler extends NamespaceHandler {
 
     public Object getBlock(PycraftAPI api, PycraftMessage message) {
         World world = api.getWorld();
-        Vector vec = expectVector(message, 0);
+        Vector vec = api.expectVector(message, 0);
         Location loc = new Location(world, vec.getX(), vec.getY(), vec.getZ());
         return loc.getBlock();
     }
 
     public Object setBlock(PycraftAPI api, PycraftMessage message) {
         World world = api.getWorld();
-        Vector vec = expectVector(message, 0);
+        Vector vec = api.expectVector(message, 0);
         Location loc = new Location(world, vec.getX(), vec.getY(), vec.getZ());
-        BlockData data = expectBlockData(api, message, 1);
+        BlockData data = api.expectBlockData(message, 1);
         return loc.getBlock();
+    }
+
+    public Object setBlocks(PycraftAPI api, PycraftMessage message) {
+        World world = api.getWorld();
+        Vector start = api.expectVector(message, 0);
+        Vector end = api.expectVector(message, 1);
+        BlockData data = api.expectBlockData(message, 2);
+        Location setter = new Location(world, start.getBlockX(), start.getBlockY(), start.getBlockZ());
+        int dx = end.getBlockX() - start.getBlockX(), dy = end.getBlockY() - start.getBlockY(),
+                dz = end.getBlockZ() - start.getBlockZ();
+        int xstep = 0, ystep = 0, zstep = 0;
+        if (dx != 0) {
+            xstep = dx / Math.abs(dx);
+        }
+        if (dy != 0) {
+            ystep = dy / Math.abs(dy);
+        }
+        if (dz != 0) {
+            zstep = dz / Math.abs(dz);
+        }
+
+        for (int x = 0; x < dx; x += xstep) {
+            for (int y = 0; y < dy; y += ystep) {
+                for (int z = 0; z < dz; z += zstep) {
+                    Location tmp = setter.add(x, y, z);
+                    tmp.getBlock().setBlockData(data);
+                }
+            }
+        }
+        return Arrays.asList(start, end, data);
+    }
+
+    public Object spawnEntity(PycraftAPI api, PycraftMessage message) {
+        World world = api.getWorld();
+        Vector vec = api.expectVector(message, 0);
+        Location loc = new Location(world, vec.getX(), vec.getY(), vec.getZ());
+        EntityType eType = api.expectEntityType(message, 1);
+        return api.getWorld().spawnEntity(loc, eType);
     }
 
     public void register(HandlerRegistry registry) {
@@ -144,6 +116,15 @@ public class WorldHandler extends NamespaceHandler {
             this.addHandler(handler.getMethod(), handler);
         }
 
+    }
+
+    public String postToChat(PycraftAPI api, PycraftMessage message) {
+        World world = api.getWorld();
+        String chat = api.expectString(message, 0);
+        for (Player p : world.getPlayers()) {
+            p.sendMessage(chat);
+        }
+        return chat;
     }
 
     public Object handle(PycraftAPI api, PycraftMessage message) {
@@ -165,6 +146,15 @@ public class WorldHandler extends NamespaceHandler {
         } else if (name.equals("setBlock")) {
             result = setBlock(api, message);
             handled = true;
+        } else if (name.equals("setBlocks")) {
+            result = setBlocks(api, message);
+            handled = true;
+        } else if (name.equals("spawnEntity")) {
+            result = spawnEntity(api, message);
+            handled = true;
+        } else if (name.equals("postToChat")) {
+            result = postToChat(api, message);
+            handled = true;
         } else {
             /* Registered method on the current World */
             MessageHandler subHandler = getHandler(name);
@@ -183,7 +173,7 @@ public class WorldHandler extends NamespaceHandler {
             // api.sendResponse(message.messageId, result);
             return result;
         } else {
-            throw new InvalidParameterException(String.format("unnown-method %s", name));
+            throw new InvalidParameterException(String.format("unknown-method %s", name));
         }
     };
 }

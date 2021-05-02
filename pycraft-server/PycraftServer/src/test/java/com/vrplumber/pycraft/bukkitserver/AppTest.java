@@ -47,6 +47,7 @@ public class AppTest {
     ServerMock server = new ServerMock();
     MockBukkit.mock(server);
     server.addSimpleWorld("sample-world");
+    server.addPlayer();
     plugin = (PycraftServerPlugin) MockBukkit.load(PycraftServerPlugin.class);
     HandlerRegistry registry = new HandlerRegistry();
     registry.registerHandlers();
@@ -202,23 +203,43 @@ public class AppTest {
   }
 
   @Test
+  public void setBlocks() {
+
+    PycraftAPI api = getMockApi();
+    api.dispatch("1,World.setBlocks,[[0,0,0],[5,5,5],\"air\"]");
+    assertEquals("1,0,[[0,0,0],[5,5,5],\"air\"]", api.lastResponse);
+  }
+
+  @Test
   public void getGameRules() {
 
     PycraftAPI api = getMockApi();
     api.dispatch("1,World.getGameRules,[]");
-    assertEquals("1,0,\"sample-world\"", api.lastResponse);
+    assertTrue(api.lastResponse.startsWith("1,0"));
   }
 
   // @Test
-  // public void loadJson() {
-  // JsonValue value = Json.parse("[\"this\",23,null,false,true,[],{}]");
-  // assertEquals(value.isArray(), true);
-  // assertEquals(value.asArray().get(0).asString(),"this");
-  // assertEquals(value.asArray().get(1).asInt(),23);
-  // assertEquals(value.asArray().get(1).isNumber(), true);
-  // assertEquals(value.asArray().get(3).isFalse(),true);
-  // assertEquals(value.asArray().get(4).isTrue(),true);
-  // assertEquals(value.asArray().get(5).isArray(),true);
-  // assertEquals(value.asArray().get(6).isObject(),true);
+  // public void isHardcore() {
+
+  // PycraftAPI api = getMockApi();
+  // api.dispatch("1,World.isHardcore,[]");
+  // assertEquals("1,0,false", api.lastResponse);
   // }
+
+  @Test
+  public void getPlayers() {
+
+    PycraftAPI api = getMockApi();
+    api.dispatch("1,World.getPlayers,[]");
+    assertTrue(api.lastResponse.startsWith("1,0"));
+  }
+
+  @Test
+  public void postToChat() {
+
+    PycraftAPI api = getMockApi();
+    api.dispatch("1,World.postToChat,[\"Hello Chat\"]");
+    assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
+  }
+
 }

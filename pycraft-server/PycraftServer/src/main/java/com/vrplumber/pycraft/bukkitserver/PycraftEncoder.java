@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.security.InvalidParameterException;
 import java.lang.Iterable;
+import java.lang.Enum;
 import java.util.Iterator;
 import java.util.Arrays;
 import java.util.Map;
@@ -16,16 +17,19 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.Block;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 
 public class PycraftEncoder {
     /* Encodes/Decodes a subset of JSON */
 
-    static private Pattern intPattern = Pattern.compile("^([-+]*[0-9]+)[,]?");
+    static private Pattern intPattern = Pattern.compile("^([-+]*[0-9]+)");
+    static private Pattern floatPattern = Pattern.compile("^([-+]?([0-9]*\\.[0-9]+))");
     static private Pattern stringPattern =
             // Pattern.compile("[\"]"
             // + "(([\\\\][n\"]|[^\\\"])*)"
             // + "[\"][,]?");
-            Pattern.compile("^\"([^\"\\\\]*(?:\\\\.|[^\"\\\\]*)*)\"[,]?");
+            Pattern.compile("^\"([^\"\\\\]*(?:\\\\.|[^\"\\\\]*)*)\"");
     static private Pattern whiteSpace = Pattern.compile("^[ \\t\\n\\r,]+");
 
     public List<Object> decode(String line) {
@@ -44,37 +48,43 @@ public class PycraftEncoder {
             if (match.find()) {
                 consumed = match.end();
             } else {
-                match = intPattern.matcher(line);
+                match = floatPattern.matcher(line);
                 if (match.find()) {
-                    result.add(Integer.parseInt(match.group(1)));
+                    result.add(Double.parseDouble(match.group(1)));
                     consumed = match.end();
                 } else {
-                    match = stringPattern.matcher(line);
+                    match = intPattern.matcher(line);
                     if (match.find()) {
-                        String rawString = match.group(1);
-                        result.add(rawString.replace("\\n", "\n").replace("\\\"", "\""));
+                        result.add(Integer.parseInt(match.group(1)));
                         consumed = match.end();
                     } else {
-                        if (line.startsWith("[")) {
-                            System.out.printf("Starting array: %s", line);
-                            List<Object> child = new ArrayList<Object>();
-                            result.add(child);
-                            result = child;
-                            stack.add(result);
-                            consumed = 1;
-                        } else if (line.startsWith("]")) {
-                            consumed = 1;
-                            if (stack.size() > 1) {
-                                System.out.printf("Finished array: %s", line);
-                                stack.remove(result);
-                                result = stack.get(stack.size() - 1);
-                            } else {
-                                System.out.printf("Unable to pop array: %s", stack);
-                                throw new InvalidParameterException(
-                                        String.format("Malformed list, more closing brackets then opening ones"));
-                            }
+                        match = stringPattern.matcher(line);
+                        if (match.find()) {
+                            String rawString = match.group(1);
+                            result.add(rawString.replace("\\n", "\n").replace("\\\"", "\""));
+                            consumed = match.end();
                         } else {
-                            throw new InvalidParameterException(String.format("Unknown data-format for %s", line));
+                            if (line.startsWith("[")) {
+                                System.out.printf("Starting array: %s", line);
+                                List<Object> child = new ArrayList<Object>();
+                                result.add(child);
+                                result = child;
+                                stack.add(result);
+                                consumed = 1;
+                            } else if (line.startsWith("]")) {
+                                consumed = 1;
+                                if (stack.size() > 1) {
+                                    System.out.printf("Finished array: %s", line);
+                                    stack.remove(result);
+                                    result = stack.get(stack.size() - 1);
+                                } else {
+                                    System.out.printf("Unable to pop array: %s", stack);
+                                    throw new InvalidParameterException(
+                                            String.format("Malformed list, more closing brackets then opening ones"));
+                                }
+                            } else {
+                                throw new InvalidParameterException(String.format("Unknown data-format for %s", line));
+                            }
                         }
                     }
                 }
@@ -89,7 +99,10 @@ public class PycraftEncoder {
     }
 
     public String encode(Object message) {
-        if (message instanceof Integer || message instanceof Double || message instanceof Float) {
+        if (message instanceof Enum) {
+            return encode(((Enum) message).name());
+        } else if (message instanceof Integer || message instanceof Double || message instanceof Float
+                || message instanceof Boolean) {
             return message.toString();
         } else if (message instanceof String) {
             return String.format("\"%s\"",
@@ -124,6 +137,24 @@ public class PycraftEncoder {
             return encode(((World) message).getName());
         } else if (message instanceof BlockData) {
             return encode(((BlockData) message).getAsString());
+        } else if (message instanceof Player) {
+            Map<String, Object> asMap = new HashMap<String, Object>();
+            Player asPlayer = (Player) message;
+            asMap.put("uuid", asPlayer.getUniqueId());
+            asMap.put("type", asPlayer.getType());
+            asMap.put("name", asPlayer.getName());
+            asMap.put("diplay_name", asPlayer.getDisplayName());
+            asMap.put("location", asPlayer.getLocation());
+            asMap.put("direction", asPlayer.getLocation().getDirection());
+            return encode(asMap);
+        } else if (message instanceof Entity) {
+            Map<String, Object> asMap = new HashMap<String, Object>();
+            Entity asEntity = (Entity) message;
+            asMap.put("id", asEntity.getEntityId());
+            asMap.put("type", asEntity.getType());
+            asMap.put("name", asEntity.getName());
+            asMap.put("location", asEntity.getLocation());
+            return encode(asMap);
         } else if (message instanceof Block) {
             org.bukkit.block.Block asBlock = (Block) message;
             Location loc = asBlock.getLocation();

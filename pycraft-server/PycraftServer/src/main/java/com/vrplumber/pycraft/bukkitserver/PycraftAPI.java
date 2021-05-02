@@ -7,6 +7,12 @@ import com.vrplumber.pycraft.bukkitserver.IHandlerRegistry;
 
 import org.bukkit.Server;
 import org.bukkit.World;
+import org.bukkit.util.Vector;
+import org.bukkit.Location;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.Block;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -193,4 +199,77 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
       this.sendError(message.messageId, 1, response);
     }
   }
+
+  public String expectString(PycraftMessage message, Integer index) throws InvalidParameterException {
+    if (index < 0 || index >= message.payload.size()) {
+      throw new InvalidParameterException(String.format("Missing String at argument %d", index));
+    }
+    Object item = message.payload.get(index);
+    if (item == null) {
+      throw new InvalidParameterException(String.format("Expected String at argument %d", index));
+    }
+    if (item instanceof String) {
+      return (String) item;
+    }
+    throw new InvalidParameterException(String.format("Non-String at argument %d", index));
+  }
+
+  public Integer expectInteger(PycraftMessage message, Integer index) throws InvalidParameterException {
+    if (index < 0 || index >= message.payload.size()) {
+      throw new InvalidParameterException(String.format("Missing Integer at argument %d", index));
+    }
+    Object item = message.payload.get(index);
+    if (item == null) {
+      throw new InvalidParameterException(String.format("Expected Integer at argument %d", index));
+    }
+    if (item instanceof Integer) {
+      return (Integer) item;
+    }
+    throw new InvalidParameterException(String.format("Non-Integer at argument %d", index));
+  }
+
+  private Double getNumber(List<Object> items, Integer index) {
+    Object item = items.get(index);
+    if (item instanceof Integer) {
+      return ((Integer) item).doubleValue();
+    } else if (item instanceof Double) {
+      return (Double) item;
+    } else if (item instanceof Float) {
+      return ((Float) item).doubleValue();
+    } else {
+      throw new InvalidParameterException(String.format("Vector value %d is not a number %s", index, item.toString()));
+    }
+  }
+
+  public Vector expectVector(PycraftMessage message, Integer index) throws InvalidParameterException {
+    if (index < 0 || index >= message.payload.size()) {
+      throw new InvalidParameterException(String.format("Missing Vector at argument %d", index));
+    }
+    Object item = message.payload.get(index);
+    if (item == null) {
+      throw new InvalidParameterException(String.format("Expected Vector at argument %d", index));
+    }
+    if (!(item instanceof List<?>)) {
+      throw new InvalidParameterException(String.format("Did not get a list at argument %d", index));
+    }
+    List<Object> asList = (List<Object>) item;
+    if (asList.size() != 3) {
+      throw new InvalidParameterException(String.format("Did not get 3 items in list at argument %d", index));
+    }
+    Vector asVector = new Vector();
+    asVector.setX(getNumber(asList, 0));
+    asVector.setY(getNumber(asList, 1));
+    asVector.setZ(getNumber(asList, 2));
+    return asVector;
+  }
+
+  public BlockData expectBlockData(PycraftMessage message, Integer index) throws InvalidParameterException {
+    String description = expectString(message, index);
+    return getServer().createBlockData(description);
+  }
+
+  public EntityType expectEntityType(PycraftMessage message, Integer index) throws InvalidParameterException {
+
+  }
+
 }

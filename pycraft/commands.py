@@ -74,6 +74,18 @@ def spawn_drop(type_id, *, mc=None, user=None):
 
 
 @expose()
+def spawn_shower(type_id, count=30, *, mc=None, user=None):
+    """Spawn an entity 50m overhead dropping onto your location
+
+    Use this to e.g. drop a creeper to their death and generate gunpowder
+    """
+    position = user.position + user.direction + Vec3(0, 50, 0)
+    for i in range(count):
+        spawn(type_id, position=position, mc=mc, user=user)
+    return count
+
+
+@expose()
 def block(type_id, position=None, *, mc=None, user=None):
     """Create a block with the given type_id at position"""
     if position is None:
@@ -274,3 +286,40 @@ def block_list(search=None):
 
     names = sorted(BLOCK_NAMES.keys())
     return " ".join(names)
+
+
+@expose()
+def stairs(
+    depth=10,
+    ystep=1,
+    position=None,
+    direction=None,
+    material='granite',
+    *,
+    mc=None,
+    user=None,
+):
+    """Read blocks to create a template that can be stamped elsewhere"""
+    from .bulldozer import roughly_forward
+
+    if direction is None:
+        direction = user.direction
+    direction = roughly_forward(direction)
+
+    if not direction:
+        raise RuntimeError("Unable to find direction")
+
+    material = blocks.Block.as_instance(material)
+
+    step = Vec3(direction.x, ystep, direction.z)
+    if position is None:
+        position = user.tile_position + (step if ystep < 0 else direction)
+
+    current = position
+    air = material.as_instance('AIR')
+    for i in range(depth):
+        mc.setBlock(current.x, current.y, current.z, material)
+        mc.setBlock(current.x, current.y + 1, current.z, air)
+        mc.setBlock(current.x, current.y + 2, current.z, air)
+        mc.setBlock(current.x, current.y + 3, current.z, air)
+        current = current + step

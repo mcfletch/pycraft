@@ -19,6 +19,7 @@ class HandlerRegistry implements IHandlerRegistry {
         handlers = new ArrayList<Class>();
         handlers.add(EchoHandler.class);
         handlers.add(WorldHandler.class);
+        handlers.add(SubscriptionHandler.class);
     }
 
     private static HandlerRegistry instance = null;

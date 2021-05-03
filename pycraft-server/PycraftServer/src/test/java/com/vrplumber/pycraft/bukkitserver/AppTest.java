@@ -13,13 +13,18 @@ import java.util.List;
 import java.util.logging.Handler;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import org.bukkit.material.MaterialData;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.Server;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
@@ -41,10 +46,11 @@ public class AppTest {
   private APIServer apiServer;
   private HandlerRegistry registry;
   private PycraftAPI api;
+  private ServerMock server;
 
   @BeforeAll
   public void setUp() {
-    ServerMock server = new ServerMock();
+    server = new ServerMock();
     MockBukkit.mock(server);
     server.addSimpleWorld("sample-world");
     server.addPlayer();
@@ -65,6 +71,7 @@ public class AppTest {
     }
 
     api = new PycraftAPI(apiServer, fakeSocket, registry);
+    apiServer.clients.add(api);
   }
 
   @AfterAll
@@ -240,6 +247,21 @@ public class AppTest {
     PycraftAPI api = getMockApi();
     api.dispatch("1,World.postToChat,[\"Hello Chat\"]");
     assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
+  }
+
+  @Test
+  public void subscribeToChat() {
+    PycraftAPI api = getMockApi();
+    World world = server.getWorlds().get(0);
+    PluginManager pluginManager = server.getPluginManager();
+    api.dispatch("1,subscribe,[\"AsyncPlayerChatEvent\",true]");
+    assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
+
+    Set<Player> targets = new HashSet<>();
+    AsyncPlayerChatEvent event = new AsyncPlayerChatEvent(true, world.getPlayers().get(0), "Sample Message", targets);
+    pluginManager.callEvent(event);
+    assertTrue(api.lastResponse.indexOf("Sample Message") > 0, api.lastResponse);
+
   }
 
 }

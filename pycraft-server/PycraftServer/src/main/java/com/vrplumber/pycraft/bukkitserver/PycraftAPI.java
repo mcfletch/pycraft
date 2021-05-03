@@ -13,6 +13,7 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.Block;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -30,6 +31,8 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import javax.swing.text.html.parser.Entity;
 
 public class PycraftAPI implements Runnable, IPycraftAPI {
   public PycraftServerPlugin getPlugin() {
@@ -78,10 +81,11 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
   public BufferedWriter sender;
   public BufferedReader reader;
   public PycraftEncoder encoder;
+  public Map<String, PycraftMessage> subscriptions;
 
   public String lastResponse;
 
-  public boolean send(String formatted) {
+  public synchronized boolean send(String formatted) {
     /* Send a fully formatted message to sender */
     lastResponse = formatted;
     if (wanted && sender != null) {
@@ -122,6 +126,7 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
     this.socket = socket;
     this.registry = registry;
     this.encoder = new PycraftEncoder();
+    this.subscriptions = new HashMap<String, PycraftMessage>();
     try {
       InputStream is = socket.getInputStream();
       OutputStream os = socket.getOutputStream();
@@ -155,6 +160,7 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
       }
     }
   }
+
   // public String encodeMessage(List<?> message) {
   // List<String> content = new ArrayList<String>();
   // for (Object item: message) {
@@ -169,6 +175,15 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
   // }
   // return String.format("[%s]",String.join(",",content));
   // }
+  public boolean onEvent(Event event) {
+    /* Handle user's subscriptions and sending them the events */
+    PycraftMessage request = this.subscriptions.get(event.getEventName());
+    if (request != null) {
+      this.sendResponse(request.messageId, event);
+      return true;
+    }
+    return false;
+  };
 
   public void dispatch(String line) {
     /* Given an incoming string line, parse into a message and handle if possible */
@@ -200,28 +215,37 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
     }
   }
 
-  public String expectString(PycraftMessage message, Integer index) throws InvalidParameterException {
+  public Object getMessageItem(PycraftMessage message, Integer index) throws InvalidParameterException {
     if (index < 0 || index >= message.payload.size()) {
-      throw new InvalidParameterException(String.format("Missing String at argument %d", index));
+      throw new InvalidParameterException(String.format("Missing argument %d", index));
     }
     Object item = message.payload.get(index);
     if (item == null) {
-      throw new InvalidParameterException(String.format("Expected String at argument %d", index));
+      throw new InvalidParameterException(String.format("Expected non-null argument at %d", index));
     }
+    return item;
+  }
+
+  public String expectString(PycraftMessage message, Integer index) throws InvalidParameterException {
+    Object item = getMessageItem(message, index);
     if (item instanceof String) {
       return (String) item;
     }
     throw new InvalidParameterException(String.format("Non-String at argument %d", index));
   }
 
+  public Boolean expectBoolean(PycraftMessage message, Integer index) throws InvalidParameterException {
+    Object item = getMessageItem(message, index);
+    if (item instanceof Integer) {
+      return ((Integer) item) != 0;
+    } else if (item instanceof Boolean) {
+      return (Boolean) item;
+    }
+    throw new InvalidParameterException(String.format("Non-String at argument %d", index));
+  }
+
   public Integer expectInteger(PycraftMessage message, Integer index) throws InvalidParameterException {
-    if (index < 0 || index >= message.payload.size()) {
-      throw new InvalidParameterException(String.format("Missing Integer at argument %d", index));
-    }
-    Object item = message.payload.get(index);
-    if (item == null) {
-      throw new InvalidParameterException(String.format("Expected Integer at argument %d", index));
-    }
+    Object item = getMessageItem(message, index);
     if (item instanceof Integer) {
       return (Integer) item;
     }
@@ -242,13 +266,7 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
   }
 
   public Vector expectVector(PycraftMessage message, Integer index) throws InvalidParameterException {
-    if (index < 0 || index >= message.payload.size()) {
-      throw new InvalidParameterException(String.format("Missing Vector at argument %d", index));
-    }
-    Object item = message.payload.get(index);
-    if (item == null) {
-      throw new InvalidParameterException(String.format("Expected Vector at argument %d", index));
-    }
+    Object item = getMessageItem(message, index);
     if (!(item instanceof List<?>)) {
       throw new InvalidParameterException(String.format("Did not get a list at argument %d", index));
     }
@@ -269,7 +287,8 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
   }
 
   public EntityType expectEntityType(PycraftMessage message, Integer index) throws InvalidParameterException {
-
+    String value = expectString(message, index);
+    return EntityType.valueOf((String) value);
   }
 
 }

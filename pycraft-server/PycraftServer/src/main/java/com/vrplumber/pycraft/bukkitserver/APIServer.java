@@ -15,6 +15,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Objects;
 import javax.net.ServerSocketFactory;
 
@@ -44,6 +45,7 @@ public class APIServer implements Runnable {
   public IHandlerRegistry handlerRegistry;
 
   public APIServer(IHandlerRegistry registry) {
+    clients = new ArrayList<PycraftAPI>();
     handlerRegistry = registry;
   }
 

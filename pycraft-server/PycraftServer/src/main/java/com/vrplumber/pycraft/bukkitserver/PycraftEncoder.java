@@ -19,6 +19,10 @@ import org.bukkit.Location;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 
 public class PycraftEncoder {
     /* Encodes/Decodes a subset of JSON */
@@ -82,6 +86,15 @@ public class PycraftEncoder {
                                     throw new InvalidParameterException(
                                             String.format("Malformed list, more closing brackets then opening ones"));
                                 }
+                            } else if (line.startsWith("true")) {
+                                result.add(Boolean.TRUE);
+                                consumed = 4;
+                            } else if (line.startsWith("false")) {
+                                result.add(Boolean.FALSE);
+                                consumed = 5;
+                            } else if (line.startsWith("null")) {
+                                result.add((Object) null);
+                                consumed = 4;
                             } else {
                                 throw new InvalidParameterException(String.format("Unknown data-format for %s", line));
                             }
@@ -143,7 +156,6 @@ public class PycraftEncoder {
             asMap.put("uuid", asPlayer.getUniqueId());
             asMap.put("type", asPlayer.getType());
             asMap.put("name", asPlayer.getName());
-            asMap.put("diplay_name", asPlayer.getDisplayName());
             asMap.put("location", asPlayer.getLocation());
             asMap.put("direction", asPlayer.getLocation().getDirection());
             return encode(asMap);
@@ -170,6 +182,20 @@ public class PycraftEncoder {
             Vector vec = (Vector) message;
             List<Double> asList = Arrays.asList((Double) vec.getX(), (Double) vec.getY(), (Double) vec.getZ());
             return encode(asList);
+        } else if (message instanceof AsyncPlayerChatEvent) {
+            AsyncPlayerChatEvent asEvent = (AsyncPlayerChatEvent) message;
+            Map<String, Object> asMap = new HashMap<String, Object>();
+            asMap.put("type", asEvent.getEventName());
+            asMap.put("player", asEvent.getPlayer());
+            asMap.put("message", asEvent.getMessage());
+            return encode(asMap);
+        } else if (message instanceof BlockBreakEvent) {
+            BlockBreakEvent asEvent = (BlockBreakEvent) message;
+            Map<String, Object> asMap = new HashMap<String, Object>();
+            asMap.put("type", asEvent.getEventName());
+            asMap.put("block", asEvent.getBlock());
+            asMap.put("player", asEvent.getPlayer());
+            return encode(asMap);
         }
         return (String) "null";
     }

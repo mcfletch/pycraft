@@ -14,6 +14,10 @@ class MethodHandler implements MessageHandler {
     public Class cls = null;
     public Method pointer = null;
 
+    public void register(HandlerRegistry registry) {
+        /* Called when we are registered with the registry (api likely not up yet) */
+    }
+
     public static List<MethodHandler> forClass(Class cls) {
         return forClass(cls, null);
     }

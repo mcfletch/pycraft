@@ -44,17 +44,18 @@ public class PycraftServerPlugin extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    getLogger().info("Hello, SpigotMC!");
+    getLogger().info("Pycraft Server Init");
     registry = HandlerRegistry.getInstance();
     registry.registerHandlers();
     endpoint = new APIServer(registry);
     endpoint.setPlugin(this);
     getServer().getPluginManager().registerEvents(new PycraftListener(this), this);
+    endpoint.createServer();
   }
 
   @Override
   public void onDisable() {
-    getLogger().info("See you again, SpigotMC!");
+    getLogger().info("Pycraft Server Deinit");
     if (endpoint != null) {
       endpoint.setWanted(false);
     }

@@ -4,6 +4,7 @@ import com.vrplumber.pycraft.bukkitserver.PycraftServerPlugin;
 import com.vrplumber.pycraft.bukkitserver.IHandlerRegistry;
 import com.vrplumber.pycraft.bukkitserver.IPycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -11,6 +12,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.logging.Logger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
@@ -45,7 +47,9 @@ public class APIServer implements Runnable {
   public IHandlerRegistry handlerRegistry;
 
   public APIServer(IHandlerRegistry registry) {
+    wanted = true;
     clients = new ArrayList<PycraftAPI>();
+    clientThreads = new ArrayList<Thread>();
     handlerRegistry = registry;
   }
 
@@ -54,32 +58,39 @@ public class APIServer implements Runnable {
     serverThread.start();
   }
 
+  public Logger getLogger() {
+    return plugin.getLogger();
+  }
+
   public void run() {
     ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
     serverSocket = null;
+    Logger log = getLogger();
     try {
       serverSocket = serverSocketFactory.createServerSocket(port);
     } catch (IOException ignored) {
+      log.warning(String.format("Unable to bind on port %d, server exiting", port));
       return;
     }
-    System.out.printf("API Server running on port: %s%n", port);
+    log.info(String.format("API Server running on port: %s", port));
     try {
       while (wanted) {
         Socket socket = null;
         try {
           socket = serverSocket.accept();
-          InputStream is = socket.getInputStream();
-          BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
           PycraftAPI handler = new PycraftAPI(this, socket, handlerRegistry);
           clients.add(handler);
+          log.info(String.format("Connection from: %s (#%d)", socket.getInetAddress().toString(), clients.size()));
           Thread clientThread = new Thread(handler);
           clientThreads.add(clientThread);
+          clientThread.start();
 
         } catch (IOException err) {
           // Just handle next request.
           err.printStackTrace();
         }
       }
+      log.warning(String.format("Wanted marked false, exiting APIServer thread"));
     } finally {
       if (serverSocket != null) {
         try {
@@ -91,8 +102,12 @@ public class APIServer implements Runnable {
         for (PycraftAPI client : clients) {
           client.setWanted(false);
         }
-        clients.clear();
-        clientThreads.clear();
+        if (clients != null) {
+          clients.clear();
+        }
+        if (clientThreads != null) {
+          clientThreads.clear();
+        }
       }
     }
   }

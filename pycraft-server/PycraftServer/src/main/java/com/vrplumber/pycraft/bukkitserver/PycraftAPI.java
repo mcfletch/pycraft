@@ -25,6 +25,7 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.security.InvalidParameterException;
 
+import java.util.logging.Logger;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Arrays;
@@ -92,6 +93,7 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
       try {
         sender.write(formatted);
         sender.newLine();
+        sender.flush();
         return true;
       } catch (IOException err) {
         err.printStackTrace();
@@ -116,7 +118,9 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
 
   public String sendError(Integer request, Integer errCode, String formatted) {
     /* Send a response to the particular request */
+    Logger log = server.getLogger();
     String to_send = String.format("%d,%d,%s", request, errCode, formatted);
+    log.info(String.format("sending %s", to_send));
     send(to_send);
     return to_send;
   }
@@ -139,13 +143,20 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
   }
 
   public void run() {
+    Logger log = server.getLogger();
     try {
       while (wanted) {
         String line = reader.readLine();
         if (line == null) {
+          log.warning(String.format("Disconnection from %s", this.socket.getInetAddress().toString()));
           this.wanted = false;
         } else {
-          this.dispatch(line);
+          log.warning(String.format("Incoming line %s", line));
+          try {
+            this.dispatch(line);
+          } catch (Exception err) {
+            err.printStackTrace();
+          }
         }
       }
     } catch (IOException err) {

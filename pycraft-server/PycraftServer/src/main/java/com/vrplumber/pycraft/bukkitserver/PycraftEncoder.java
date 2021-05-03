@@ -69,7 +69,6 @@ public class PycraftEncoder {
                             consumed = match.end();
                         } else {
                             if (line.startsWith("[")) {
-                                System.out.printf("Starting array: %s", line);
                                 List<Object> child = new ArrayList<Object>();
                                 result.add(child);
                                 result = child;
@@ -78,11 +77,9 @@ public class PycraftEncoder {
                             } else if (line.startsWith("]")) {
                                 consumed = 1;
                                 if (stack.size() > 1) {
-                                    System.out.printf("Finished array: %s", line);
                                     stack.remove(result);
                                     result = stack.get(stack.size() - 1);
                                 } else {
-                                    System.out.printf("Unable to pop array: %s", stack);
                                     throw new InvalidParameterException(
                                             String.format("Malformed list, more closing brackets then opening ones"));
                                 }

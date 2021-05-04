@@ -29,6 +29,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.TestInstance;
+
+// import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -261,6 +263,40 @@ public class AppTest {
     AsyncPlayerChatEvent event = new AsyncPlayerChatEvent(true, world.getPlayers().get(0), "Sample Message", targets);
     pluginManager.callEvent(event);
     assertTrue(api.lastResponse.indexOf("Sample Message") > 0, api.lastResponse);
+
+  }
+
+  @Test
+  public void testConverterByClass() {
+    PycraftConverterRegistry registry = new PycraftConverterRegistry();
+    PycraftAPI api = getMockApi();
+
+    Object result = registry.toJava(String.class, api, (String) "Sample String");
+    assertTrue(result.equals("Sample String"));
+    String encoded = null;
+    encoded = registry.fromJava(api, "\n\t");
+    assertEquals(encoded, "\"\\n\\t\"");
+
+    result = registry.toJava(String.class, api, (Object) Boolean.TRUE);
+    assertTrue(result.equals("true"));
+    encoded = registry.fromJava(api, Boolean.TRUE);
+    assertEquals(encoded, "true");
+
+    result = registry.toJava(Double.class, api, (Double) 3.1415);
+    assertEquals((double) result, 3.1415, 0.001);
+    encoded = registry.fromJava(api, (Double) 3.1415);
+    assertEquals(encoded, "3.1415");
+
+    result = registry.toJava(Integer.class, api, (Double) 3.1415);
+    assertTrue(result == (Integer) 3);
+    encoded = registry.fromJava(api, (Integer) 31415);
+    assertEquals(encoded, "31415");
+
+    List<Integer> intList = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
+    result = registry.toJava(intList.getClass(), api, intList);
+    assertTrue(result == intList);
+    encoded = registry.fromJava(api, intList);
+    assertEquals(encoded, "[1,2,3]");
 
   }
 

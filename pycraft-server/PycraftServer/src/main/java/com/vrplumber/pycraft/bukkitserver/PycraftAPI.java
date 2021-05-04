@@ -118,7 +118,7 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
 
   public String sendError(Integer request, Integer errCode, String formatted) {
     /* Send a response to the particular request */
-    Logger log = server.getLogger();
+    Logger log = getLogger();
     String to_send = String.format("%d,%d,%s", request, errCode, formatted);
     log.info(String.format("sending %s", to_send));
     send(to_send);
@@ -142,8 +142,15 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
     }
   }
 
+  public Logger getLogger() {
+    if (server != null) {
+      return server.getLogger();
+    }
+    return null;
+  }
+
   public void run() {
-    Logger log = server.getLogger();
+    Logger log = getLogger();
     try {
       while (wanted) {
         String line = reader.readLine();

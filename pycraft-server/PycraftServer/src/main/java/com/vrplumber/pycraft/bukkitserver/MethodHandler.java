@@ -2,7 +2,9 @@ package com.vrplumber.pycraft.bukkitserver;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.Class;
+import java.lang.module.ModuleDescriptor.Modifier;
 import java.util.List;
 import java.util.ArrayList;
 import java.security.InvalidParameterException;
@@ -12,6 +14,7 @@ import com.vrplumber.pycraft.bukkitserver.MessageHandler;
 class MethodHandler implements MessageHandler {
     /* Handle a method by dispatching to a method on a class instance */
     public Class cls = null;
+    public Boolean staticMethod = false;
     public Method pointer = null;
 
     public void register(HandlerRegistry registry) {
@@ -30,8 +33,12 @@ class MethodHandler implements MessageHandler {
         Method[] methods = cls.getMethods();
         List<MethodHandler> handlers = new ArrayList<MethodHandler>();
         for (Method method : methods) {
+            int modifiers = method.getModifiers();
+            if (!(Modifier.isPublic(modifiers))) {
+                continue;
+            }
             if (names == null || names.indexOf(method.getName()) > -1) {
-                MethodHandler handler = new MethodHandler(cls, method);
+                MethodHandler handler = new MethodHandler(cls, method, Modifier.isStatic(modifiers));
                 handlers.add(handler);
             }
         }
@@ -42,12 +49,13 @@ class MethodHandler implements MessageHandler {
         return pointer.getName();
     }
 
-    public MethodHandler(Class cls, Method pointer) {
+    public MethodHandler(Class cls, Method pointer, boolean isStatic) {
         /*
          * Create a new MethodHandler that operates on cls instances of the given Method
          */
         this.cls = cls;
         this.pointer = pointer;
+        this.staticMethod = isStatic;
     }
 
     public List<Object> checkArguments(PycraftAPI api, PycraftMessage message) throws InvalidParameterException {

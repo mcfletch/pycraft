@@ -11,6 +11,7 @@ import com.vrplumber.pycraft.bukkitserver.converters.PycraftConverterRegistry;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Handler;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +23,7 @@ import java.io.InputStream;
 import java.net.Socket;
 import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -298,6 +300,24 @@ public class AppTest {
     assertTrue(result == intList);
     encoded = registry.fromJava(api, intList);
     assertEquals(encoded, "[1,2,3]");
+
+    Map<String, Integer> intMap = new HashMap<String, Integer>();
+    intMap.put("x", 3);
+    result = registry.toJava(intMap.getClass(), api, intMap);
+    assertTrue(result == intMap);
+    encoded = registry.fromJava(api, intMap);
+    assertEquals(encoded, "{\"x\":3}");
+
+    Integer[] intArray = new Integer[] { (Integer) 1, (Integer) 2, (Integer) 3 };
+    result = registry.toJava(Integer[].class, api, intArray);
+    assertTrue(result == intArray);
+    encoded = registry.fromJava(api, intArray);
+    assertEquals(encoded, "[1,2,3]");
+
+    result = registry.toJava(Material.class, api, (String) "AIR");
+    assertTrue(result == Material.AIR);
+    encoded = registry.fromJava(api, Material.AIR);
+    assertEquals(encoded, "\"AIR\"");
 
   }
 

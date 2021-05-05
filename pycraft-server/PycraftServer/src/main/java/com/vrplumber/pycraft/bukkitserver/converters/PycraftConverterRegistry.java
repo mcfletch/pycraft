@@ -1,22 +1,23 @@
-package com.vrplumber.pycraft.bukkitserver;
+package com.vrplumber.pycraft.bukkitserver.converters;
 
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.lang.Class;
-import com.vrplumber.pycraft.bukkitserver.Converter;
-import com.vrplumber.pycraft.bukkitserver.StringConverter;
-import com.vrplumber.pycraft.bukkitserver.BooleanConverter;
-import com.vrplumber.pycraft.bukkitserver.ListConverter;
-import com.vrplumber.pycraft.bukkitserver.FloatConverter;
-import com.vrplumber.pycraft.bukkitserver.DoubleConverter;
+import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
+import com.vrplumber.pycraft.bukkitserver.converters.Converter;
+import com.vrplumber.pycraft.bukkitserver.converters.StringConverter;
+import com.vrplumber.pycraft.bukkitserver.converters.BooleanConverter;
+import com.vrplumber.pycraft.bukkitserver.converters.ListConverter;
+import com.vrplumber.pycraft.bukkitserver.converters.FloatConverter;
+import com.vrplumber.pycraft.bukkitserver.converters.DoubleConverter;
 
 public class PycraftConverterRegistry {
     /* Registers .class => Converter.toJava(api, value, finalType) converter */
     public Map<Class<?>, Converter> mapping;
 
-    PycraftConverterRegistry() {
+    public PycraftConverterRegistry() {
         mapping = new HashMap<Class<?>, Converter>();
         mapping.put(String.class, new StringConverter());
         mapping.put(Boolean.class, new BooleanConverter());

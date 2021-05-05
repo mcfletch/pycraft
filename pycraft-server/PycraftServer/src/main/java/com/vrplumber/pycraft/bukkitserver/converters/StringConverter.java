@@ -1,6 +1,7 @@
-package com.vrplumber.pycraft.bukkitserver;
+package com.vrplumber.pycraft.bukkitserver.converters;
 
-import com.vrplumber.pycraft.bukkitserver.Converter;
+import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
+import com.vrplumber.pycraft.bukkitserver.converters.Converter;
 
 public class StringConverter implements Converter {
     /* Given a message and an index convert the value to an instance of T */

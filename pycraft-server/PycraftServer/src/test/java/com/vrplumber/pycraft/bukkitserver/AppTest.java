@@ -7,6 +7,7 @@ import com.vrplumber.pycraft.bukkitserver.HandlerRegistry;
 import com.vrplumber.pycraft.bukkitserver.PycraftEncoder;
 import com.vrplumber.pycraft.bukkitserver.APIServer;
 import com.vrplumber.pycraft.bukkitserver.PycraftServerPlugin;
+import com.vrplumber.pycraft.bukkitserver.converters.PycraftConverterRegistry;
 
 import java.util.Arrays;
 import java.util.List;

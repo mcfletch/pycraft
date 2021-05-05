@@ -1,7 +1,8 @@
-package com.vrplumber.pycraft.bukkitserver;
+package com.vrplumber.pycraft.bukkitserver.converters;
 
 import java.security.InvalidParameterException;
-import com.vrplumber.pycraft.bukkitserver.Converter;
+import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
+import com.vrplumber.pycraft.bukkitserver.converters.Converter;
 
 public class BooleanConverter implements Converter {
     /* Given a message and an index convert the value to an instance of T */

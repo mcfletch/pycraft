@@ -1,4 +1,7 @@
-package com.vrplumber.pycraft.bukkitserver;
+package com.vrplumber.pycraft.bukkitserver.converters;
+
+import java.lang.Class;
+import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 
 public interface Converter {
     /* Given a message and an index convert the value to an instance of T */

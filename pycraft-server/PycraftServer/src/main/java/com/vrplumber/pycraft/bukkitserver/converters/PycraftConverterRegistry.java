@@ -5,10 +5,12 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.UUID;
 import java.lang.Class;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -27,6 +29,7 @@ import com.vrplumber.pycraft.bukkitserver.converters.EnumConverter;
 import com.vrplumber.pycraft.bukkitserver.converters.BlockConverter;
 import com.vrplumber.pycraft.bukkitserver.converters.EntityConverter;
 import com.vrplumber.pycraft.bukkitserver.converters.WorldConverter;
+import com.vrplumber.pycraft.bukkitserver.converters.UUIDConverter;
 
 public class PycraftConverterRegistry {
     /* Registers .class => Converter.toJava(api, value, finalType) converter */
@@ -61,6 +64,7 @@ public class PycraftConverterRegistry {
         mapping.put(Integer.class, new IntegerConverter());
         mapping.put(Double.class, new DoubleConverter());
         mapping.put(Float.class, new FloatConverter());
+        mapping.put(UUID.class, new UUIDConverter(this));
 
         mapping.put(HashMap.class, new MapConverter(this));
         mapping.put(ArrayList.class, new ListConverter(this));
@@ -76,6 +80,7 @@ public class PycraftConverterRegistry {
         mapping.put(BlockBreakEvent.class, new BlockBreakEventConverter(this, BlockBreakEvent.class));
         mapping.put(AsyncPlayerChatEvent.class, new AsyncPlayerChatEventConverter(this, AsyncPlayerChatEvent.class));
         mapping.put(World.class, new WorldConverter(this));
+        mapping.put(Player.class, new PlayerConverter(this));
 
         // Now the interfaces, which require a linear scan, so we want to reduce
         // usage...
@@ -84,6 +89,7 @@ public class PycraftConverterRegistry {
         interfaceConverters.add(new InterfaceConverter(Enum.class, new EnumConverter(this)));
         interfaceConverters.add(new InterfaceConverter(Block.class, new BlockConverter(this)));
         interfaceConverters.add(new InterfaceConverter(Entity.class, new EntityConverter(this)));
+        interfaceConverters.add(new InterfaceConverter(Player.class, new PlayerConverter(this)));
         // This is really *just* for the test server's mocked worlds
         interfaceConverters.add(new InterfaceConverter(World.class, new WorldConverter(this)));
         interfaceConverters.add(new InterfaceConverter(BlockData.class, new BlockDataConverter(this)));

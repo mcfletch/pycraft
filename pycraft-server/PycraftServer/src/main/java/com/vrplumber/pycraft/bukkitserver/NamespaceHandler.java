@@ -35,10 +35,10 @@ public abstract class NamespaceHandler implements MessageHandler {
         if (subHandler == null) {
             List<String> response = Arrays.asList("unknown-method", String.join(name));
             api.sendError(message.messageId, 1, response);
-            return;
+            return (Object) null;
         }
         message.addImplementation(subHandler);
         subHandler.handle(api, message);
-        return;
+        return (Object) null;
     };
 }

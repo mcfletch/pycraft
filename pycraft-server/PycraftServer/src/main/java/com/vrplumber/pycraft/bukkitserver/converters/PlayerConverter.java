@@ -21,11 +21,11 @@ import org.bukkit.entity.Player;
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.converters.Converter;
 
-public class EntityConverter implements Converter {
+public class PlayerConverter implements Converter {
     /* Given a message and an index convert the value to an instance of T */
     PycraftConverterRegistry registry;
 
-    EntityConverter(PycraftConverterRegistry registry) {
+    PlayerConverter(PycraftConverterRegistry registry) {
         this.registry = registry;
     }
 
@@ -43,34 +43,28 @@ public class EntityConverter implements Converter {
             if (player != null) {
                 return player;
             }
-            for (World world : api.getServer().getWorlds()) {
-                for (Entity entity : world.getEntities()) {
-                    if (entity.getName() == (String) value) {
-                        return entity;
-                    }
-                }
-
-            }
             throw new InvalidParameterException(
                     String.format("Could not find player by uuid or name: %s", value.toString()));
         }
         throw new InvalidParameterException(
-                String.format("Need a UUID or name for entity lookup in String format, got %s", value.toString()));
+                String.format("Need a UUID or name for player lookup in String format, got %s", value.toString()));
     }
 
     public Map<String, Object> entityAsMapping(PycraftAPI api, Object value) {
-        org.bukkit.entity.Entity asEntity = (Entity) value;
-        Location loc = asEntity.getLocation();
+        Player asPlayer = (Player) value;
+        Location loc = asPlayer.getLocation();
         Map<String, Object> asMap = new HashMap<String, Object>();
-        asMap.put("world", asEntity.getWorld().getName());
+        asMap.put("world", asPlayer.getWorld().getName());
         asMap.put("location", loc);
         try {
-            asMap.put("uuid", asEntity.getUniqueId());
+            asMap.put("uuid", asPlayer.getUniqueId());
         } catch (Exception e) {
             // Mock bukkit exception...
         }
-        asMap.put("type", asEntity.getType());
-        asMap.put("name", asEntity.getName());
+        asMap.put("type", asPlayer.getType());
+        asMap.put("name", asPlayer.getName());
+        asMap.put("display_name", asPlayer.getDisplayName());
+        asMap.put("last_played", (Double) ((double) asPlayer.getLastPlayed()));
         return asMap;
     }
 

@@ -142,13 +142,22 @@ async def test_api():
         response = await server.call_remote(
             "World.setBlock", [world, 0, 74, 0], 'minecraft:netherite_block'
         )
-        for material in await server.call_remote(
-            "World.getMaterialTypes",
-        ):
-            print(material)
-        for entity in await server.call_remote("World.getEntityTypes"):
-            print(entity)
+        if world == 'world':  # default world name...
+            for material in await server.call_remote(
+                "World.getMaterialTypes",
+            ):
+                print(material)
+            for entity in await server.call_remote("World.getEntityTypes"):
+                print(entity)
 
+        for entity in await server.call_remote("World.getEntities", world):
+            print(entity)
+            if entity.get('type') == 'SKELETON':
+                await server.call_remote("Entity.remove", entity['uuid'])
+    queue = await server.subscribe("AsyncPlayerChatEvent")
+    while True:
+        event = await queue.get()
+        print('Event: %s', event)
     await server.close()
 
 

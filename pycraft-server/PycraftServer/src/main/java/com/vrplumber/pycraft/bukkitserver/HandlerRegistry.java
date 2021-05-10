@@ -3,6 +3,7 @@ package com.vrplumber.pycraft.bukkitserver;
 import com.vrplumber.pycraft.bukkitserver.APIServer;
 import com.vrplumber.pycraft.bukkitserver.EchoHandler;
 import com.vrplumber.pycraft.bukkitserver.WorldHandler;
+import com.vrplumber.pycraft.bukkitserver.EntityHandler;
 import com.vrplumber.pycraft.bukkitserver.MessageHandler;
 import com.vrplumber.pycraft.bukkitserver.PycraftMessage;
 import com.vrplumber.pycraft.bukkitserver.IHandlerRegistry;
@@ -20,6 +21,7 @@ class HandlerRegistry implements IHandlerRegistry {
         handlers.add(EchoHandler.class);
         handlers.add(WorldHandler.class);
         handlers.add(SubscriptionHandler.class);
+        handlers.add(EntityHandler.class);
     }
 
     private static HandlerRegistry instance = null;

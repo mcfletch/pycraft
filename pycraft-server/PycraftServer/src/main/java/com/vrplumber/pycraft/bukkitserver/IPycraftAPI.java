@@ -9,5 +9,5 @@ public interface IPycraftAPI {
 
   public String sendResponse(Integer request, String formatted);
 
-  public void dispatch(String line);
+  public void dispatch(String line, boolean async);
 }

@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.Class;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.ArrayList;
 import java.security.InvalidParameterException;
 import com.vrplumber.pycraft.bukkitserver.MessageHandler;
@@ -14,7 +15,6 @@ class MethodHandler implements MessageHandler {
     public Class cls = null;
     public Boolean staticMethod = false;
     public Method pointer = null;
-    public Method defaultTarget = null; // Function.invoke(api,message) => producing instance of cls
 
     public void register(HandlerRegistry registry) {
         /* Called when we are registered with the registry (api likely not up yet) */
@@ -87,23 +87,8 @@ class MethodHandler implements MessageHandler {
         List<Object> arguments = message.payload;
         if (!staticMethod) {
             int consumed = 0;
-            if (message.payload.size() < 1) {
-                if (defaultTarget != null) {
-                    try {
-                        message.instance = defaultTarget.invoke(api, message);
-                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                        e.printStackTrace();
-                        throw new InvalidParameterException(String.format("Unable to run defaultTarget %s on %s.%s",
-                                defaultTarget.getName(), cls.getName(), pointer.getName()));
-                    }
-                    consumed = 0;
-                } else {
-                    throw new InvalidParameterException("No target specified for self/this");
-                }
-            } else {
-                message.instance = api.expectType(message, 0, cls);
-                consumed = 1;
-            }
+            message.instance = api.expectType(message, 0, cls);
+            consumed = 1;
             arguments = message.payload.subList(consumed, message.payload.size());
         } else {
             message.instance = null;

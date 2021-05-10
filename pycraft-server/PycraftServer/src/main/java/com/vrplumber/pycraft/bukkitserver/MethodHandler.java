@@ -4,11 +4,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.Class;
-import java.lang.module.ModuleDescriptor.Modifier;
 import java.util.List;
 import java.util.ArrayList;
 import java.security.InvalidParameterException;
-import java.security.IllegalAccessExceptionJava;
 import com.vrplumber.pycraft.bukkitserver.MessageHandler;
 
 class MethodHandler implements MessageHandler {
@@ -16,6 +14,7 @@ class MethodHandler implements MessageHandler {
     public Class cls = null;
     public Boolean staticMethod = false;
     public Method pointer = null;
+    public Method defaultTarget = null; // Function.invoke(api,message) => producing instance of cls
 
     public void register(HandlerRegistry registry) {
         /* Called when we are registered with the registry (api likely not up yet) */
@@ -58,22 +57,6 @@ class MethodHandler implements MessageHandler {
         this.staticMethod = isStatic;
     }
 
-    public List<Object> checkArguments(PycraftAPI api, PycraftMessage message) throws InvalidParameterException {
-        /*
-         * Can arguments in message be converted to our type signature?
-         * 
-         * Attempts the conversion, raise InvalidArgumentException if not returns the
-         * converted records;
-         */
-        if (message.payload.size() != pointer.getParameterCount()) {
-            throw new InvalidParameterException(String.format("%s takes %d arguments, got %d", getMethod(),
-                    pointer.getParameterCount(), message.payload.size()));
-        }
-        List<Object> args = new ArrayList<Object>();
-        return args;
-
-    }
-
     private Object pointerInvoke(PycraftAPI api, PycraftMessage message, List<Object> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         /* Invoke our pointer doing (manual) unpacking of arguments */
@@ -101,22 +84,34 @@ class MethodHandler implements MessageHandler {
     }
 
     public Object handle(PycraftAPI api, PycraftMessage message) {
-        if (message.instance == null) {
-            throw new InvalidParameterException(
-                    String.format("%s.%s passed null instance", pointer.getName(), getMethod()));
+        List<Object> arguments = message.payload;
+        if (!staticMethod) {
+            int consumed = 0;
+            if (message.payload.size() < 1) {
+                if (defaultTarget != null) {
+                    try {
+                        message.instance = defaultTarget.invoke(api, message);
+                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                        e.printStackTrace();
+                        throw new InvalidParameterException(String.format("Unable to run defaultTarget %s on %s.%s",
+                                defaultTarget.getName(), cls.getName(), pointer.getName()));
+                    }
+                    consumed = 0;
+                } else {
+                    throw new InvalidParameterException("No target specified for self/this");
+                }
+            } else {
+                message.instance = api.expectType(message, 0, cls);
+                consumed = 1;
+            }
+            arguments = message.payload.subList(consumed, message.payload.size());
+        } else {
+            message.instance = null;
         }
-
-        if (!this.cls.isInstance(message.instance)) {
-            throw new InvalidParameterException(String.format("%s.%s passed instance %s", pointer.getName(),
-                    getMethod(), message.instance.toString()));
-        }
-
-        List<Object> arguments = this.checkArguments(api, message);
         Object result;
         try {
             result = pointerInvoke(api, message, arguments);
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             throw new InvalidParameterException(
                     String.format("%s failed with %s", pointer.toGenericString(), e.getMessage()));

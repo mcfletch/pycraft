@@ -17,15 +17,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.World;
+import org.bukkit.util.Vector;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.junit.jupiter.api.Test;
@@ -35,8 +39,11 @@ import org.junit.jupiter.api.TestInstance;
 
 // import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.*;
 
 import be.seeseemelk.mockbukkit.MockBukkit;
@@ -58,7 +65,7 @@ public class AppTest {
     server = new ServerMock();
     MockBukkit.mock(server);
     server.addSimpleWorld("sample-world");
-    server.addPlayer();
+    server.addPlayer("sam");
     plugin = (PycraftServerPlugin) MockBukkit.load(PycraftServerPlugin.class);
     HandlerRegistry registry = new HandlerRegistry();
     registry.registerHandlers();
@@ -157,9 +164,9 @@ public class AppTest {
 
     PycraftAPI api = getMockApi();
     List<Integer> response = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    assertEquals("[1,2,3]", encoder.encode(response));
+    assertEquals("[1,2,3]", encoder.encode(api, response));
 
-    api.dispatch("0,echo,[1,2,3]");
+    api.dispatch("0,echo,[1,2,3]", false);
 
     assertEquals("0,0,[1,2,3]", api.lastResponse);
 
@@ -171,14 +178,14 @@ public class AppTest {
     PycraftAPI api = getMockApi();
     HashMap<String, Object> response = new HashMap<String, Object>();
     response.put("testing", "Value");
-    assertEquals("{\"testing\":\"Value\"}", encoder.encode(response));
+    assertEquals("{\"testing\":\"Value\"}", encoder.encode(api, response));
   }
 
   @Test
   public void worldList() {
 
     PycraftAPI api = getMockApi();
-    api.dispatch("1,World.getWorlds,[]");
+    api.dispatch("1,World.getWorlds,[]", false);
     assertEquals("1,0,[\"sample-world\"]", api.lastResponse);
   }
 
@@ -186,47 +193,63 @@ public class AppTest {
   public void getWorld() {
 
     PycraftAPI api = getMockApi();
-    api.dispatch("1,World.getWorld,[]");
-    assertEquals("1,0,\"sample-world\"", api.lastResponse);
+    api.dispatch("1,World.getWorld,[null]", false);
+    assertTrue(api.lastResponse.indexOf("sample-world") > -1);
+  }
+
+  @Test
+  public void getMaterialTypes() {
+
+    PycraftAPI api = getMockApi();
+    api.dispatch("1,World.getMaterialTypes,[]", false);
+    assertTrue(api.lastResponse.indexOf("netherite_block") > -1);
+  }
+
+  @Test
+  public void getEntityTypes() {
+
+    PycraftAPI api = getMockApi();
+    api.dispatch("1,World.getEntityTypes,[]", false);
+    assertTrue(api.lastResponse.indexOf("spider") > -1);
   }
 
   @Test
   public void setWorld() {
 
     PycraftAPI api = getMockApi();
-    api.dispatch("1,World.setWorld,[\"sample-world\"]");
+    api.dispatch("1,World.setWorld,[\"sample-world\"]", false);
     assertEquals("1,0,\"sample-world\"", api.lastResponse);
   }
 
-  @Test
-  public void getBlock() {
+  // @Test
+  // public void getBlock() {
 
-    PycraftAPI api = getMockApi();
-    api.dispatch("1,World.getBlock,[[0,0,0]]");
-    assertEquals("1,0,\"sample-world\"", api.lastResponse);
-  }
+  // PycraftAPI api = getMockApi();
+  // api.dispatch("1,World.getBlock,[[\"sample-world\",0,0,0]]", false);
+  // assertEquals("1,0,\"sample-world\"", api.lastResponse);
+  // }
 
-  @Test
-  public void setBlock() {
+  // @Test
+  // public void setBlock() {
 
-    PycraftAPI api = getMockApi();
-    api.dispatch("1,World.setBlock,[[0,0,0],\"air\"]");
-    assertEquals("1,0,\"sample-world\"", api.lastResponse);
-  }
+  // PycraftAPI api = getMockApi();
+  // api.dispatch("1,World.setBlock,[[0,0,0],\"air\"]", false);
+  // assertEquals("1,0,\"sample-world\"", api.lastResponse);
+  // }
 
-  @Test
-  public void setBlocks() {
+  // @Test
+  // public void setBlocks() {
 
-    PycraftAPI api = getMockApi();
-    api.dispatch("1,World.setBlocks,[[0,0,0],[5,5,5],\"air\"]");
-    assertEquals("1,0,[[0,0,0],[5,5,5],\"air\"]", api.lastResponse);
-  }
+  // PycraftAPI api = getMockApi();
+  // api.dispatch("1,World.setBlocks,[null,[0,0,0],[5,5,5],\"air\"]", false);
+  // assertEquals("1,0,[[0,0,0],[5,5,5],\"air\"]", api.lastResponse);
+  // }
 
   @Test
   public void getGameRules() {
 
     PycraftAPI api = getMockApi();
-    api.dispatch("1,World.getGameRules,[]");
+    api.dispatch("1,World.getGameRules,[\"sample-world\"]", false);
     assertTrue(api.lastResponse.startsWith("1,0"));
   }
 
@@ -234,7 +257,7 @@ public class AppTest {
   // public void isHardcore() {
 
   // PycraftAPI api = getMockApi();
-  // api.dispatch("1,World.isHardcore,[]");
+  // api.dispatch("1,World.isHardcore,[]",false);
   // assertEquals("1,0,false", api.lastResponse);
   // }
 
@@ -242,15 +265,15 @@ public class AppTest {
   public void getPlayers() {
 
     PycraftAPI api = getMockApi();
-    api.dispatch("1,World.getPlayers,[]");
-    assertTrue(api.lastResponse.startsWith("1,0"));
+    api.dispatch("1,World.getPlayers,[\"sample-world\"]", false);
+    assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
   }
 
   @Test
   public void postToChat() {
 
     PycraftAPI api = getMockApi();
-    api.dispatch("1,World.postToChat,[\"Hello Chat\"]");
+    api.dispatch("1,World.postToChat,[\"Hello Chat\"]", false);
     assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
   }
 
@@ -259,7 +282,7 @@ public class AppTest {
     PycraftAPI api = getMockApi();
     World world = server.getWorlds().get(0);
     PluginManager pluginManager = server.getPluginManager();
-    api.dispatch("1,subscribe,[\"AsyncPlayerChatEvent\",true]");
+    api.dispatch("1,subscribe,[\"AsyncPlayerChatEvent\",true]", false);
     assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
 
     Set<Player> targets = new HashSet<>();
@@ -318,6 +341,43 @@ public class AppTest {
     assertTrue(result == Material.AIR);
     encoded = registry.fromJava(api, Material.AIR);
     assertEquals(encoded, "\"AIR\"");
+
+    encoded = registry.fromJava(api, api.getWorld().getPlayers());
+    assertTrue(encoded.startsWith("[{"));
+    assertTrue(encoded.endsWith("}]"));
+
+    // Back and forth to a vector...
+    result = registry.toJava(Vector.class, api, intList);
+    assertNotNull(result);
+    assertTrue(result instanceof Vector);
+    assertTrue(((Vector) result).getX() == 1);
+    assertTrue(((Vector) result).getZ() == 3);
+
+    result = registry.fromJava(api, result);
+    assertEquals(result, "[1.0,2.0,3.0]");
+
+    // Back and forth to a Location object
+    result = registry.toJava(Location.class, api, intList);
+    assertNotNull(result);
+    assertTrue(result instanceof Location);
+    assertTrue(((Location) result).getX() == 1);
+    assertTrue(((Location) result).getZ() == 3);
+
+    result = registry.fromJava(api, result);
+    assertEquals(result, "[\"sample-world\",1.0,2.0,3.0,0.0,0.0]");
+
+    intList.add((Integer) 8);
+    intList.add((Integer) 10);
+    result = registry.toJava(Location.class, api, intList);
+    result = registry.fromJava(api, result);
+    assertEquals(result, "[\"sample-world\",1.0,2.0,3.0,8.0,10.0]");
+
+    AsyncPlayerChatEvent chatEvent = new AsyncPlayerChatEvent(true, server.getPlayer("sam"), "Testing message",
+        server.getWorlds().get(0).getPlayers().stream().collect(Collectors.toSet()));
+    registry.fromJava(api, chatEvent);
+    assertNotNull(result);
+    assertTrue(encoded.startsWith("[{"));
+    assertTrue(encoded.endsWith("}]"));
 
   }
 

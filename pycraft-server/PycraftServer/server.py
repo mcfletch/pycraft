@@ -92,7 +92,7 @@ class Server(object):
                         await queue.put(payload)
             else:
                 if error_flag == 1:
-                    pending.set_exception(payload)
+                    pending.set_exception(MethodInvocationError(*payload))
                 else:
                     pending.set_result(payload)
 
@@ -135,9 +135,21 @@ async def test_api():
     worlds = await server.call_remote("World.getWorlds")
     log.info("getWorlds => %s", worlds)
     for world in worlds:
-        response = await server.call_remote("World.getPlayers")
-        log.info("getPlayers => %s", response)
-        await server.close()
+        response = await server.call_remote("World.getPlayers", world)
+        log.info("getPlayers(%r) => %s", world, response)
+        response = await server.call_remote("World.getBlock", [world, 0, 0, 0])
+        log.info("%s block(0,0,0) => %s", world, response)
+        response = await server.call_remote(
+            "World.setBlock", [world, 0, 74, 0], 'minecraft:netherite_block'
+        )
+        for material in await server.call_remote(
+            "World.getMaterialTypes",
+        ):
+            print(material)
+        for entity in await server.call_remote("World.getEntityTypes"):
+            print(entity)
+
+    await server.close()
 
 
 def main():

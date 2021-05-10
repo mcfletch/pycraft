@@ -6,6 +6,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.lang.Class;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Entity;
+import org.bukkit.util.Vector;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.converters.Converter;
 import com.vrplumber.pycraft.bukkitserver.converters.StringConverter;
@@ -16,6 +24,9 @@ import com.vrplumber.pycraft.bukkitserver.converters.DoubleConverter;
 
 import com.vrplumber.pycraft.bukkitserver.converters.ArrayConverter;
 import com.vrplumber.pycraft.bukkitserver.converters.EnumConverter;
+import com.vrplumber.pycraft.bukkitserver.converters.BlockConverter;
+import com.vrplumber.pycraft.bukkitserver.converters.EntityConverter;
+import com.vrplumber.pycraft.bukkitserver.converters.WorldConverter;
 
 public class PycraftConverterRegistry {
     /* Registers .class => Converter.toJava(api, value, finalType) converter */
@@ -60,11 +71,22 @@ public class PycraftConverterRegistry {
         mapping.put(float[].class, new ArrayConverter(this));
         mapping.put(double[].class, new ArrayConverter(this));
 
+        mapping.put(Vector.class, new VectorConverter(this, 3, Vector.class));
+        mapping.put(Location.class, new LocationConverter(this, Location.class));
+        mapping.put(BlockBreakEvent.class, new BlockBreakEventConverter(this, BlockBreakEvent.class));
+        mapping.put(AsyncPlayerChatEvent.class, new AsyncPlayerChatEventConverter(this, AsyncPlayerChatEvent.class));
+        mapping.put(World.class, new WorldConverter(this));
+
         // Now the interfaces, which require a linear scan, so we want to reduce
         // usage...
         interfaceConverters.add(new InterfaceConverter(List.class, new ListConverter(this)));
         interfaceConverters.add(new InterfaceConverter(Map.class, new MapConverter(this)));
         interfaceConverters.add(new InterfaceConverter(Enum.class, new EnumConverter(this)));
+        interfaceConverters.add(new InterfaceConverter(Block.class, new BlockConverter(this)));
+        interfaceConverters.add(new InterfaceConverter(Entity.class, new EntityConverter(this)));
+        // This is really *just* for the test server's mocked worlds
+        interfaceConverters.add(new InterfaceConverter(World.class, new WorldConverter(this)));
+        interfaceConverters.add(new InterfaceConverter(BlockData.class, new BlockDataConverter(this)));
     }
 
     public Object toJava(Class targetType, PycraftAPI api, Object value) {
@@ -100,6 +122,9 @@ public class PycraftConverterRegistry {
     }
 
     public String fromJava(PycraftAPI api, Object value) {
+        if (value == null) {
+            return "null";
+        }
         Converter converter = mapping.get(value.getClass());
         if (converter == null) {
             converter = getConverterByInterface(value);

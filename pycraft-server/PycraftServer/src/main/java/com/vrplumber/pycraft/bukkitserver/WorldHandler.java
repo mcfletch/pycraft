@@ -13,6 +13,7 @@ import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -49,34 +50,35 @@ public class WorldHandler extends NamespaceHandler {
 
     public Object getWorld(PycraftAPI api, PycraftMessage message) {
         /* Get the current world, it not yet set, set to the first world */
-        World world = api.getWorld();
-        if (world != null) {
-            return (Object) world.getName();
-        } else {
-            return null;
+        World world = (World) api.expectType(message, 0, World.class, true);
+        if (world == null) {
+            return api.getWorld();
         }
+        return world;
     }
 
     public Object getBlock(PycraftAPI api, PycraftMessage message) {
-        World world = api.getWorld();
-        Vector vec = api.expectVector(message, 0);
-        Location loc = new Location(world, vec.getX(), vec.getY(), vec.getZ());
+        Location loc = (Location) api.expectType(message, 0, Location.class);
         return loc.getBlock();
     }
 
     public Object setBlock(PycraftAPI api, PycraftMessage message) {
-        World world = api.getWorld();
-        Vector vec = api.expectVector(message, 0);
-        Location loc = new Location(world, vec.getX(), vec.getY(), vec.getZ());
-        BlockData data = api.expectBlockData(message, 1);
-        return loc.getBlock();
+        Location loc = (Location) api.expectType(message, 0, Location.class);
+        BlockData data = (BlockData) api.expectType(message, 1, BlockData.class);
+        if (data == null) {
+            throw new InvalidParameterException(
+                    String.format("Unable to resolve the blockdata value %s", message.payload.get(1)));
+        }
+        loc.getBlock().setBlockData(data);
+        return data;
     }
 
     public Object setBlocks(PycraftAPI api, PycraftMessage message) {
-        World world = api.getWorld();
-        Vector start = api.expectVector(message, 0);
-        Vector end = api.expectVector(message, 1);
-        BlockData data = api.expectBlockData(message, 2);
+        World world = (World) api.expectType(message, 0, World.class, true);
+        Vector start = (Vector) api.expectType(message, 1, Vector.class);
+        Vector end = (Vector) api.expectType(message, 2, Vector.class);
+        BlockData data = (BlockData) api.expectType(message, 3, BlockData.class);
+
         Location setter = new Location(world, start.getBlockX(), start.getBlockY(), start.getBlockZ());
         int dx = end.getBlockX() - start.getBlockX(), dy = end.getBlockY() - start.getBlockY(),
                 dz = end.getBlockZ() - start.getBlockZ();
@@ -103,10 +105,8 @@ public class WorldHandler extends NamespaceHandler {
     }
 
     public Object spawnEntity(PycraftAPI api, PycraftMessage message) {
-        World world = api.getWorld();
-        Vector vec = api.expectVector(message, 0);
-        Location loc = new Location(world, vec.getX(), vec.getY(), vec.getZ());
-        EntityType eType = api.expectEntityType(message, 1);
+        Location loc = (Location) api.expectType(message, 0, Location.class);
+        EntityType eType = (EntityType) api.expectType(message, 1, EntityType.class);
         return api.getWorld().spawnEntity(loc, eType);
     }
 
@@ -125,6 +125,30 @@ public class WorldHandler extends NamespaceHandler {
             p.sendMessage(chat);
         }
         return chat;
+    }
+
+    public Object getMaterialTypes(PycraftAPI api, PycraftMessage message) {
+        // Get set of all materials for reference by the client-side software
+        List<String> result = new ArrayList<String>();
+        for (Material material : Material.values()) {
+            // So *how* do you go about supporting all materials without
+            // relying on deprecated legacy prefix???
+            if (!material.name().startsWith(Material.LEGACY_PREFIX)) {
+                result.add(material.getKey().toString());
+            }
+        }
+        return result;
+    }
+
+    public Object getEntityTypes(PycraftAPI api, PycraftMessage message) {
+        // Get set of all materials for reference by the client-side software
+        List<String> result = new ArrayList<String>();
+        for (EntityType entityType : EntityType.values()) {
+            if (entityType != EntityType.UNKNOWN) {
+                result.add(entityType.getKey().toString());
+            }
+        }
+        return result;
     }
 
     public Object handle(PycraftAPI api, PycraftMessage message) {
@@ -154,6 +178,12 @@ public class WorldHandler extends NamespaceHandler {
             handled = true;
         } else if (name.equals("postToChat")) {
             result = postToChat(api, message);
+            handled = true;
+        } else if (name.equals("getMaterialTypes")) {
+            result = getMaterialTypes(api, message);
+            handled = true;
+        } else if (name.equals("getEntityTypes")) {
+            result = getEntityTypes(api, message);
             handled = true;
         } else {
             /* Registered method on the current World */

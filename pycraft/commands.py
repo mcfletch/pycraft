@@ -82,6 +82,7 @@ def spawn_shower(type_id, count=30, *, mc=None, user=None):
     position = user.position + user.direction + Vec3(0, 50, 0)
     for i in range(count):
         spawn(type_id, position=position, mc=mc, user=user)
+        time.sleep(0.1)
     return count
 
 

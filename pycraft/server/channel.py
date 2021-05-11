@@ -1,4 +1,4 @@
-"""Client for interacting with Pycraft Server"""
+"""Communications channel for interacting with Pycraft Server"""
 import asyncio
 import json
 import logging

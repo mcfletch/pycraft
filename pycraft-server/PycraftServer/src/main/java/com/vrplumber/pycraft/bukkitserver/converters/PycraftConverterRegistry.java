@@ -16,6 +16,10 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.enchantments.Enchantment;
+
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.converters.Converter;
 import com.vrplumber.pycraft.bukkitserver.converters.StringConverter;
@@ -65,6 +69,9 @@ public class PycraftConverterRegistry {
         mapping.put(Double.class, new DoubleConverter());
         mapping.put(Float.class, new FloatConverter());
         mapping.put(UUID.class, new UUIDConverter(this));
+        mapping.put(int.class, new IntegerConverter());
+        mapping.put(double.class, new DoubleConverter());
+        mapping.put(boolean.class, new BooleanConverter());
 
         mapping.put(HashMap.class, new MapConverter(this));
         mapping.put(ArrayList.class, new ListConverter(this));
@@ -81,6 +88,8 @@ public class PycraftConverterRegistry {
         mapping.put(AsyncPlayerChatEvent.class, new AsyncPlayerChatEventConverter(this, AsyncPlayerChatEvent.class));
         mapping.put(World.class, new WorldConverter(this));
         mapping.put(Player.class, new PlayerConverter(this));
+        mapping.put(ItemStack.class, new ItemStackConverter(this));
+        mapping.put(Enchantment.class, new EnchantmentConverter(this));
 
         // Now the interfaces, which require a linear scan, so we want to reduce
         // usage...
@@ -93,6 +102,7 @@ public class PycraftConverterRegistry {
         // This is really *just* for the test server's mocked worlds
         interfaceConverters.add(new InterfaceConverter(World.class, new WorldConverter(this)));
         interfaceConverters.add(new InterfaceConverter(BlockData.class, new BlockDataConverter(this)));
+        interfaceConverters.add(new InterfaceConverter(Inventory.class, new InventoryConverter(this)));
     }
 
     public Object toJava(Class targetType, PycraftAPI api, Object value) {
@@ -138,7 +148,7 @@ public class PycraftConverterRegistry {
         if (converter != null) {
             return converter.fromJava(api, value);
         }
-        api.getLogger().info(String.format("No converter found for type %s", value.getClass().getName()));
+        api.getLogger().warning(String.format("No converter found for type %s", value.getClass().getName()));
         return "null";
 
     }

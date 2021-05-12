@@ -32,6 +32,7 @@ import org.bukkit.World;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
@@ -59,13 +60,14 @@ public class AppTest {
   private HandlerRegistry registry;
   private PycraftAPI api;
   private ServerMock server;
+  private Player player;
 
   @BeforeAll
   public void setUp() {
     server = new ServerMock();
     MockBukkit.mock(server);
     server.addSimpleWorld("sample-world");
-    server.addPlayer("sam");
+    player = server.addPlayer("sam");
     plugin = (PycraftServerPlugin) MockBukkit.load(PycraftServerPlugin.class);
     HandlerRegistry registry = new HandlerRegistry();
     registry.registerHandlers();
@@ -182,11 +184,33 @@ public class AppTest {
   }
 
   @Test
+  public void describe_methods_world() {
+
+    PycraftAPI api = getMockApi();
+    api.dispatch("1,World.__methods__,[]", false);
+    String[] expected = { "getPlayers", "getBlockAt", "strikeLightning" };
+    for (String expect : expected) {
+      assertTrue(api.lastResponse.indexOf(expect) > -1, api.lastResponse);
+    }
+  }
+
+  @Test
+  public void describe_methods_root() {
+
+    PycraftAPI api = getMockApi();
+    api.dispatch("1,__methods__,[]", false);
+    String[] expected = { "World", "Player", "Skeleton" };
+    for (String expect : expected) {
+      assertTrue(api.lastResponse.indexOf(expect) > -1, api.lastResponse);
+    }
+  }
+
+  @Test
   public void worldList() {
 
     PycraftAPI api = getMockApi();
     api.dispatch("1,World.getWorlds,[]", false);
-    assertEquals("1,0,[\"sample-world\"]", api.lastResponse);
+    assertTrue(api.lastResponse.indexOf("sample-world") > -1, api.lastResponse);
   }
 
   @Test
@@ -267,6 +291,7 @@ public class AppTest {
     PycraftAPI api = getMockApi();
     api.dispatch("1,World.getPlayers,[\"sample-world\"]", false);
     assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
+
   }
 
   @Test
@@ -290,6 +315,19 @@ public class AppTest {
     pluginManager.callEvent(event);
     assertTrue(api.lastResponse.indexOf("Sample Message") > 0, api.lastResponse);
 
+  }
+
+  @Test
+  public void playerInventory() {
+    api.dispatch("1,Player.getInventory,[\"sam\"]", false);
+    assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
+    assertTrue(api.lastResponse.indexOf("inventoryType") > -1, api.lastResponse);
+    api.dispatch("1,Inventory.setItem,[\"sam\",0,\"minecraft:netherite_sword\"]", false);
+    assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
+    // MockBukkit doesn't allow enchanting at all...
+    // api.dispatch("1,ItemStack.addEnchantment,[[0,\"sam\"],\"minecraft:fire_aspect\",0]",
+    // false);
+    // assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
   }
 
   @Test
@@ -374,10 +412,14 @@ public class AppTest {
 
     AsyncPlayerChatEvent chatEvent = new AsyncPlayerChatEvent(true, server.getPlayer("sam"), "Testing message",
         server.getWorlds().get(0).getPlayers().stream().collect(Collectors.toSet()));
-    registry.fromJava(api, chatEvent);
+    result = registry.fromJava(api, chatEvent);
     assertNotNull(result);
     assertTrue(encoded.startsWith("[{"));
     assertTrue(encoded.endsWith("}]"));
+
+    ItemStack itemStack = new ItemStack(Material.NETHERITE_AXE, 5);
+    result = registry.fromJava(api, itemStack);
+    assertTrue(((String) result).indexOf("minecraft:netherite_axe") >= 1, result.toString());
 
   }
 

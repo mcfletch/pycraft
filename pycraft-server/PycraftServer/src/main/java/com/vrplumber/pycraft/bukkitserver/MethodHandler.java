@@ -3,11 +3,18 @@ package com.vrplumber.pycraft.bukkitserver;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Parameter;
 import java.lang.Class;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.security.InvalidParameterException;
+
+import java.util.stream.Stream;
 import com.vrplumber.pycraft.bukkitserver.MessageHandler;
 
 class MethodHandler implements MessageHandler {
@@ -22,6 +29,31 @@ class MethodHandler implements MessageHandler {
 
     public static List<MethodHandler> forClass(Class cls) {
         return forClass(cls, null);
+    }
+
+    public Map<String, Object> getDescription() {
+        Map<String, Object> result = new HashMap<String, Object>();
+        int modifiers = pointer.getModifiers();
+        result.put("type", "method");
+        result.put("static", (Boolean) Modifier.isStatic(modifiers));
+        result.put("name", pointer.getName());
+        result.put("__doc__", pointer.toGenericString());
+        result.put("argcount", pointer.getParameterCount());
+        List<String> typeNames = new ArrayList<String>();
+        for (Class cls : pointer.getParameterTypes()) {
+            typeNames.add(cls.getSimpleName());
+        }
+        result.put("argtypes", typeNames);
+        return result;
+        // List<String> parameterList = new ArrayList<String>();
+        // for (Parameter parameter : pointer.getParameters()) {
+        // parameterList.add(String.format("%s: %s",
+        // parameter.getType().getSimpleName(), parameter.getName()));
+        // }
+        // return String.format("%s(%s) => %s", pointer.getName(), String.join(", ",
+        // parameterList),
+        // pointer.getReturnType().getSimpleName());
+
     }
 
     public static List<MethodHandler> forClass(Class cls, List<String> names) {
@@ -57,27 +89,58 @@ class MethodHandler implements MessageHandler {
         this.staticMethod = isStatic;
     }
 
+    private Object argumentCoerce(PycraftAPI api, List<Object> arguments, Integer index, List<Class> parameterTypes) {
+        return api.converterRegistry.toJava(parameterTypes.get(index), api, arguments.get(index));
+    }
+
     private Object pointerInvoke(PycraftAPI api, PycraftMessage message, List<Object> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        /* Invoke our pointer doing (manual) unpacking of arguments */
-        if (arguments.size() == 0) {
+        /*
+         * Invoke our pointer doing (manual) unpacking of arguments
+         * 
+         * for i in range(0,10):
+         * 
+         * 
+         */
+        List<Class> parameterTypes = Arrays.asList(this.pointer.getParameterTypes());
+        List<Object> parameters = new ArrayList<Object>();
+        if (parameterTypes.size() != arguments.size()) {
+            throw new InvalidParameterException(
+                    String.format("Needed %s parameters, got %s", parameterTypes.size(), arguments.size()));
+        }
+        for (int index = 0; index < arguments.size(); index++) {
+            parameters.add(api.converterRegistry.toJava(parameterTypes.get(index), api, arguments.get(index)));
+        }
+
+        if (parameters.size() == 0) {
             return (Object) this.pointer.invoke(cls.cast(message.instance));
-        } else if (arguments.size() == 1) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), arguments.get(0));
-        } else if (arguments.size() == 2) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), arguments.get(0), arguments.get(1));
-        } else if (arguments.size() == 3) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), arguments.get(0), arguments.get(1),
-                    arguments.get(2));
-        } else if (arguments.size() == 4) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), arguments.get(0), arguments.get(1),
-                    arguments.get(2), arguments.get(3));
-        } else if (arguments.size() == 5) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), arguments.get(0), arguments.get(1),
-                    arguments.get(2), arguments.get(3), arguments.get(4));
-        } else if (arguments.size() == 6) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), arguments.get(0), arguments.get(1),
-                    arguments.get(2), arguments.get(3), arguments.get(4), arguments.get(5));
+        } else if (parameters.size() == 1) {
+            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0));
+        } else if (parameters.size() == 2) {
+            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1));
+        } else if (parameters.size() == 3) {
+            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+                    parameters.get(2));
+        } else if (parameters.size() == 4) {
+            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+                    parameters.get(2), parameters.get(3));
+        } else if (parameters.size() == 5) {
+            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+                    parameters.get(2), parameters.get(3), parameters.get(4));
+        } else if (parameters.size() == 6) {
+            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+                    parameters.get(2), parameters.get(3), parameters.get(4), parameters.get(5));
+        } else if (parameters.size() == 7) {
+            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+                    parameters.get(2), parameters.get(3), parameters.get(4), parameters.get(5), parameters.get(6));
+        } else if (parameters.size() == 8) {
+            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+                    parameters.get(2), parameters.get(3), parameters.get(4), parameters.get(5), parameters.get(6),
+                    parameters.get(7));
+        } else if (parameters.size() == 9) {
+            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+                    parameters.get(2), parameters.get(3), parameters.get(4), parameters.get(5), parameters.get(6),
+                    parameters.get(7), parameters.get(8));
         } else {
             throw new InvalidParameterException("Only currently support up to 6 parameters");
         }

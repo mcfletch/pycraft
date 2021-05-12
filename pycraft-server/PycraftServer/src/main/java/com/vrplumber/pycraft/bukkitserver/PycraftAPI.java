@@ -252,6 +252,8 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
           this.sendError(message.messageId, 1, Arrays.asList("Error handling request"));
         }
       }
+    } else if (message.method.get(0).equals("__methods__")) {
+      this.sendResponse(message.messageId, registry.getMethodDescriptions());
     } else {
       List<String> response = Arrays.asList("unknown-method", message.method.get(0));
       this.sendError(message.messageId, 1, response);

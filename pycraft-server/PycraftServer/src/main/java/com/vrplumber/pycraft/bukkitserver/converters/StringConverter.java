@@ -17,8 +17,7 @@ public class StringConverter implements Converter {
     }
 
     public String fromJava(PycraftAPI api, Object value) {
-        return String.format("\"%s\"",
-                ((String) value).replace("\\", "\\\\").replace("\t", "\\t").replace("\b", "\\b").replace("\n", "\\n")
-                        .replace("\r", "\\r").replace("\f", "\\f").replace("\'", "\\'").replace("\"", "\\\""));
+        return String.format("\"%s\"", ((String) value).replace("\\", "\\\\").replace("\t", "\\t").replace("\b", "\\b")
+                .replace("\n", "\\n").replace("\r", "\\r").replace("\f", "\\f").replace("\"", "\\\""));
     }
 }

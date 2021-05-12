@@ -32,11 +32,7 @@ public class WorldHandler extends NamespaceHandler {
     }
 
     public Object getWorlds(PycraftAPI api, PycraftMessage message) {
-        List<String> names = new ArrayList<String>();
-        for (World world : api.getPlugin().getServer().getWorlds()) {
-            names.add(world.getName());
-        }
-        return (Object) names;
+        return api.getPlugin().getServer().getWorlds();
     }
 
     public Object setWorld(PycraftAPI api, PycraftMessage message) {
@@ -115,6 +111,12 @@ public class WorldHandler extends NamespaceHandler {
         for (MessageHandler handler : MethodHandler.forClass(World.class)) {
             this.addHandler(handler.getMethod(), handler);
         }
+        // for (MessageHandler handler :
+        // MethodHandler.forClass(WorldHandler.class,Arrays.asList({
+        // "getWorlds"
+        // }))) {
+        // this.addHandler(handler.getMethod(), handler);
+        // }
 
     }
 
@@ -151,6 +153,7 @@ public class WorldHandler extends NamespaceHandler {
         return result;
     }
 
+    @Override
     public Object handle(PycraftAPI api, PycraftMessage message) {
         String name = message.nextName();
         Object result = null;
@@ -186,18 +189,7 @@ public class WorldHandler extends NamespaceHandler {
             result = getEntityTypes(api, message);
             handled = true;
         } else {
-            /* Registered method on the current World */
-            MessageHandler subHandler = getHandler(name);
-            if (subHandler != null) {
-                if (subHandler instanceof MethodHandler) {
-                    MethodHandler subMethod = (MethodHandler) subHandler;
-                    if (subMethod.cls == World.class) {
-                        message.instance = api.getWorld();
-                    }
-                }
-                result = subHandler.handle(api, message);
-                handled = true;
-            }
+            return super.handle(api, message);
         }
         if (handled) {
             // api.sendResponse(message.messageId, result);

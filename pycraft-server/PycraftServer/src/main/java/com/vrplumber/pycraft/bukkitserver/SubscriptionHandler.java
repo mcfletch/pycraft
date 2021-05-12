@@ -4,6 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.Class;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.security.InvalidParameterException;
 import com.vrplumber.pycraft.bukkitserver.MessageHandler;
@@ -12,6 +14,17 @@ class SubscriptionHandler implements MessageHandler {
     /* Handle a method by dispatching to a method on a class instance */
     public String getMethod() {
         return "subscribe";
+    }
+
+    public Map<String, Object> getDescription() {
+        Map<String, Object> result = new HashMap<String, Object>();
+        result.put("type", "method");
+        result.put("static", Boolean.TRUE);
+        result.put("name", "subscribe");
+        result.put("__doc__", "public void subscribe(String EventTypeName, Boolean subscribe) -> Boolean");
+        result.put("argcount", (Integer) 0);
+
+        return result;
     }
 
     public void register(HandlerRegistry registry) {

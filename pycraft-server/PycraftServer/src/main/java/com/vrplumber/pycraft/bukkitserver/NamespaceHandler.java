@@ -4,9 +4,11 @@ import com.vrplumber.pycraft.bukkitserver.MessageHandler;
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.PycraftMessage;
 import java.util.regex.Pattern;
+import java.util.stream.StreamSupport;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public abstract class NamespaceHandler implements MessageHandler {
@@ -15,6 +17,19 @@ public abstract class NamespaceHandler implements MessageHandler {
 
     NamespaceHandler() {
         subcommands = new HashMap<String, MessageHandler>();
+    }
+
+    public Map<String, Object> getDescription() {
+        Map<String, Object> result = new HashMap<String, Object>();
+        result.put("type", "namespace");
+        result.put("name", getMethod());
+        List<Map<String, Object>> commands = new ArrayList<Map<String, Object>>();
+        for (String key : subcommands.keySet()) {
+            MessageHandler handler = subcommands.get(key);
+            commands.add(handler.getDescription());
+        }
+        result.put("commands", commands);
+        return result;
     }
 
     public void addHandler(String name, MessageHandler handler) {
@@ -30,6 +45,9 @@ public abstract class NamespaceHandler implements MessageHandler {
         String name = message.nextName();
         MessageHandler subHandler = null;
         if (name != null) {
+            if (name.equals("__methods__")) {
+                return getDescription();
+            }
             subHandler = subcommands.get(name);
         }
         if (subHandler == null) {

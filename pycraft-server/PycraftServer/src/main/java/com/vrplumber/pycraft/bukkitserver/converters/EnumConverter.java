@@ -10,6 +10,8 @@ import java.util.Arrays;
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.converters.Converter;
 
+import org.bukkit.Keyed;
+
 public class EnumConverter implements Converter {
     /* Given a message and an index convert the value to an instance of T */
     PycraftConverterRegistry registry;
@@ -22,6 +24,11 @@ public class EnumConverter implements Converter {
         if (value instanceof String) {
             String asString = (String) value;
             for (Object defined : finalType.getEnumConstants()) {
+                if (defined instanceof Keyed) {
+                    if (((Keyed) defined).getKey().toString().equals(value)) {
+                        return defined;
+                    }
+                }
                 Enum asEnum = (Enum) defined;
                 if (asEnum.name() == asString) {
                     return defined;

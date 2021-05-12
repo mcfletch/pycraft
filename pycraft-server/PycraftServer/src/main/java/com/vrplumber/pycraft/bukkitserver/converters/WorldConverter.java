@@ -45,7 +45,6 @@ public class WorldConverter implements Converter {
         // asMap.put("allow_monsters", asWorld.getAllowMonsters());
         // asMap.put("allow_monsters", asWorld.getAllowMonsters());
         // asMap.put("difficulty", asWorld.getDifficulty());
-        asMap.put("players", asWorld.getPlayers());
         return asMap;
     }
 

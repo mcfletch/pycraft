@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 
 public class PycraftMessage {
 
-  static private Pattern headerPattern = Pattern.compile("^(\\d+),([a-zA-Z0-9.]+),(.*)$");
+  static private Pattern headerPattern = Pattern.compile("^(\\d+),([a-z_A-Z0-9.]+),(.*)$");
 
   public Integer messageId = 0;
   public List<String> method = null;

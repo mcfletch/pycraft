@@ -74,12 +74,12 @@ def spawn_drop(type_id, *, mc=None, user=None):
 
 
 @expose()
-def spawn_shower(type_id, count=30, *, mc=None, user=None):
+def spawn_shower(type_id, count=30, height=50, *, mc=None, user=None):
     """Spawn an entity 50m overhead dropping onto your location
 
     Use this to e.g. drop a creeper to their death and generate gunpowder
     """
-    position = user.position + user.direction + Vec3(0, 50, 0)
+    position = user.position + user.direction + Vec3(0, height, 0)
     for i in range(count):
         spawn(type_id, position=position, mc=mc, user=user)
         time.sleep(0.1)

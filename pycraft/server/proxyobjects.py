@@ -40,6 +40,8 @@ def type_name_to_type(name):
 
 def type_coerce(value, typ):
     """Attempt to coerce value to the given typ"""
+    if value is None:
+        return None
     if typ is None:
         return value
     elif typ in (str, float, int, uuid.UUID):
@@ -47,7 +49,15 @@ def type_coerce(value, typ):
     elif typ in (np.ndarray,):
         # Not ideal to assume 'd' type
         return np.array(value, dtype='d')
-    elif isinstance(typ, type):
+    if isinstance(value, dict) and '__type__' in value and '__namespace__' in value:
+        log.warning("Coerce dictionary: %s", value)
+        if value['__type__'] in PROXY_TYPES:
+            typ = PROXY_TYPES[value['__type__']]
+            # return type_coerce(value, typ)
+        elif value['__namespace__'] in PROXY_TYPES:
+            typ = PROXY_TYPES[value['__namespace__']]
+            # return type_coerce(value, typ)
+    if isinstance(typ, type):
         if issubclass(typ, typing.List):
             sub_type = typ.__args__[0]  # YUCK!
             return [type_coerce(item, sub_type) for item in value]
@@ -56,8 +66,13 @@ def type_coerce(value, typ):
                 return typ.from_server(value)
             else:
                 return typ(value)
-    else:
-        log.warning("No type coercion for type: %s", typ)
+    raise ValueError(
+        "Do not know how to convert type %s with value %r"
+        % (
+            typ,
+            value,
+        )
+    )
 
 
 class ProxyMethod(object):
@@ -108,6 +123,13 @@ class ProxyMethod(object):
                     return_type = return_type[sub_types]
             if return_type:
                 result = type_coerce(result, return_type)
+            else:
+                log.warning(
+                    "Return type %r unknown on %s %s",
+                    return_type_name,
+                    self.get_full_method(),
+                    sorted(PROXY_TYPES.keys()),
+                )
         return result
 
 
@@ -136,6 +158,9 @@ class ServerObjectProxy(object):
     @classmethod
     def from_server(cls, struct):
         """Convert server-side structure to local object"""
+        log.info("%s from server: %s", cls.__name__, struct)
+        if not struct:
+            return None
         instance = cls(**struct)
         return instance
 
@@ -180,4 +205,6 @@ class ServerObjectProxy(object):
 def ProxyType(cls):
     """Register a particular class as an ObjectProxy sub-type"""
     PROXY_TYPES[cls.__namespace__] = cls
+    for clsName in getattr(cls, '__known_classes__', ()):
+        PROXY_TYPES[clsName] = cls
     return cls

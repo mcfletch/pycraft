@@ -2,6 +2,7 @@
 import asyncio
 import json
 from json import encoder
+import uuid
 import logging
 from functools import lru_cache
 
@@ -16,6 +17,8 @@ class ProxyEncoder(JSONEncoder):
         """If o has a __json__ method, return the encoded result of o.__json__()"""
         if hasattr(o, '__json__'):
             return o.__json__()
+        elif isinstance(o, uuid.UUID):
+            return str(o)
         raise TypeError("No __json__ on type %s" % (o.__class__,))
 
 
@@ -64,7 +67,7 @@ class Channel(object):
                 break
             if isinstance(message, str):
                 message = message.encode('utf-8')
-            log.info("Writing message: %r", message)
+            log.debug("Writing message: %r", message)
             self.writer.write(message)
             self.writer.write(b"\n")
 
@@ -87,7 +90,7 @@ class Channel(object):
                     )
                 except Exception as err:
                     log.exception("Error reading from socket with %r", line)
-                log.info("Read message: %r,%r,%r", message_id, error_flag, payload)
+                log.debug("Read message: %r,%r,%r", message_id, error_flag, payload)
                 await queue.put((message_id, error_flag, payload))
             except Exception as err:
                 log.exception("Error reading from socket")
@@ -129,7 +132,7 @@ class Channel(object):
             ),
         )
         await self.outgoing_queue.put(message)
-        log.info("Outgoing message queued")
+        log.debug("Outgoing message queued")
         self.pending[id] = asyncio.Future()
         return await asyncio.wait_for(self.pending[id], self.timeout)
 
@@ -170,14 +173,15 @@ class Channel(object):
 
 
 async def test_api():
-    from .world import World, Player, Server, Entity, BlockData, Location
+    from .world import World, Player, Server, Entity, BlockData, Location, Inventory
 
     server = Channel()
     await server.open()
     Server.inject_methods(server, await server.get_methods('Server'))
     World.inject_methods(server, await server.get_methods('World'))
     Player.inject_methods(server, await server.get_methods('Player'))
-    Entity.inject_methods(server, await server.get_methods('Player'))
+    Inventory.inject_methods(server, await server.get_methods('Inventory'))
+    Entity.inject_methods(server, await server.get_methods('Entity'))
 
     import pprint
 
@@ -195,21 +199,32 @@ async def test_api():
 
     # worlds = await server.call_remote("Server.getWorlds", "server")
     log.info("getWorlds => %s", worlds)
-    # for world in worlds:
-    #     structured = World.from_server(world)
-    #     for player in structured.players:
-    #         # print(await structured.getBlockAt([structured.name, 0, 0, 0]))
-    #         if player.name == 'VRPlumber':
-    #             print(dir(structured))
-    #             # await structured.spawn(player.location, 'minecraft:sheep')
-    #             # await structured.setStorm(True)
-    #             # await structured.setThundering(True)
+    for world in worlds:
+        for player in world.players:
+            # print(await structured.getBlockAt([structured.name, 0, 0, 0]))
+            if player.name == 'VRPlumber':
+                inventory = await player.getInventory()
+                assert isinstance(inventory, Inventory), inventory
+                await inventory.setItem(0, 'minecraft:elytra')
 
-    #             # await structured.spawnEntity(player.location, 'minecraft:pufferfish')
+                location = player.location + (0, -1, 0)
+                await location.setBlockData('minecraft:netherite_block')
+                # await server.call_remote(
+                #     "Inventory.setItem",
+                #     str(player.uuid),
+                #     0,
+                #     'minecraft:elytra',
+                # )
 
-    #             # await structured.strikeLightning(player.location)
-    #             # await structured.strikeLightningEffect(player.location)
-    #             await player.sendMessage("Hello from the new api")
+                # await world.spawnEntity(player.location, 'SHEEP')
+                # await world.setStorm(True)
+                # await world.setThundering(True)
+
+                # await world.spawnEntity(player.location, 'minecraft:pufferfish')
+
+                # await world.strikeLightning(player.location)
+                # await world.strikeLightningEffect(player.location)
+                # await player.sendMessage("Hello from the new api")
 
     # for player in world.get('players'):
     #     if player.get('name') != 'VRPlumber':

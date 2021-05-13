@@ -199,6 +199,11 @@ class Server(ServerObjectProxy):
 
 
 @ProxyType
+class ItemStack(ServerObjectProxy):
+    __namespace__ = 'ItemStack'
+
+
+@ProxyType
 class BlockData(ServerObjectProxy):
     """Data describing a particular block (or a potential block)"""
 
@@ -213,6 +218,37 @@ class BlockData(ServerObjectProxy):
 
     def get_key(self):
         return self.string_value
+
+
+@ProxyType
+class Inventory(ServerObjectProxy):
+    __namespace__ = 'Inventory'
+    __known_classes__ = ['PlayerInventory']
+
+    type: str
+    inventoryType: str
+    size: int
+    contents: typing.List[ItemStack]
+    holder: typing.Union[Entity, Player, BlockData, None]
+    firstEmpty: int
+
+    def get_key(self):
+        if isinstance(self.holder, Player) or isinstance(self.holder, Entity):
+            return self.holder.uuid
+        elif isinstance(self.holder, BlockData):
+            return self.holder.location
+        raise RuntimeError(
+            "Can't calculate the key of an inventory that doesn't belong to something",
+            self,
+        )
+
+
+# @ProxyType
+# class PlayerInventory(Inventory):
+#     __namespace__ = 'PlayerInventory'
+# @ProxyType
+# class ChestInventory(Inventory):
+#     __namespace__ = 'PlayerInventory'
 
 
 class Enum(ServerObjectProxy):

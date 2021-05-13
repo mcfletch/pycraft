@@ -37,7 +37,8 @@ public class ServerConverter implements Converter {
     public String fromJava(PycraftAPI api, Object value) {
         Server server = (Server) value;
         Map<String, Object> asMap = new HashMap<String, Object>();
-        asMap.put("type", "Server");
+        asMap.put("__type__", server.getClass().getSimpleName());
+        asMap.put("__namespace__", "Server");
         asMap.put("version", api.getServer().getVersion());
         asMap.put("pycraft_version", api.getPlugin().getDescription().getVersion());
         return registry.fromJava(api, asMap);

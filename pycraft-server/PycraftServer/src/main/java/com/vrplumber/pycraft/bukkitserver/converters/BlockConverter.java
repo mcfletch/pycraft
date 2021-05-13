@@ -43,6 +43,8 @@ public class BlockConverter implements Converter {
         org.bukkit.block.Block asBlock = (Block) value;
         Location loc = asBlock.getLocation();
         Map<String, Object> asMap = new HashMap<String, Object>();
+        asMap.put("__type__", asBlock.getClass().getSimpleName());
+        asMap.put("__namespace__", "Block");
         asMap.put("location", loc);
         asMap.put("data", asBlock.getBlockData());
         return asMap;

@@ -37,6 +37,8 @@ public class AsyncPlayerChatEventConverter implements Converter {
     public String fromJava(PycraftAPI api, Object value) {
         AsyncPlayerChatEvent asEvent = (AsyncPlayerChatEvent) value;
         Map<String, Object> asMap = new HashMap<String, Object>();
+        asMap.put("__type__", asEvent.getClass().getSimpleName());
+        asMap.put("__namespace__", "Event");
         asMap.put("type", asEvent.getEventName());
         asMap.put("player", asEvent.getPlayer());
         asMap.put("message", asEvent.getMessage());

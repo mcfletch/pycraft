@@ -38,9 +38,10 @@ public class WorldConverter implements Converter {
     public Map<String, Object> worldAsMapping(PycraftAPI api, Object value) {
         World asWorld = (World) value;
         Map<String, Object> asMap = new HashMap<String, Object>();
+        asMap.put("__type__", asWorld.getClass().getSimpleName());
+        asMap.put("__namespace__", "World");
         asMap.put("name", asWorld.getName());
         asMap.put("players", asWorld.getPlayers());
-        asMap.put("type", asWorld.getClass().getSimpleName());
         // asMap.put("allow_animals", asWorld.getAllowAnimals());
         // asMap.put("allow_monsters", asWorld.getAllowMonsters());
         // asMap.put("allow_monsters", asWorld.getAllowMonsters());

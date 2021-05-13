@@ -67,7 +67,8 @@ public class ItemStackConverter implements Converter {
     public String fromJava(PycraftAPI api, Object value) {
         ItemStack itemStack = (ItemStack) value;
         Map<String, Object> asMap = new HashMap<String, Object>();
-        asMap.put("type", "ItemStack");
+        asMap.put("__type__", itemStack.getClass().getSimpleName());
+        asMap.put("__namespace__", "ItemStack");
         asMap.put("material", itemStack.getType().getKey().toString());
         asMap.put("amount", itemStack.getAmount());
         return registry.fromJava(api, asMap);

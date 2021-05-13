@@ -54,7 +54,8 @@ public class PlayerConverter implements Converter {
         Player asPlayer = (Player) value;
         Location loc = asPlayer.getLocation();
         Map<String, Object> asMap = new HashMap<String, Object>();
-        asMap.put("world", asPlayer.getWorld().getName());
+        asMap.put("__type__", asPlayer.getClass().getSimpleName());
+        asMap.put("__namespace__", "Player");
         asMap.put("location", loc);
         try {
             asMap.put("uuid", asPlayer.getUniqueId());

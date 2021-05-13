@@ -307,7 +307,7 @@ public class AppTest {
   public void playerInventory() {
     api.dispatch("1,Player.getInventory,[\"sam\"]", false);
     assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
-    assertTrue(api.lastResponse.indexOf("inventoryType") > -1, api.lastResponse);
+    assertTrue(api.lastResponse.indexOf("PlayerInventoryMock") > -1, api.lastResponse);
     api.dispatch("1,Inventory.setItem,[\"sam\",0,\"minecraft:netherite_sword\"]", false);
     assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
     // MockBukkit doesn't allow enchanting at all...

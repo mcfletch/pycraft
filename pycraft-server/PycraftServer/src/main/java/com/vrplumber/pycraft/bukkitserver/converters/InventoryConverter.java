@@ -69,8 +69,9 @@ public class InventoryConverter implements Converter {
     public String fromJava(PycraftAPI api, Object value) {
         Inventory inventory = (Inventory) value;
         Map<String, Object> asMap = new HashMap<String, Object>();
-        asMap.put("type", "inventory");
-        asMap.put("inventoryType", inventory.getType().name());
+        asMap.put("__type__", inventory.getClass().getSimpleName());
+        asMap.put("__namespace__", "Inventory");
+        asMap.put("type", inventory.getType().name());
         asMap.put("holder", inventory.getHolder());
         asMap.put("contents", Arrays.asList(inventory.getContents()));
         asMap.put("size", inventory.getSize());

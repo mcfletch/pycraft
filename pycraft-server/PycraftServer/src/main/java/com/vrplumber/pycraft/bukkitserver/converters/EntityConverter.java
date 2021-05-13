@@ -62,7 +62,8 @@ public class EntityConverter implements Converter {
         org.bukkit.entity.Entity asEntity = (Entity) value;
         Location loc = asEntity.getLocation();
         Map<String, Object> asMap = new HashMap<String, Object>();
-        asMap.put("world", asEntity.getWorld().getName());
+        asMap.put("__type__", asEntity.getClass().getSimpleName());
+        asMap.put("__namespace__", "Entity");
         asMap.put("location", loc);
         try {
             asMap.put("uuid", asEntity.getUniqueId());

@@ -1,10 +1,22 @@
 """Communications channel for interacting with Pycraft Server"""
 import asyncio
 import json
+from json import encoder
 import logging
 from functools import lru_cache
 
+from json.encoder import JSONEncoder
+from . import proxyobjects
+
 log = logging.getLogger(__name__)
+
+
+class ProxyEncoder(JSONEncoder):
+    def default(self, o):
+        """If o has a __json__ method, return the encoded result of o.__json__()"""
+        if hasattr(o, '__json__'):
+            return o.__json__()
+        raise TypeError("No __json__ on type %s" % (o.__class__,))
 
 
 class MethodInvocationError(RuntimeError):
@@ -34,8 +46,11 @@ class Channel(object):
         asyncio.ensure_future(self.write_to_socket(self.outgoing_queue, self.writer))
         asyncio.ensure_future(self.read_from_socket(self.incoming_queue, self.reader))
         asyncio.ensure_future(self.process_incoming_queue(self.incoming_queue))
+        proxyobjects.ProxyMethod.set_channel(self)
 
     async def close(self):
+        if proxyobjects.ProxyMethod.channel is self:
+            proxyobjects.ProxyMethod.set_channel(None)
         self.wanted = False
         self.writer.close()
         await self.outgoing_queue.put(None)
@@ -108,7 +123,10 @@ class Channel(object):
         message = "%s,%s,%s" % (
             id,
             method,
-            json.dumps(args),
+            json.dumps(
+                args,
+                cls=ProxyEncoder,
+            ),
         )
         await self.outgoing_queue.put(message)
         log.info("Outgoing message queued")
@@ -152,74 +170,103 @@ class Channel(object):
 
 
 async def test_api():
-    from .world import World
+    from .world import World, Player, Server, Entity, BlockData, Location
 
     server = Channel()
     await server.open()
-    worlds = await server.call_remote("World.getWorlds")
-    log.info("getWorlds => %s", worlds)
-    for world in worlds:
-        # structured = World.from_server(world)
-        # print(structured)
-        # for method in sorted(await server.get_methods()):
-        #     print(method)
-        # World.inject_methods(server, await server.get_methods('World'))
-        # print(await structured.getBlockAt([structured.name, 0, 0, 0]))
+    Server.inject_methods(server, await server.get_methods('Server'))
+    World.inject_methods(server, await server.get_methods('World'))
+    Player.inject_methods(server, await server.get_methods('Player'))
+    Entity.inject_methods(server, await server.get_methods('Player'))
 
-        for player in world.get('players'):
-            items = [
-                'minecraft:netherite_axe',
-                'minecraft:netherite_sword',
-                'minecraft:netherite_hoe',
-                'minecraft:netherite_helmet',
-                'minecraft:netherite_chestplate',
-                'minecraft:netherite_leggings',
-                'minecraft:netherite_boots',
-                'minecraft:trident',
+    import pprint
+
+    pprint.pprint(
+        sorted(
+            [
+                x
+                for x in proxyobjects.RETURN_TYPES.keys()
+                if not proxyobjects.type_name_to_type(x)
             ]
-            for index, item in enumerate(items):
-                await server.call_remote(
-                    "Inventory.setItem",
-                    player['uuid'],
-                    index,
-                    item,
-                )
-                if index in [0, 1]:
-                    await server.call_remote(
-                        "ItemStack.addEnchantment",
-                        [index, player['uuid']],
-                        'minecraft:fire_aspect',
-                        1,
-                    )
+        )
+    )
 
-        # response = await server.call_remote("World.getBlock", [world, 0, 0, 0])
-        # log.info("%s block(0,0,0) => %s", world, response)
-        # response = await server.call_remote(
-        #     "World.setBlock", [world, 0, 74, 0], 'minecraft:netherite_block'
-        # )
-        # if world.get('name') == 'world':  # default world name...
-        #     # for material in await server.call_remote(
-        #     #     "World.getMaterialTypes",
-        #     # ):
-        #     #     print(material)
-        #     # for entity in await server.call_remote("World.getEntityTypes"):
-        #     #     print(entity)
-        #     for i in range(1, 5):
-        #         response = await server.call_remote(
-        #             "World.setBlock",
-        #             [
-        #                 'world',
-        #                 193,
-        #                 110 + i,
-        #                 277,
-        #             ],
-        #             "minecraft:netherite_block",
-        #         )
+    worlds = await Server(name="server").getWorlds()
 
-        # for entity in await server.call_remote("World.getEntities", world):
-        #     print(entity)
-        #     if entity.get('type') == 'SKELETON':
-        #         await server.call_remote("Entity.remove", entity['uuid'])
+    # worlds = await server.call_remote("Server.getWorlds", "server")
+    log.info("getWorlds => %s", worlds)
+    # for world in worlds:
+    #     structured = World.from_server(world)
+    #     for player in structured.players:
+    #         # print(await structured.getBlockAt([structured.name, 0, 0, 0]))
+    #         if player.name == 'VRPlumber':
+    #             print(dir(structured))
+    #             # await structured.spawn(player.location, 'minecraft:sheep')
+    #             # await structured.setStorm(True)
+    #             # await structured.setThundering(True)
+
+    #             # await structured.spawnEntity(player.location, 'minecraft:pufferfish')
+
+    #             # await structured.strikeLightning(player.location)
+    #             # await structured.strikeLightningEffect(player.location)
+    #             await player.sendMessage("Hello from the new api")
+
+    # for player in world.get('players'):
+    #     if player.get('name') != 'VRPlumber':
+    #         continue
+    #     items = [
+    #         'minecraft:netherite_axe',
+    #         'minecraft:netherite_sword',
+    #         'minecraft:netherite_hoe',
+    #         'minecraft:netherite_helmet',
+    #         'minecraft:netherite_chestplate',
+    #         'minecraft:netherite_leggings',
+    #         'minecraft:netherite_boots',
+    #         'minecraft:trident',
+    #     ]
+    #     for index, item in enumerate(items):
+    #         await server.call_remote(
+    #             "Inventory.setItem",
+    #             player['uuid'],
+    #             index,
+    #             item,
+    #         )
+    #         # if index in [0, 1]:
+    #         #     await server.call_remote(
+    #         #         "ItemStack.addEnchantment",
+    #         #         [index, player['uuid']],
+    #         #         'minecraft:fire_aspect',
+    #         #         1,
+    #         #     )
+
+    # response = await server.call_remote("World.getBlock", [world, 0, 0, 0])
+    # log.info("%s block(0,0,0) => %s", world, response)
+    # response = await server.call_remote(
+    #     "World.setBlock", [world, 0, 74, 0], 'minecraft:netherite_block'
+    # )
+    # if world.get('name') == 'world':  # default world name...
+    #     # for material in await server.call_remote(
+    #     #     "World.getMaterialTypes",
+    #     # ):
+    #     #     print(material)
+    #     # for entity in await server.call_remote("World.getEntityTypes"):
+    #     #     print(entity)
+    #     for i in range(1, 5):
+    #         response = await server.call_remote(
+    #             "World.setBlock",
+    #             [
+    #                 'world',
+    #                 193,
+    #                 110 + i,
+    #                 277,
+    #             ],
+    #             "minecraft:netherite_block",
+    #         )
+
+    # for entity in await server.call_remote("World.getEntities", world):
+    #     print(entity)
+    #     if entity.get('type') == 'SKELETON':
+    #         await server.call_remote("Entity.remove", entity['uuid'])
     queue = await server.subscribe("AsyncPlayerChatEvent")
     while True:
         event = await queue.get()

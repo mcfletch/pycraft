@@ -4,6 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.lang.Class;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,8 @@ import java.util.ArrayList;
 import java.security.InvalidParameterException;
 
 import java.util.stream.Stream;
+
+import com.google.common.collect.Interner;
 import com.vrplumber.pycraft.bukkitserver.MessageHandler;
 
 class MethodHandler implements MessageHandler {
@@ -44,6 +48,20 @@ class MethodHandler implements MessageHandler {
             typeNames.add(cls.getSimpleName());
         }
         result.put("argtypes", typeNames);
+        result.put("returntype", pointer.getReturnType().getSimpleName());
+        Type genericReturn = pointer.getGenericReturnType();
+        if (genericReturn instanceof ParameterizedType) {
+            ParameterizedType parameterized = (ParameterizedType) genericReturn;
+            List<String> subTypeNames = new ArrayList<String>();
+            for (Type innerType : parameterized.getActualTypeArguments()) {
+                if (innerType instanceof Class) {
+                    subTypeNames.add(((Class) innerType).getSimpleName());
+                } else {
+                    subTypeNames.add(innerType.getTypeName());
+                }
+            }
+            result.put("returntype_subtypes", subTypeNames);
+        }
         return result;
         // List<String> parameterList = new ArrayList<String>();
         // for (Parameter parameter : pointer.getParameters()) {
@@ -159,6 +177,9 @@ class MethodHandler implements MessageHandler {
         Object result;
         try {
             result = pointerInvoke(api, message, arguments);
+            if (pointer.getReturnType() == Void.TYPE) {
+                result = Boolean.TRUE;
+            }
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             e.printStackTrace();
             throw new InvalidParameterException(

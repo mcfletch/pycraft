@@ -26,21 +26,25 @@ public class BlockConverter implements Converter {
 
     public Object toJava(PycraftAPI api, Object value, Class finalType) {
         if (value instanceof List<?>) {
-            Vector vector = (Vector) registry.toJava(Vector.class, api, value);
-            Block block = api.getWorld().getBlockAt(vector.getBlockX(), vector.getBlockY(), vector.getBlockZ());
+            Location location = (Location) registry.toJava(Location.class, api, value);
+            if (location == null) {
+                throw new InvalidParameterException(String.format("Location was null for %s", value.toString()));
+            }
+            Block block = location.getBlock();
+            if (block == null) {
+                throw new InvalidParameterException(String.format("Block was null for %s", location.toString()));
+            }
             return block;
         }
-        throw new InvalidParameterException(
-                String.format("Need a 3-element list of coordinates, got %s", value.toString()));
+        throw new InvalidParameterException(String.format("Need a location ['world',x,y,z], got %s", value.toString()));
     }
 
     public Map<String, Object> blockAsMapping(PycraftAPI api, Object value) {
         org.bukkit.block.Block asBlock = (Block) value;
         Location loc = asBlock.getLocation();
         Map<String, Object> asMap = new HashMap<String, Object>();
-        asMap.put("world", asBlock.getWorld().getName());
         asMap.put("location", loc);
-        asMap.put("material", asBlock.getBlockData());
+        asMap.put("data", asBlock.getBlockData());
         return asMap;
     }
 

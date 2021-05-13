@@ -31,45 +31,8 @@ public class WorldHandler extends NamespaceHandler {
         return response;
     }
 
-    public Object getWorlds(PycraftAPI api, PycraftMessage message) {
-        return api.getPlugin().getServer().getWorlds();
-    }
-
-    public Object setWorld(PycraftAPI api, PycraftMessage message) {
-        /* Set the world on which we will operate */
-        String name = api.expectString(message, 0);
-        if (name != null) {
-            api.setWorld(name);
-        }
-        return (Object) name;
-    }
-
-    public Object getWorld(PycraftAPI api, PycraftMessage message) {
-        /* Get the current world, it not yet set, set to the first world */
-        World world = (World) api.expectType(message, 0, World.class, true);
-        if (world == null) {
-            return api.getWorld();
-        }
-        return world;
-    }
-
-    public Object getBlock(PycraftAPI api, PycraftMessage message) {
-        Location loc = (Location) api.expectType(message, 0, Location.class);
-        return loc.getBlock();
-    }
-
-    public Object setBlock(PycraftAPI api, PycraftMessage message) {
-        Location loc = (Location) api.expectType(message, 0, Location.class);
-        BlockData data = (BlockData) api.expectType(message, 1, BlockData.class);
-        if (data == null) {
-            throw new InvalidParameterException(
-                    String.format("Unable to resolve the blockdata value %s", message.payload.get(1)));
-        }
-        loc.getBlock().setBlockData(data);
-        return data;
-    }
-
     public Object setBlocks(PycraftAPI api, PycraftMessage message) {
+        /* Custom operation to set large numbers of blocks at once */
         World world = (World) api.expectType(message, 0, World.class, true);
         Vector start = (Vector) api.expectType(message, 1, Vector.class);
         Vector end = (Vector) api.expectType(message, 2, Vector.class);
@@ -100,11 +63,11 @@ public class WorldHandler extends NamespaceHandler {
         return Arrays.asList(start, end, data);
     }
 
-    public Object spawnEntity(PycraftAPI api, PycraftMessage message) {
-        Location loc = (Location) api.expectType(message, 0, Location.class);
-        EntityType eType = (EntityType) api.expectType(message, 1, EntityType.class);
-        return api.getWorld().spawnEntity(loc, eType);
-    }
+    // public Object spawnEntity(PycraftAPI api, PycraftMessage message) {
+    // Location loc = (Location) api.expectType(message, 0, Location.class);
+    // EntityType eType = (EntityType) api.expectType(message, 1, EntityType.class);
+    // return api.getWorld().spawnEntity(loc, eType);
+    // }
 
     public void register(HandlerRegistry registry) {
         /* Called when we are registered with the registry (api likely not up yet) */
@@ -118,15 +81,6 @@ public class WorldHandler extends NamespaceHandler {
         // this.addHandler(handler.getMethod(), handler);
         // }
 
-    }
-
-    public String postToChat(PycraftAPI api, PycraftMessage message) {
-        World world = api.getWorld();
-        String chat = api.expectString(message, 0);
-        for (Player p : world.getPlayers()) {
-            p.sendMessage(chat);
-        }
-        return chat;
     }
 
     public Object getMaterialTypes(PycraftAPI api, PycraftMessage message) {
@@ -158,29 +112,8 @@ public class WorldHandler extends NamespaceHandler {
         String name = message.nextName();
         Object result = null;
         boolean handled = false;
-        if (name.equals("getWorlds")) {
-            result = getWorlds(api, message);
-            handled = true;
-        } else if (name.equals("setWorld")) {
-            result = setWorld(api, message);
-            handled = true;
-        } else if (name.equals("getWorld")) {
-            result = getWorld(api, message);
-            handled = true;
-        } else if (name.equals("getBlock")) {
-            result = getBlock(api, message);
-            handled = true;
-        } else if (name.equals("setBlock")) {
-            result = setBlock(api, message);
-            handled = true;
-        } else if (name.equals("setBlocks")) {
+        if (name.equals("setBlocks")) {
             result = setBlocks(api, message);
-            handled = true;
-        } else if (name.equals("spawnEntity")) {
-            result = spawnEntity(api, message);
-            handled = true;
-        } else if (name.equals("postToChat")) {
-            result = postToChat(api, message);
             handled = true;
         } else if (name.equals("getMaterialTypes")) {
             result = getMaterialTypes(api, message);

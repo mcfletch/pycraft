@@ -39,20 +39,4 @@ public class GenericHandler extends NamespaceHandler {
         }
     }
 
-    public Object handle(PycraftAPI api, PycraftMessage message) {
-        String name = message.nextName();
-        Object result = null;
-        boolean handled = false;
-        /* Registered method on the current World */
-        MessageHandler subHandler = getHandler(name);
-        if (subHandler != null) {
-            result = subHandler.handle(api, message);
-            handled = true;
-        }
-        if (handled) {
-            return result;
-        } else {
-            throw new InvalidParameterException(String.format("unknown-method %s.%s", getMethod(), name));
-        }
-    };
 }

@@ -13,6 +13,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import org.bukkit.Location;
+import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
@@ -97,12 +98,14 @@ public class PycraftConverterRegistry {
         interfaceConverters.add(new InterfaceConverter(Map.class, new MapConverter(this)));
         interfaceConverters.add(new InterfaceConverter(Enum.class, new EnumConverter(this)));
         interfaceConverters.add(new InterfaceConverter(Block.class, new BlockConverter(this)));
-        interfaceConverters.add(new InterfaceConverter(Entity.class, new EntityConverter(this)));
         interfaceConverters.add(new InterfaceConverter(Player.class, new PlayerConverter(this)));
+        interfaceConverters.add(new InterfaceConverter(Entity.class, new EntityConverter(this)));
         // This is really *just* for the test server's mocked worlds
         interfaceConverters.add(new InterfaceConverter(World.class, new WorldConverter(this)));
         interfaceConverters.add(new InterfaceConverter(BlockData.class, new BlockDataConverter(this)));
         interfaceConverters.add(new InterfaceConverter(Inventory.class, new InventoryConverter(this)));
+        interfaceConverters.add(new InterfaceConverter(Server.class, new ServerConverter(this)));
+
     }
 
     public Object toJava(Class targetType, PycraftAPI api, Object value) {

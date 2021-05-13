@@ -56,7 +56,6 @@ public abstract class NamespaceHandler implements MessageHandler {
             return (Object) null;
         }
         message.addImplementation(subHandler);
-        subHandler.handle(api, message);
-        return (Object) null;
+        return subHandler.handle(api, message);
     };
 }

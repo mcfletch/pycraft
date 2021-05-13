@@ -38,6 +38,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.TestInstance;
 
+import com.google.gson.Gson;
+
 // import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -209,16 +211,8 @@ public class AppTest {
   public void worldList() {
 
     PycraftAPI api = getMockApi();
-    api.dispatch("1,World.getWorlds,[]", false);
+    api.dispatch("1,Server.getWorlds,[\"server\"]", false);
     assertTrue(api.lastResponse.indexOf("sample-world") > -1, api.lastResponse);
-  }
-
-  @Test
-  public void getWorld() {
-
-    PycraftAPI api = getMockApi();
-    api.dispatch("1,World.getWorld,[null]", false);
-    assertTrue(api.lastResponse.indexOf("sample-world") > -1);
   }
 
   @Test
@@ -235,14 +229,6 @@ public class AppTest {
     PycraftAPI api = getMockApi();
     api.dispatch("1,World.getEntityTypes,[]", false);
     assertTrue(api.lastResponse.indexOf("spider") > -1);
-  }
-
-  @Test
-  public void setWorld() {
-
-    PycraftAPI api = getMockApi();
-    api.dispatch("1,World.setWorld,[\"sample-world\"]", false);
-    assertEquals("1,0,\"sample-world\"", api.lastResponse);
   }
 
   // @Test

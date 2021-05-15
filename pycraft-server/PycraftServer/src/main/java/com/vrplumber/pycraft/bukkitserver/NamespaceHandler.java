@@ -52,6 +52,7 @@ public abstract class NamespaceHandler implements MessageHandler {
         }
         if (subHandler == null) {
             List<String> response = Arrays.asList("unknown-method", String.join(name));
+            message.finished = true;
             api.sendError(message.messageId, 1, response);
             return (Object) null;
         }

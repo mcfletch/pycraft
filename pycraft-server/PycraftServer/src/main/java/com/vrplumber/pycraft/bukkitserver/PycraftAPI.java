@@ -218,11 +218,13 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
     PycraftMessage message = PycraftMessage.parseHeader(line, this);
     if (message == null) {
       List<String> response = Arrays.asList("bad-header", "Unable to parse the message header");
+      message.finished = true;
       this.sendError(0, 1, response);
       return;
     }
     if (message.method == null || message.method.size() < 1) {
       List<String> response = Arrays.asList("invalid-request", "Method is not present or message could not be parsed");
+      message.finished = true;
       this.sendError(message.messageId, 1, response);
       return;
     }
@@ -233,15 +235,19 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
       Callable operation = (Callable) () -> {
         try {
           Object response = handler.handle(this, message);
-          this.sendResponse(message.messageId, response);
+          if (!message.finished) {
+            this.sendResponse(message.messageId, response);
+          }
           return response;
         } catch (InvalidParameterException e) {
           e.printStackTrace();
           List<String> response = Arrays.asList("error", e.getMessage());
+          message.finished = true;
           this.sendError(message.messageId, 1, response);
           return response;
         } catch (Exception e) {
           List<String> response = Arrays.asList("error", e.getMessage());
+          message.finished = true;
           this.sendError(message.messageId, 1, response);
           e.printStackTrace();
           throw e;
@@ -254,13 +260,16 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
           operation.call();
         } catch (Exception e) {
           e.printStackTrace();
+          message.finished = true;
           this.sendError(message.messageId, 1, Arrays.asList("Error handling request"));
         }
       }
     } else if (message.method.get(0).equals("__methods__")) {
+      message.finished = true;
       this.sendResponse(message.messageId, registry.getDescription());
     } else {
       List<String> response = Arrays.asList("unknown-method", message.method.get(0));
+      message.finished = true;
       this.sendError(message.messageId, 1, response);
     }
   }

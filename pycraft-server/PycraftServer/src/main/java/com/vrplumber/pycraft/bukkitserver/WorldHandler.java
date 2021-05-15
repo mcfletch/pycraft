@@ -4,6 +4,8 @@ import com.vrplumber.pycraft.bukkitserver.NamespaceHandler;
 import com.vrplumber.pycraft.bukkitserver.MessageHandler;
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.PycraftMessage;
+import com.vrplumber.pycraft.bukkitserver.HelperMethod;
+import com.vrplumber.pycraft.bukkitserver.InjectedMethod;
 import java.lang.Math;
 import java.util.List;
 import java.util.Arrays;
@@ -31,10 +33,9 @@ public class WorldHandler extends NamespaceHandler {
         return response;
     }
 
-    public Object getBlocks(PycraftAPI api, PycraftMessage message) {
-        World world = (World) api.expectType(message, 0, World.class, true);
-        Vector start = (Vector) api.expectType(message, 1, Vector.class);
-        Vector end = (Vector) api.expectType(message, 2, Vector.class);
+    @InjectedMethod
+    @HelperMethod
+    static public List<List<List<BlockData>>> getBlocks(World world, Vector start, Vector end) {
         Location getter = new Location(world, start.getBlockX(), start.getBlockY(), start.getBlockZ());
         int dx = end.getBlockX() - start.getBlockX(), dy = end.getBlockY() - start.getBlockY(),
                 dz = end.getBlockZ() - start.getBlockZ();
@@ -48,11 +49,11 @@ public class WorldHandler extends NamespaceHandler {
         if (dz != 0) {
             zstep = dz / Math.abs(dz);
         }
-        List<Object> result = new ArrayList<Object>();
+        List<List<List<BlockData>>> result = new ArrayList<List<List<BlockData>>>();
         for (int y = 0; y < dy; y += ystep) {
-            List<Object> slab = new ArrayList<Object>();
+            List<List<BlockData>> slab = new ArrayList<List<BlockData>>();
             for (int z = 0; z < dz; z += zstep) {
-                List<Object> row = new ArrayList<Object>();
+                List<BlockData> row = new ArrayList<BlockData>();
                 for (int x = 0; x < dx; x += xstep) {
                     Location tmp = getter.add(x, y, z);
                     row.add(tmp.getBlock().getBlockData());
@@ -64,13 +65,10 @@ public class WorldHandler extends NamespaceHandler {
         return result;
     }
 
-    public Object setBlocks(PycraftAPI api, PycraftMessage message) {
-        /* Custom operation to set large numbers of blocks at once */
-        World world = (World) api.expectType(message, 0, World.class, true);
-        Vector start = (Vector) api.expectType(message, 1, Vector.class);
-        Vector end = (Vector) api.expectType(message, 2, Vector.class);
-        BlockData data = (BlockData) api.expectType(message, 3, BlockData.class);
-
+    @HelperMethod
+    @InjectedMethod
+    public BlockData setBlocks(World world, Vector start, Vector end, BlockData data) {
+        /* Set Blocks to the given BlockData value */
         Location setter = new Location(world, start.getBlockX(), start.getBlockY(), start.getBlockZ());
         int dx = end.getBlockX() - start.getBlockX(), dy = end.getBlockY() - start.getBlockY(),
                 dz = end.getBlockZ() - start.getBlockZ();
@@ -93,75 +91,47 @@ public class WorldHandler extends NamespaceHandler {
                 }
             }
         }
-        return Arrays.asList(start, end, data);
+        return data;
     }
-
-    // public Object spawnEntity(PycraftAPI api, PycraftMessage message) {
-    // Location loc = (Location) api.expectType(message, 0, Location.class);
-    // EntityType eType = (EntityType) api.expectType(message, 1, EntityType.class);
-    // return api.getWorld().spawnEntity(loc, eType);
-    // }
 
     public void register(HandlerRegistry registry) {
         /* Called when we are registered with the registry (api likely not up yet) */
         for (MessageHandler handler : MethodHandler.forClass(World.class)) {
             this.addHandler(handler.getMethod(), handler);
         }
-        // for (MessageHandler handler :
-        // MethodHandler.forClass(WorldHandler.class,Arrays.asList({
-        // "getWorlds"
-        // }))) {
-        // this.addHandler(handler.getMethod(), handler);
-        // }
+        MethodHandler.forHandler(World.class, this);
 
     }
 
-    public Object getMaterialTypes(PycraftAPI api, PycraftMessage message) {
-        // Get set of all materials for reference by the client-side software
-        List<String> result = new ArrayList<String>();
+    @HelperMethod
+    @InjectedMethod
+    public List<Material> getMaterialTypes() {
+        /* Get all *non-legacy* material types */
+        List<Material> result = new ArrayList<Material>();
         for (Material material : Material.values()) {
             // So *how* do you go about supporting all materials without
             // relying on deprecated legacy prefix???
             if (!material.name().startsWith(Material.LEGACY_PREFIX)) {
-                result.add(material.getKey().toString());
+                result.add(material);
             }
         }
         return result;
     }
 
-    public Object getEntityTypes(PycraftAPI api, PycraftMessage message) {
-        // Get set of all materials for reference by the client-side software
-        List<String> result = new ArrayList<String>();
+    @HelperMethod
+    @InjectedMethod
+    public List<EntityType> getEntityTypes() {
+        /*
+         * Get set of all materials for reference by the client-side software (filtering
+         * unknown)
+         */
+        List<EntityType> result = new ArrayList<EntityType>();
         for (EntityType entityType : EntityType.values()) {
             if (entityType != EntityType.UNKNOWN) {
-                result.add(entityType.getKey().toString());
+                result.add(entityType);
             }
         }
         return result;
     }
 
-    @Override
-    public Object handle(PycraftAPI api, PycraftMessage message) {
-        String name = message.nextName();
-        Object result = null;
-        boolean handled = false;
-        if (name.equals("setBlocks")) {
-            result = setBlocks(api, message);
-            handled = true;
-        } else if (name.equals("getMaterialTypes")) {
-            result = getMaterialTypes(api, message);
-            handled = true;
-        } else if (name.equals("getEntityTypes")) {
-            result = getEntityTypes(api, message);
-            handled = true;
-        } else {
-            return super.handle(api, message);
-        }
-        if (handled) {
-            // api.sendResponse(message.messageId, result);
-            return result;
-        } else {
-            throw new InvalidParameterException(String.format("unknown-method %s", name));
-        }
-    };
 }

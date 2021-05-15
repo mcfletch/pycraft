@@ -38,7 +38,12 @@ public class BlockDataConverter implements Converter {
         Map<String, Object> asMap = new HashMap<String, Object>();
         asMap.put("__type__", blockdata.getClass().getSimpleName());
         asMap.put("__namespace__", "BlockData");
-        asMap.put("string_value", blockdata.getAsString());
+        try {
+            asMap.put("string_value", blockdata.getAsString());
+        } catch (Exception err) {
+            // MockBukkit doesn't support getAsString()
+            asMap.put("string_value", blockdata.getMaterial().getKey().toString());
+        }
         return registry.fromJava(api, asMap);
     }
 }

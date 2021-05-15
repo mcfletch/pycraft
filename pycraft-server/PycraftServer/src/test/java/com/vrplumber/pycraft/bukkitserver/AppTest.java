@@ -422,7 +422,7 @@ public class AppTest {
 
   @Test
   public void getBlocks() {
-    api.dispatch("1,World.getBlocks,[\"world\",[0,0,0],[10,10,10]]", false);
+    api.dispatch("1,World.getBlocks,[\"sample-world\",[0,0,0],[2,2,2]]", false);
     assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
 
   }

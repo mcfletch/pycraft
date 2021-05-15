@@ -7,6 +7,7 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.Class;
+import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -18,6 +19,8 @@ import java.security.InvalidParameterException;
 
 import java.util.stream.Stream;
 
+import javax.xml.stream.events.Namespace;
+
 import com.google.common.collect.Interner;
 import com.vrplumber.pycraft.bukkitserver.MessageHandler;
 
@@ -25,6 +28,8 @@ class MethodHandler implements MessageHandler {
     /* Handle a method by dispatching to a method on a class instance */
     public Class cls = null;
     public Boolean staticMethod = false;
+    public Boolean injectedMethod = false;
+    public Object injectionTarget = (Object) null;
     public Method pointer = null;
 
     public void register(HandlerRegistry registry) {
@@ -37,9 +42,9 @@ class MethodHandler implements MessageHandler {
 
     public Map<String, Object> getDescription() {
         Map<String, Object> result = new HashMap<String, Object>();
-        int modifiers = pointer.getModifiers();
         result.put("type", "method");
-        result.put("static", (Boolean) Modifier.isStatic(modifiers));
+        result.put("static", (staticMethod && !injectedMethod));
+        result.put("injected", injectedMethod);
         result.put("name", pointer.getName());
         result.put("__doc__", pointer.toGenericString());
         result.put("argcount", pointer.getParameterCount());
@@ -94,6 +99,36 @@ class MethodHandler implements MessageHandler {
         return handlers;
     }
 
+    public static void forHandler(Class cls, NamespaceHandler handler) {
+        /*
+         * Create MethodHandler instances for methods on cls
+         * 
+         */
+        Method[] methods = handler.getClass().getMethods();
+        for (Method method : methods) {
+            int modifiers = method.getModifiers();
+            boolean isHelper = false;
+            boolean isInjected = false;
+            String name = method.getName();
+            for (Annotation annotation : method.getDeclaredAnnotations()) {
+                if (annotation instanceof HelperMethod) {
+                    isHelper = true;
+                } else if (annotation instanceof InjectedMethod) {
+                    isInjected = true;
+                }
+            }
+            if (!isHelper) {
+                continue;
+            }
+            MethodHandler mHandler = new MethodHandler(cls, method, Modifier.isStatic(modifiers));
+            if (isInjected) {
+                mHandler.injectedMethod = true;
+                mHandler.injectionTarget = handler;
+            }
+            handler.addHandler(method.getName(), mHandler);
+        }
+    }
+
     public String getMethod() {
         return pointer.getName();
     }
@@ -131,32 +166,32 @@ class MethodHandler implements MessageHandler {
         }
 
         if (parameters.size() == 0) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance));
+            return (Object) this.pointer.invoke(message.instance);
         } else if (parameters.size() == 1) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0));
+            return (Object) this.pointer.invoke(message.instance, parameters.get(0));
         } else if (parameters.size() == 2) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1));
+            return (Object) this.pointer.invoke(message.instance, parameters.get(0), parameters.get(1));
         } else if (parameters.size() == 3) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+            return (Object) this.pointer.invoke(message.instance, parameters.get(0), parameters.get(1),
                     parameters.get(2));
         } else if (parameters.size() == 4) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+            return (Object) this.pointer.invoke(message.instance, parameters.get(0), parameters.get(1),
                     parameters.get(2), parameters.get(3));
         } else if (parameters.size() == 5) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+            return (Object) this.pointer.invoke(message.instance, parameters.get(0), parameters.get(1),
                     parameters.get(2), parameters.get(3), parameters.get(4));
         } else if (parameters.size() == 6) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+            return (Object) this.pointer.invoke(message.instance, parameters.get(0), parameters.get(1),
                     parameters.get(2), parameters.get(3), parameters.get(4), parameters.get(5));
         } else if (parameters.size() == 7) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+            return (Object) this.pointer.invoke(message.instance, parameters.get(0), parameters.get(1),
                     parameters.get(2), parameters.get(3), parameters.get(4), parameters.get(5), parameters.get(6));
         } else if (parameters.size() == 8) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+            return (Object) this.pointer.invoke(message.instance, parameters.get(0), parameters.get(1),
                     parameters.get(2), parameters.get(3), parameters.get(4), parameters.get(5), parameters.get(6),
                     parameters.get(7));
         } else if (parameters.size() == 9) {
-            return (Object) this.pointer.invoke(cls.cast(message.instance), parameters.get(0), parameters.get(1),
+            return (Object) this.pointer.invoke(message.instance, parameters.get(0), parameters.get(1),
                     parameters.get(2), parameters.get(3), parameters.get(4), parameters.get(5), parameters.get(6),
                     parameters.get(7), parameters.get(8));
         } else {
@@ -166,14 +201,18 @@ class MethodHandler implements MessageHandler {
 
     public Object handle(PycraftAPI api, PycraftMessage message) {
         List<Object> arguments = message.payload;
-        if (!staticMethod) {
-            int consumed = 0;
-            message.instance = api.expectType(message, 0, cls);
-            consumed = 1;
-            arguments = message.payload.subList(consumed, message.payload.size());
+        int consumed = 0;
+        if (injectedMethod) {
+            message.instance = injectionTarget;
         } else {
-            message.instance = null;
+            if (!staticMethod) {
+                message.instance = api.expectType(message, 0, cls);
+                consumed = 1;
+            } else {
+                message.instance = null;
+            }
         }
+        arguments = message.payload.subList(consumed, message.payload.size());
         Object result;
         try {
             api.getLogger().info(String.format("%s result call", pointer.getName()));

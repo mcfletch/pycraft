@@ -19,6 +19,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.World;
+import org.bukkit.enchantments.Enchantment;
 
 public class ItemStackConverter implements Converter {
     /* Given a message and an index convert the value to an instance of T */
@@ -71,6 +72,12 @@ public class ItemStackConverter implements Converter {
         asMap.put("__namespace__", "ItemStack");
         asMap.put("material", itemStack.getType().getKey().toString());
         asMap.put("amount", itemStack.getAmount());
+        Map<String, Integer> enchantments = new HashMap<String, Integer>();
+        Map<Enchantment, Integer> onStack = itemStack.getEnchantments();
+        for (Enchantment key : onStack.keySet()) {
+            enchantments.put(key.getKey().toString(), onStack.get(key));
+        }
+        asMap.put("enchantments", enchantments);
         return registry.fromJava(api, asMap);
     }
 }

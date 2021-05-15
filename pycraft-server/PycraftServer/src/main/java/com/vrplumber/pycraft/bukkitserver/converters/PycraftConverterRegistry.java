@@ -20,6 +20,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.enchantments.EnchantmentWrapper;
 
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.converters.Converter;
@@ -91,6 +92,7 @@ public class PycraftConverterRegistry {
         mapping.put(Player.class, new PlayerConverter(this));
         mapping.put(ItemStack.class, new ItemStackConverter(this));
         mapping.put(Enchantment.class, new EnchantmentConverter(this));
+        mapping.put(EnchantmentWrapper.class, new EnchantmentConverter(this));
 
         // Now the interfaces, which require a linear scan, so we want to reduce
         // usage...
@@ -105,6 +107,8 @@ public class PycraftConverterRegistry {
         interfaceConverters.add(new InterfaceConverter(BlockData.class, new BlockDataConverter(this)));
         interfaceConverters.add(new InterfaceConverter(Inventory.class, new InventoryConverter(this)));
         interfaceConverters.add(new InterfaceConverter(Server.class, new ServerConverter(this)));
+        interfaceConverters.add(new InterfaceConverter(ItemStack.class, new ItemStackConverter(this)));
+        interfaceConverters.add(new InterfaceConverter(Enchantment.class, new EnchantmentConverter(this)));
 
     }
 
@@ -144,9 +148,16 @@ public class PycraftConverterRegistry {
         if (value == null) {
             return "null";
         }
-        Converter converter = mapping.get(value.getClass());
+        Class cls = value.getClass();
+        Converter converter = mapping.get(cls);
+
         if (converter == null) {
-            converter = getConverterByInterface(value);
+            if (cls.isArray()) {
+                /* Use the String array's Converter */
+                converter = mapping.get(String[].class);
+            } else {
+                converter = getConverterByInterface(value);
+            }
         }
         if (converter != null) {
             return converter.fromJava(api, value);

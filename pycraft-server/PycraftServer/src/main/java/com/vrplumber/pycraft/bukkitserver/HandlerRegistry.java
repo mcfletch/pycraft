@@ -11,10 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
+import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.PistonMoveReaction;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
@@ -22,6 +26,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
+
 import java.util.HashMap;
 import java.util.logging.Handler;
 import org.bukkit.block.data.type.*;
@@ -79,11 +85,18 @@ class HandlerRegistry implements IHandlerRegistry {
         registerImplementation("OfflinePlayer", new GenericHandler(OfflinePlayer.class));
         registerImplementation("BlockData", new GenericHandler(BlockData.class));
         registerImplementation("Block", new GenericHandler(Block.class));
+        registerImplementation("Material", new GenericHandler(Material.class));
+        registerImplementation("Location", new GenericHandler(Location.class));
+        registerImplementation("Vector", new GenericHandler(Vector.class));
         registerImplementation("ItemStack", new GenericHandler(ItemStack.class));
         registerImplementation("Inventory", new GenericHandler(Inventory.class));
         registerImplementation("Enchantment", new GenericHandler(Enchantment.class));
         registerImplementation("Entity", new GenericHandler(Entity.class));
+        registerImplementation("EntityType", new GenericHandler(EntityType.class));
         registerImplementation("Server", new GenericHandler(Server.class));
+        registerImplementation("Biome", new GenericHandler(Biome.class));
+        registerImplementation("BlockFace", new GenericHandler(BlockFace.class));
+        registerImplementation("PistonMoveReaction", new GenericHandler(PistonMoveReaction.class));
 
         registerImplementation("Bamboo", new GenericHandler(Bamboo.class));
         registerImplementation("Bed", new GenericHandler(Bed.class));

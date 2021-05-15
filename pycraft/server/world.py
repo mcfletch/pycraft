@@ -2,10 +2,40 @@ import typing
 import uuid
 import logging
 import numpy as np
-from .proxyobjects import ServerObjectProxy, ProxyType
+from .proxyobjects import ProxyMethod, ServerObjectProxy, ProxyType, ServerObjectEnum
 
 
 log = logging.getLogger(__name__)
+
+
+@ProxyType
+class Enchantment(ServerObjectEnum):
+    __namespace__ = 'Enchantment'
+
+
+@ProxyType
+class Material(ServerObjectEnum):
+    __namespace__ = 'Material'
+
+
+@ProxyType
+class EntityType(ServerObjectEnum):
+    __namespace__ = 'EntityType'
+
+
+@ProxyType
+class Biome(ServerObjectEnum):
+    __namespace__ = 'Biome'
+
+
+@ProxyType
+class BlockFace(ServerObjectEnum):
+    __namespace__ = 'BlockFace'
+
+
+@ProxyType
+class PistonMoveReaction(ServerObjectEnum):
+    __namespace__ = 'PistonMoveReaction'
 
 
 @ProxyType
@@ -57,6 +87,8 @@ class Location(object):
         return self.__json__()
 
     def __init__(self, record):
+        if isinstance(record, Location):
+            record = record.__json__()
         if len(record) == 6:
             world, x, y, z, yaw, pitch = record
         else:
@@ -82,7 +114,7 @@ class Location(object):
     def y(self):
         return self.vector[1]
 
-    @x.setter
+    @y.setter
     def y(self, value):
         self.vector[1] = value
 
@@ -90,7 +122,7 @@ class Location(object):
     def z(self):
         return self.vector[2]
 
-    @x.setter
+    @z.setter
     def z(self, value):
         self.vector[2] = value
 
@@ -117,6 +149,18 @@ class Location(object):
         )
 
     __repr__ = __str__
+
+    def __add__(self, other):
+        if isinstance(other, (Vector, Location)):
+            other = other.vector[:3]
+        other = np.array(other, dtype='d')
+        x, y, z = self.vector[:3] + other
+        return Location([self.world, x, y, z, self.yaw, self.pitch])
+
+    def block_location(self):
+        return Location(
+            [self.world, round(self.x, 0), round(self.y, 0), round(self.z, 0)]
+        )
 
 
 @ProxyType
@@ -179,6 +223,12 @@ class World(ServerObjectProxy):
     def get_key(self):
         return self.name
 
+    async def setBlock(self, vector, material_or_blockdata):
+        """Set a specific block in this world to given material (blockdata)"""
+        return await ProxyMethod.channel.call_remote(
+            "World.setBlock", [self.name] + vector, material_or_blockdata
+        )
+
 
 @ProxyType
 class Server(ServerObjectProxy):
@@ -201,6 +251,14 @@ class Server(ServerObjectProxy):
 @ProxyType
 class ItemStack(ServerObjectProxy):
     __namespace__ = 'ItemStack'
+    material: Material
+    amount: int
+    enchantments: typing.Dict[Enchantment, int]
+
+    key = None
+
+    def get_key(self):
+        return self.key
 
 
 @ProxyType
@@ -220,27 +278,122 @@ class BlockData(ServerObjectProxy):
         return self.string_value
 
 
+for _name in [
+    "Bamboo",
+    "Bed",
+    "Beehive",
+    "Bell",
+    "BrewingStand",
+    "BubbleColumn",
+    "Cake",
+    "Campfire",
+    "Chain",
+    "Chest",
+    "Cocoa",
+    "CommandBlock",
+    "Comparator",
+    "CoralWallFan",
+    "DaylightDetector",
+    "Dispenser",
+    "Door",
+    "EnderChest",
+    "EndPortalFrame",
+    "Farmland",
+    "Fence",
+    "Fire",
+    "Furnace",
+    "Gate",
+    "GlassPane",
+    "Grindstone",
+    "Hopper",
+    "Jigsaw",
+    "Jukebox",
+    "Ladder",
+    "Lantern",
+    "Leaves",
+    "Lectern",
+    "NoteBlock",
+    "Observer",
+    "Piston",
+    "PistonHead",
+    "RedstoneRail",
+    "RedstoneWallTorch",
+    "RedstoneWire",
+    "Repeater",
+    "RespawnAnchor",
+    "Sapling",
+    "Scaffolding",
+    "SeaPickle",
+    "Sign",
+    "Slab",
+    "Snow",
+    "Stairs",
+    "StructureBlock",
+    "Switch",
+    "TechnicalPiston",
+    "TNT",
+    "TrapDoor",
+    "Tripwire",
+    "TripwireHook",
+    "TurtleEgg",
+    "Wall",
+    "WallSign",
+]:
+    globals()[_name] = ProxyType(
+        type(
+            _name,
+            (BlockData,),
+            {
+                '__namespace__': _name,
+            },
+        )
+    )
+
+
+@ProxyType
+class Block(ServerObjectProxy):
+    __namespace__ = 'Block'
+
+    def get_key(self):
+        return self.location
+
+    data: BlockData
+    location: Location
+
+
 @ProxyType
 class Inventory(ServerObjectProxy):
     __namespace__ = 'Inventory'
-    __known_classes__ = ['PlayerInventory']
+    __known_classes__ = ['PlayerInventory', 'CraftInventoryPlayer']
 
     type: str
     inventoryType: str
     size: int
     contents: typing.List[ItemStack]
-    holder: typing.Union[Entity, Player, BlockData, None]
+    holder: typing.Union[Entity, Player, Block, BlockData, None]
     firstEmpty: int
+
+    def __init__(self, *args, **named):
+        super().__init__(*args, **named)
+        for index, stack in enumerate(self.contents):
+            if stack is not None:
+                stack.key = [index, self.get_key()]
 
     def get_key(self):
         if isinstance(self.holder, Player) or isinstance(self.holder, Entity):
             return self.holder.uuid
-        elif isinstance(self.holder, BlockData):
+        elif isinstance(self.holder, Block):
             return self.holder.location
         raise RuntimeError(
             "Can't calculate the key of an inventory that doesn't belong to something",
             self,
         )
+
+    def get_stack(self, index):
+        stack = self.contents[index]
+        if stack is None:
+            stack = ItemStack(key=[index, self.holder.get_key()])
+        return stack
 
 
 # @ProxyType

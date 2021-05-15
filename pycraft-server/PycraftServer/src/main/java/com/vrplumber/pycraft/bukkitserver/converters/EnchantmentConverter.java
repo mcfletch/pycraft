@@ -28,19 +28,17 @@ public class EnchantmentConverter implements Converter {
 
     public Object toJava(PycraftAPI api, Object value, Class finalType) {
         if (value instanceof String) {
-            NamespacedKey key = NamespacedKey.fromString((String) value);
-            Enchantment enchantment = Enchantment.getByKey(key);
-            if (enchantment == null) {
-                throw new InvalidParameterException(String.format("Did not find Enchantment %s, known Enchantments: %s",
-                        value.toString(), Stream.of(Enchantment.values()).map((e) -> {
-                            return e.getKey().toString();
-                        }).collect(Collectors.joining(","))));
-
+            for (Enchantment enchantment : Enchantment.values()) {
+                if (enchantment.getKey().toString().equals((String) value)) {
+                    return enchantment;
+                }
             }
-            return enchantment;
+            throw new InvalidParameterException(String.format("Did not find Enchantment %s", value.toString()));
+
         }
         throw new InvalidParameterException(
-                String.format("Need a namespaced key or enum name for Enchantment, got %s", value.toString()));
+                String.format("Need a namespaced key for Enchantment, got %s", value.toString()));
+
     }
 
     public String fromJava(PycraftAPI api, Object value) {

@@ -29,6 +29,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.World;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
@@ -310,6 +311,10 @@ public class AppTest {
     assertTrue(api.lastResponse.indexOf("PlayerInventoryMock") > -1, api.lastResponse);
     api.dispatch("1,Inventory.setItem,[\"sam\",0,\"minecraft:netherite_sword\"]", false);
     assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
+
+    api.dispatch("1,Player.getInventory,[\"sam\"]", false);
+    assertTrue(api.lastResponse.indexOf("netherite_sword") > -1, api.lastResponse);
+
     // MockBukkit doesn't allow enchanting at all...
     // api.dispatch("1,ItemStack.addEnchantment,[[0,\"sam\"],\"minecraft:fire_aspect\",0]",
     // false);
@@ -364,7 +369,7 @@ public class AppTest {
     result = registry.toJava(Material.class, api, (String) "AIR");
     assertTrue(result == Material.AIR);
     encoded = registry.fromJava(api, Material.AIR);
-    assertEquals(encoded, "\"AIR\"");
+    assertEquals(encoded, "\"minecraft:air\"");
 
     encoded = registry.fromJava(api, api.getWorld().getPlayers());
     assertTrue(encoded.startsWith("[{"));
@@ -406,6 +411,19 @@ public class AppTest {
     ItemStack itemStack = new ItemStack(Material.NETHERITE_AXE, 5);
     result = registry.fromJava(api, itemStack);
     assertTrue(((String) result).indexOf("minecraft:netherite_axe") >= 1, result.toString());
+
+    encoded = registry.fromJava(api, Enchantment.values());
+    assertTrue(encoded.indexOf("minecraft:flame") > -1, encoded);
+
+    Enchantment ench = (Enchantment) registry.toJava(Enchantment.class, api, "minecraft:flame");
+    assertEquals(ench.getKey().toString(), "minecraft:flame");
+
+  }
+
+  @Test
+  public void getBlocks() {
+    api.dispatch("1,World.getBlocks,[\"world\",[0,0,0],[10,10,10]]", false);
+    assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
 
   }
 

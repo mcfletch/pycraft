@@ -7,7 +7,7 @@ import logging
 from functools import lru_cache
 
 from json.encoder import JSONEncoder
-from . import proxyobjects
+from . import proxyobjects, world
 
 log = logging.getLogger(__name__)
 
@@ -171,128 +171,21 @@ class Channel(object):
         finally:
             self.method_cache_lock.release()
 
-
-async def test_api():
-    from .world import World, Player, Server, Entity, BlockData, Location, Inventory
-
-    server = Channel()
-    await server.open()
-    Server.inject_methods(server, await server.get_methods('Server'))
-    World.inject_methods(server, await server.get_methods('World'))
-    Player.inject_methods(server, await server.get_methods('Player'))
-    Inventory.inject_methods(server, await server.get_methods('Inventory'))
-    Entity.inject_methods(server, await server.get_methods('Entity'))
-
-    import pprint
-
-    pprint.pprint(
-        sorted(
-            [
-                x
-                for x in proxyobjects.RETURN_TYPES.keys()
-                if not proxyobjects.type_name_to_type(x)
-            ]
-        )
-    )
-
-    worlds = await Server(name="server").getWorlds()
-
-    # worlds = await server.call_remote("Server.getWorlds", "server")
-    log.info("getWorlds => %s", worlds)
-    for world in worlds:
-        for player in world.players:
-            # print(await structured.getBlockAt([structured.name, 0, 0, 0]))
-            if player.name == 'VRPlumber':
-                inventory = await player.getInventory()
-                assert isinstance(inventory, Inventory), inventory
-                await inventory.setItem(0, 'minecraft:elytra')
-
-                location = player.location + (0, -1, 0)
-                await location.setBlockData('minecraft:netherite_block')
-                # await server.call_remote(
-                #     "Inventory.setItem",
-                #     str(player.uuid),
-                #     0,
-                #     'minecraft:elytra',
-                # )
-
-                # await world.spawnEntity(player.location, 'SHEEP')
-                # await world.setStorm(True)
-                # await world.setThundering(True)
-
-                # await world.spawnEntity(player.location, 'minecraft:pufferfish')
-
-                # await world.strikeLightning(player.location)
-                # await world.strikeLightningEffect(player.location)
-                # await player.sendMessage("Hello from the new api")
-
-    # for player in world.get('players'):
-    #     if player.get('name') != 'VRPlumber':
-    #         continue
-    #     items = [
-    #         'minecraft:netherite_axe',
-    #         'minecraft:netherite_sword',
-    #         'minecraft:netherite_hoe',
-    #         'minecraft:netherite_helmet',
-    #         'minecraft:netherite_chestplate',
-    #         'minecraft:netherite_leggings',
-    #         'minecraft:netherite_boots',
-    #         'minecraft:trident',
-    #     ]
-    #     for index, item in enumerate(items):
-    #         await server.call_remote(
-    #             "Inventory.setItem",
-    #             player['uuid'],
-    #             index,
-    #             item,
-    #         )
-    #         # if index in [0, 1]:
-    #         #     await server.call_remote(
-    #         #         "ItemStack.addEnchantment",
-    #         #         [index, player['uuid']],
-    #         #         'minecraft:fire_aspect',
-    #         #         1,
-    #         #     )
-
-    # response = await server.call_remote("World.getBlock", [world, 0, 0, 0])
-    # log.info("%s block(0,0,0) => %s", world, response)
-    # response = await server.call_remote(
-    #     "World.setBlock", [world, 0, 74, 0], 'minecraft:netherite_block'
-    # )
-    # if world.get('name') == 'world':  # default world name...
-    #     # for material in await server.call_remote(
-    #     #     "World.getMaterialTypes",
-    #     # ):
-    #     #     print(material)
-    #     # for entity in await server.call_remote("World.getEntityTypes"):
-    #     #     print(entity)
-    #     for i in range(1, 5):
-    #         response = await server.call_remote(
-    #             "World.setBlock",
-    #             [
-    #                 'world',
-    #                 193,
-    #                 110 + i,
-    #                 277,
-    #             ],
-    #             "minecraft:netherite_block",
-    #         )
-
-    # for entity in await server.call_remote("World.getEntities", world):
-    #     print(entity)
-    #     if entity.get('type') == 'SKELETON':
-    #         await server.call_remote("Entity.remove", entity['uuid'])
-    queue = await server.subscribe("AsyncPlayerChatEvent")
-    while True:
-        event = await queue.get()
-        print('Event: %s', event)
-    await server.close()
-
-
-def main():
-    logging.basicConfig(level=logging.INFO)
-    asyncio.get_event_loop().run_until_complete(test_api())
-
-
-if __name__ == "__main__":
-    main()
+    async def introspect(self):
+        """Get methods for all registered namespaces"""
+        seen = {}
+        seen_classes = {}
+        for proxy in proxyobjects.PROXY_TYPES.values():
+            if proxy.__namespace__ not in seen:
+                log.info("Introspect: %s", proxy.__namespace__)
+                try:
+                    seen[proxy.__namespace__] = await self.get_methods(
+                        proxy.__namespace__
+                    )
+                except MethodInvocationError as err:
+                    log.warning("Unable to introspect: %s %s", proxy.__namespace__, err)
+                    continue
+            if proxy in seen_classes:
+                continue
+            seen_classes[proxy] = True
+            proxy.inject_methods(self, seen[proxy.__namespace__])

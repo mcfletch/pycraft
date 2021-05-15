@@ -40,6 +40,8 @@ def type_name_to_type(name):
 
 def type_coerce(value, typ):
     """Attempt to coerce value to the given typ"""
+    from . import world
+
     if value is None:
         return None
     if typ is None:
@@ -50,17 +52,29 @@ def type_coerce(value, typ):
         # Not ideal to assume 'd' type
         return np.array(value, dtype='d')
     if isinstance(value, dict) and '__type__' in value and '__namespace__' in value:
-        log.warning("Coerce dictionary: %s", value)
         if value['__type__'] in PROXY_TYPES:
             typ = PROXY_TYPES[value['__type__']]
             # return type_coerce(value, typ)
         elif value['__namespace__'] in PROXY_TYPES:
             typ = PROXY_TYPES[value['__namespace__']]
             # return type_coerce(value, typ)
+        else:
+            log.warning("No type for dictionary: %s", value)
+
+    # if typ == world.Inventory.__annotations__['contents']:
+    #     import pdb
+
+    #     pdb.set_trace()
     if isinstance(typ, type):
         if issubclass(typ, typing.List):
             sub_type = typ.__args__[0]  # YUCK!
             return [type_coerce(item, sub_type) for item in value]
+        elif issubclass(typ, typing.Dict):
+            key_typ, value_typ = typ.__args__
+            result = {}
+            for key, value in value.items():
+                result[type_coerce(key, key_typ)] = type_coerce(value, value_typ)
+            return result
         else:
             if hasattr(typ, 'from_server'):
                 return typ.from_server(value)
@@ -158,7 +172,7 @@ class ServerObjectProxy(object):
     @classmethod
     def from_server(cls, struct):
         """Convert server-side structure to local object"""
-        log.info("%s from server: %s", cls.__name__, struct)
+        # log.info("%s from server: %s", cls.__name__, struct)
         if not struct:
             return None
         instance = cls(**struct)
@@ -176,7 +190,7 @@ class ServerObjectProxy(object):
     def __init__(self, **named):
         """Set each named key/value as an attribute on object"""
         for key, value in named.items():
-            typ = self.__annotations__.get(key)
+            typ = getattr(self, '__annotations__', {}).get(key)
             if typ:
                 setattr(self, key, type_coerce(value, typ))
             else:
@@ -200,6 +214,22 @@ class ServerObjectProxy(object):
     __repr__ = __str__
     # def __repr__(self):
     #     return repr(self.get_key())
+
+
+class ServerObjectEnum(ServerObjectProxy):
+    """Holder for an enumeration where the enumeration's key is used to lookup the value"""
+
+    key: str
+
+    def __init__(self, key):
+        self.key = key
+
+    def get_key(self):
+        return self.key
+
+    @classmethod
+    def from_server(cls, key):
+        return cls(key)
 
 
 def ProxyType(cls):

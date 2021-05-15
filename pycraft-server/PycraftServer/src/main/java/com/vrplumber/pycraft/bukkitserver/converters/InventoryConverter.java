@@ -19,6 +19,7 @@ import java.util.stream.DoubleStream;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.inventory.BlockInventoryHolder;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.World;
@@ -72,7 +73,12 @@ public class InventoryConverter implements Converter {
         asMap.put("__type__", inventory.getClass().getSimpleName());
         asMap.put("__namespace__", "Inventory");
         asMap.put("type", inventory.getType().name());
-        asMap.put("holder", inventory.getHolder());
+        InventoryHolder holder = inventory.getHolder();
+        if (holder instanceof BlockInventoryHolder) {
+            asMap.put("holder", ((BlockInventoryHolder) holder).getBlock());
+        } else {
+            asMap.put("holder", inventory.getHolder());
+        }
         asMap.put("contents", Arrays.asList(inventory.getContents()));
         asMap.put("size", inventory.getSize());
         asMap.put("firstEmpty", inventory.firstEmpty());

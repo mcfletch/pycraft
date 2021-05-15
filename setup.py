@@ -30,7 +30,7 @@ setuptools.setup(
     entry_points={
         'console_scripts': [
             'pycraft-chat-server = pycraft.chatserver:main',
-            'pycraft-channel-test = pycraft.server.channel:main',
+            'pycraft-channel-test = pycraft.server.operations:main',
         ]
     },
     python_requires='>=3.6',

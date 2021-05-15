@@ -176,8 +176,13 @@ class MethodHandler implements MessageHandler {
         }
         Object result;
         try {
+            api.getLogger().info(String.format("%s result call", pointer.getName()));
             result = pointerInvoke(api, message, arguments);
+            api.getLogger().info(
+                    String.format("%s result %s", pointer.getName(), result == null ? "null" : result.toString()));
             if (pointer.getReturnType() == Void.TYPE) {
+                result = Boolean.TRUE;
+            } else if (pointer == null) {
                 result = Boolean.TRUE;
             }
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {

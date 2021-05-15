@@ -31,6 +31,39 @@ public class WorldHandler extends NamespaceHandler {
         return response;
     }
 
+    public Object getBlocks(PycraftAPI api, PycraftMessage message) {
+        World world = (World) api.expectType(message, 0, World.class, true);
+        Vector start = (Vector) api.expectType(message, 1, Vector.class);
+        Vector end = (Vector) api.expectType(message, 2, Vector.class);
+        Location getter = new Location(world, start.getBlockX(), start.getBlockY(), start.getBlockZ());
+        int dx = end.getBlockX() - start.getBlockX(), dy = end.getBlockY() - start.getBlockY(),
+                dz = end.getBlockZ() - start.getBlockZ();
+        int xstep = 0, ystep = 0, zstep = 0;
+        if (dx != 0) {
+            xstep = dx / Math.abs(dx);
+        }
+        if (dy != 0) {
+            ystep = dy / Math.abs(dy);
+        }
+        if (dz != 0) {
+            zstep = dz / Math.abs(dz);
+        }
+        List<Object> result = new ArrayList<Object>();
+        for (int y = 0; y < dy; y += ystep) {
+            List<Object> slab = new ArrayList<Object>();
+            for (int z = 0; z < dz; z += zstep) {
+                List<Object> row = new ArrayList<Object>();
+                for (int x = 0; x < dx; x += xstep) {
+                    Location tmp = getter.add(x, y, z);
+                    row.add(tmp.getBlock().getBlockData());
+                }
+                slab.add(row);
+            }
+            result.add(slab);
+        }
+        return result;
+    }
+
     public Object setBlocks(PycraftAPI api, PycraftMessage message) {
         /* Custom operation to set large numbers of blocks at once */
         World world = (World) api.expectType(message, 0, World.class, true);
@@ -52,9 +85,9 @@ public class WorldHandler extends NamespaceHandler {
             zstep = dz / Math.abs(dz);
         }
 
-        for (int x = 0; x < dx; x += xstep) {
-            for (int y = 0; y < dy; y += ystep) {
-                for (int z = 0; z < dz; z += zstep) {
+        for (int y = 0; y < dy; y += ystep) {
+            for (int z = 0; z < dz; z += zstep) {
+                for (int x = 0; x < dx; x += xstep) {
                     Location tmp = setter.add(x, y, z);
                     tmp.getBlock().setBlockData(data);
                 }

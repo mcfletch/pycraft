@@ -175,6 +175,14 @@ class Channel(object):
         """Get methods for all registered namespaces"""
         seen = {}
         seen_classes = {}
+
+        automatic = await self.call_remote("__methods__")
+        import pdb
+
+        pdb.set_trace()
+        for key, declarations in automatic.items():
+            print(key)
+
         for proxy in proxyobjects.PROXY_TYPES.values():
             if proxy.__namespace__ not in seen:
                 log.info("Introspect: %s", proxy.__namespace__)

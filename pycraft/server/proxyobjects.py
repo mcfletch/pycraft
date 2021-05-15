@@ -3,6 +3,7 @@ import typing
 import uuid
 import logging
 import numpy as np
+from functools import lru_cache, wraps
 
 log = logging.getLogger(__name__)
 
@@ -27,6 +28,21 @@ PROXY_TYPES = {
 }
 
 RETURN_TYPES = {}
+
+
+def acache(function):
+    """Dumb cache operation for async no-arg functions"""
+    cache = []
+
+    @wraps(function)
+    async def with_acache(target):
+        if cache:
+            return cache[0]
+        result = await function(target)
+        cache.append(result)
+        return result
+
+    return with_acache
 
 
 def type_name_to_type(name):
@@ -220,6 +236,17 @@ class ServerObjectEnum(ServerObjectProxy):
     """Holder for an enumeration where the enumeration's key is used to lookup the value"""
 
     key: str
+
+    @classmethod
+    @acache
+    async def values(cls):
+        """Get the enumerated values in this class"""
+        result = []
+        for key in await ProxyMethod.channel.call_remote(
+            "%s.values" % (cls.__namespace__,),
+        ):
+            result.append(cls(key))
+        return result
 
     def __init__(self, key):
         self.key = key

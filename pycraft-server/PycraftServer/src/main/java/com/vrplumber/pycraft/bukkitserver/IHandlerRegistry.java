@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Handler;
 
 public interface IHandlerRegistry {
@@ -17,5 +18,5 @@ public interface IHandlerRegistry {
 
     public MessageHandler getHandler(String name);
 
-    public List<String> getMethodDescriptions();
+    public Map<String, Object> getDescription();
 }

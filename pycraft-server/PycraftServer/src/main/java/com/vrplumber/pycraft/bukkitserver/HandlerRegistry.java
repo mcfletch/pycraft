@@ -21,6 +21,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.PistonMoveReaction;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -31,8 +32,6 @@ import org.bukkit.util.Vector;
 import java.util.HashMap;
 import java.util.logging.Handler;
 import org.bukkit.block.data.type.*;
-
-import javax.swing.text.html.parser.Entity;
 
 class HandlerRegistry implements IHandlerRegistry {
     private static List<Class> handlers;
@@ -65,13 +64,17 @@ class HandlerRegistry implements IHandlerRegistry {
         payload.register(this);
     }
 
-    public List<String> namespaceMethods(Map<String, MessageHandler> subcommands) {
-        List<String> response = new ArrayList<String>();
-        for (String key : subcommands.keySet()) {
-            MessageHandler handler = subcommands.get(key);
-            response.add(String.format("%s => %s", key, handler.getDescription()));
+    public Map<String, Object> getDescription() {
+        Map<String, Object> result = new HashMap<String, Object>();
+        result.put("type", "namespace");
+        result.put("name", "");
+        List<Map<String, Object>> commands = new ArrayList<Map<String, Object>>();
+        for (String key : implementations.keySet()) {
+            MessageHandler handler = implementations.get(key);
+            commands.add(handler.getDescription());
         }
-        return response;
+        result.put("commands", commands);
+        return result;
     }
 
     public void registerHandlers() {
@@ -178,9 +181,5 @@ class HandlerRegistry implements IHandlerRegistry {
 
     public MessageHandler getHandler(String name) {
         return implementations.get(name);
-    }
-
-    public List<String> getMethodDescriptions() {
-        return namespaceMethods(implementations);
     }
 }

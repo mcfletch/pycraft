@@ -1,10 +1,12 @@
-import logging, asyncio
+import logging, asyncio, pprint
+from pycraft.server.proxyobjects import ProxyMethod
 from .channel import Channel
 from .world import (
     World,
     Player,
     Server,
     Entity,
+    Material,
     BlockData,
     Location,
     Inventory,
@@ -34,6 +36,12 @@ async def nice_sword(player):
         )
 
 
+async def show_enum(cls):
+    print("Instances of %s" % cls.__name__)
+    for instance in await cls.values():
+        print(instance.get_key())
+
+
 async def test_api():
 
     server = Channel()
@@ -43,6 +51,8 @@ async def test_api():
     import pprint
 
     worlds = await Server(name="server").getWorlds()
+
+    # await show_enum(Material)
 
     # worlds = await server.call_remote("Server.getWorlds", "server")
     log.info("getWorlds => %s", worlds)

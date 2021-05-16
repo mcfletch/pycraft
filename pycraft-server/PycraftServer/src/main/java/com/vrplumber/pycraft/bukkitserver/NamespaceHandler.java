@@ -33,6 +33,22 @@ public abstract class NamespaceHandler implements MessageHandler {
     }
 
     public void addHandler(String name, MessageHandler handler) {
+        MessageHandler other = subcommands.get(name);
+        if (other != null) {
+            if (other instanceof MethodHandler && handler instanceof MethodHandler) {
+                MethodHandler newMethod = ((MethodHandler) handler);
+                MethodHandler otherMethod = ((MethodHandler) other);
+                MultiDispatchHandler multi = new MultiDispatchHandler();
+                multi.addHandler(otherMethod);
+                multi.addHandler(newMethod);
+                handler = multi;
+            } else if (other instanceof MultiDispatchHandler && handler instanceof MethodHandler) {
+                ((MultiDispatchHandler) other).addHandler((MethodHandler) handler);
+                return;
+            } else {
+                throw new RuntimeException(String.format("Got conflicting name for %s", other.getMethod()));
+            }
+        }
         subcommands.put(name, handler);
     };
 

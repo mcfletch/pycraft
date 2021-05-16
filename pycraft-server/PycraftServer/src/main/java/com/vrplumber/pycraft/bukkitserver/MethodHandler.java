@@ -10,7 +10,9 @@ import java.lang.Class;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.Arrays;
@@ -31,6 +33,7 @@ class MethodHandler implements MessageHandler {
     public Boolean injectedMethod = false;
     public Object injectionTarget = (Object) null;
     public Method pointer = null;
+    public Integer parameterCount = 0;
 
     public void register(HandlerRegistry registry) {
         /* Called when we are registered with the registry (api likely not up yet) */
@@ -87,6 +90,15 @@ class MethodHandler implements MessageHandler {
         Method[] methods = cls.getMethods();
         List<MethodHandler> handlers = new ArrayList<MethodHandler>();
         for (Method method : methods) {
+            String methodName = method.getName();
+            if (methodName.equals("spigot") || methodName.equals("clone") || methodName.equals("wait")) {
+                continue;
+            } else if (methodName.equals("getAsString")) {
+                /* Just use the simple form for this common operation */
+                if (method.getParameterCount() != 0) {
+                    continue;
+                }
+            }
             int modifiers = method.getModifiers();
             if (!(Modifier.isPublic(modifiers))) {
                 continue;
@@ -140,13 +152,23 @@ class MethodHandler implements MessageHandler {
         this.cls = cls;
         this.pointer = pointer;
         this.staticMethod = isStatic;
+        this.parameterCount = pointer.getParameterCount() + getSelfConsumption();
     }
 
-    private Object argumentCoerce(PycraftAPI api, List<Object> arguments, Integer index, List<Class> parameterTypes) {
-        return api.converterRegistry.toJava(parameterTypes.get(index), api, arguments.get(index));
+    public List<Object> coerceParameters(PycraftAPI api, PycraftMessage message, List<Object> arguments) {
+        /* Attempt to coerce parameters to the required types */
+        List<Class> parameterTypes = Arrays.asList(this.pointer.getParameterTypes());
+        List<Object> parameters = new ArrayList<Object>();
+        if (parameterTypes.size() != arguments.size()) {
+            return null;
+        }
+        for (int index = 0; index < arguments.size(); index++) {
+            parameters.add(api.converterRegistry.toJava(parameterTypes.get(index), api, arguments.get(index)));
+        }
+        return parameters;
     }
 
-    private Object pointerInvoke(PycraftAPI api, PycraftMessage message, List<Object> arguments)
+    private Object pointerInvoke(PycraftAPI api, PycraftMessage message, List<Object> parameters)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         /*
          * Invoke our pointer doing (manual) unpacking of arguments
@@ -155,15 +177,6 @@ class MethodHandler implements MessageHandler {
          * 
          * 
          */
-        List<Class> parameterTypes = Arrays.asList(this.pointer.getParameterTypes());
-        List<Object> parameters = new ArrayList<Object>();
-        if (parameterTypes.size() != arguments.size()) {
-            throw new InvalidParameterException(
-                    String.format("Needed %s parameters, got %s", parameterTypes.size(), arguments.size()));
-        }
-        for (int index = 0; index < arguments.size(); index++) {
-            parameters.add(api.converterRegistry.toJava(parameterTypes.get(index), api, arguments.get(index)));
-        }
 
         if (parameters.size() == 0) {
             return (Object) this.pointer.invoke(message.instance);
@@ -199,6 +212,21 @@ class MethodHandler implements MessageHandler {
         }
     }
 
+    public int getSelfConsumption() {
+        /* Calculate the parameter count for the method */
+        int consumed;
+        if (injectedMethod) {
+            consumed = 0;
+        } else {
+            if (staticMethod) {
+                consumed = 0;
+            } else {
+                consumed = 1;
+            }
+        }
+        return consumed;
+    }
+
     public Object handle(PycraftAPI api, PycraftMessage message) {
         List<Object> arguments = message.payload;
         int consumed = 0;
@@ -213,10 +241,11 @@ class MethodHandler implements MessageHandler {
             }
         }
         arguments = message.payload.subList(consumed, message.payload.size());
+        List<Object> parameters = coerceParameters(api, message, arguments);
         Object result;
         try {
             api.getLogger().info(String.format("%s result call", pointer.getName()));
-            result = pointerInvoke(api, message, arguments);
+            result = pointerInvoke(api, message, parameters);
             api.getLogger().info(
                     String.format("%s result %s", pointer.getName(), result == null ? "null" : result.toString()));
             if (pointer.getReturnType() == Void.TYPE) {
@@ -226,8 +255,7 @@ class MethodHandler implements MessageHandler {
             }
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             e.printStackTrace();
-            throw new InvalidParameterException(
-                    String.format("%s failed with %s", pointer.toGenericString(), e.getMessage()));
+            throw new RuntimeException(String.format("%s failed with %s", pointer.toGenericString(), e.getMessage()));
         }
         return result;
     };

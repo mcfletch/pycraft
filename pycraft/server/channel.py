@@ -4,6 +4,7 @@ import json
 from json import encoder
 import uuid
 import logging
+import time
 from functools import lru_cache
 
 from json.encoder import JSONEncoder
@@ -27,7 +28,7 @@ class MethodInvocationError(RuntimeError):
 
 
 class Channel(object):
-    def __init__(self, host='localhost', port=4712):
+    def __init__(self, host='localhost', port=4712, debug=False):
         self.address = (host, port)
         self.reader = None
         self.writer = None
@@ -40,18 +41,23 @@ class Channel(object):
         self.subscriptions = {}
         self.method_cache = {}
         self.method_cache_lock = asyncio.Lock()
+        self.debug = debug
 
     async def open(self):
         self.wanted = True
         self.reader, self.writer = await asyncio.open_connection(
             *self.address, limit=1024 * 1024 * 5
         )
+        if self.debug:
+            log.info("Opening channel to server: %s", self.address)
         asyncio.ensure_future(self.write_to_socket(self.outgoing_queue, self.writer))
         asyncio.ensure_future(self.read_from_socket(self.incoming_queue, self.reader))
         asyncio.ensure_future(self.process_incoming_queue(self.incoming_queue))
         proxyobjects.ProxyMethod.set_channel(self)
 
     async def close(self):
+        if self.debug:
+            log.info("Closing channel to server: %s", self.address)
         if proxyobjects.ProxyMethod.channel is self:
             proxyobjects.ProxyMethod.set_channel(None)
         self.wanted = False
@@ -67,7 +73,8 @@ class Channel(object):
                 break
             if isinstance(message, str):
                 message = message.encode('utf-8')
-            log.debug("Writing message: %r", message)
+            if self.debug:
+                log.debug("Writing message: %r", message)
             self.writer.write(message)
             self.writer.write(b"\n")
 
@@ -90,7 +97,8 @@ class Channel(object):
                     )
                 except Exception as err:
                     log.exception("Error reading from socket with %r", line)
-                log.debug("Read message: %r,%r,%r", message_id, error_flag, payload)
+                if self.debug:
+                    log.debug("Read message: %r,%r,%r", message_id, error_flag, payload)
                 await queue.put((message_id, error_flag, payload))
             except Exception as err:
                 log.exception("Error reading from socket")
@@ -121,20 +129,26 @@ class Channel(object):
 
     async def call_remote(self, method, *args):
         """1:1 RPC call to the remote server"""
-        self.count += 1
-        id = self.count
-        message = "%s,%s,%s" % (
-            id,
-            method,
-            json.dumps(
-                args,
-                cls=ProxyEncoder,
-            ),
-        )
-        await self.outgoing_queue.put(message)
-        log.debug("Outgoing message queued")
-        self.pending[id] = asyncio.Future()
-        return await asyncio.wait_for(self.pending[id], self.timeout)
+        ts = time.time()
+        try:
+            self.count += 1
+            id = self.count
+            message = "%s,%s,%s" % (
+                id,
+                method,
+                json.dumps(
+                    args,
+                    cls=ProxyEncoder,
+                ),
+            )
+            await self.outgoing_queue.put(message)
+            if self.debug:
+                log.debug("Outgoing message queued")
+            self.pending[id] = asyncio.Future()
+            return await asyncio.wait_for(self.pending[id], self.timeout)
+        finally:
+            if self.debug:
+                log.debug("%0.2fs for %s call", time.time() - ts, method)
 
     async def subscribe(self, EventClass):
         """Subscribe to an Event Type from the server
@@ -177,15 +191,28 @@ class Channel(object):
         seen_classes = {}
 
         automatic = await self.call_remote("__methods__")
-        import pdb
 
-        pdb.set_trace()
-        for key, declarations in automatic.items():
-            print(key)
+        for declarations in automatic.get('commands', []):
+            if not isinstance(declarations, dict):
+                log.warning("Non dictionary type in declarations: %s", declarations)
+                continue
+            if declarations.get('type') == 'namespace':
+                name = declarations['name']
+                cls = proxyobjects.PROXY_TYPES.get(name)
+                if cls is None:
+                    proxyobjects.PROXY_TYPES[name] = cls = type(
+                        name,
+                        (proxyobjects.ServerObjectProxy,),
+                        {
+                            '__namespace__': name,
+                        },
+                    )
+                seen[name] = declarations
 
         for proxy in proxyobjects.PROXY_TYPES.values():
             if proxy.__namespace__ not in seen:
-                log.info("Introspect: %s", proxy.__namespace__)
+                if self.debug:
+                    log.info("Manual Introspect: %s", proxy.__namespace__)
                 try:
                     seen[proxy.__namespace__] = await self.get_methods(
                         proxy.__namespace__

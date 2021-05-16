@@ -245,6 +245,12 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
           message.finished = true;
           this.sendError(message.messageId, 1, response);
           return response;
+        } catch (RuntimeException e) {
+          List<String> response = Arrays.asList("error", e.getMessage());
+          message.finished = true;
+          this.sendError(message.messageId, 1, response);
+          e.printStackTrace();
+          throw e;
         } catch (Exception e) {
           List<String> response = Arrays.asList("error", e.getMessage());
           message.finished = true;

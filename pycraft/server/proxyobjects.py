@@ -22,6 +22,7 @@ SIMPLE_TYPES = {
     "Set": typing.Set,
     "String[]": typing.List[str],
     "void": bool,
+    'java.util.List<java.util.List<java.lang.String>>': typing.List[typing.List[str]],
 }
 PROXY_TYPES = {
     # Namespace:str => ProxyObject class
@@ -55,6 +56,14 @@ def type_name_to_type(name):
 
 
 def type_coerce(value, typ):
+    try:
+        return _type_coerce(value, typ)
+    except Exception as err:
+        err.args += (typ, value)
+        raise
+
+
+def _type_coerce(value, typ):
     """Attempt to coerce value to the given typ"""
     from . import world
 
@@ -71,6 +80,8 @@ def type_coerce(value, typ):
         if value['__type__'] in PROXY_TYPES:
             typ = PROXY_TYPES[value['__type__']]
             # return type_coerce(value, typ)
+        elif '.' in value['__type__'] and value['__type__'].split('.') in PROXY_TYPES:
+            typ = PROXY_TYPES[value['__type__'].split('.')]
         elif value['__namespace__'] in PROXY_TYPES:
             typ = PROXY_TYPES[value['__namespace__']]
             # return type_coerce(value, typ)
@@ -163,6 +174,12 @@ class ProxyMethod(object):
         return result
 
 
+class MultiMethod(ProxyMethod):
+    def __init__(self, description, namespace):
+        self.multi = description
+        super().__init__(description['commands'][0], namespace)
+
+
 class BoundProxyMethod(object):
     def __init__(self, instance, method):
         if not hasattr(instance, 'get_key'):
@@ -198,9 +215,12 @@ class ServerObjectProxy(object):
     def inject_methods(cls, channel, method_descriptions):
         """Inject the methods the server reports are available for this namespace"""
         for description in method_descriptions.get('commands', ()):
-            if description.get('type') != 'method':
+            if description.get('type') not in ('method', 'multidispatch'):
                 continue
-            method = ProxyMethod(description, cls.__namespace__)
+            if description.get('type') == 'multidispatch':
+                method = MultiMethod(description, cls.__namespace__)
+            else:
+                method = ProxyMethod(description, cls.__namespace__)
             setattr(cls, method.__name__, method)
 
     def __init__(self, **named):
@@ -257,6 +277,18 @@ class ServerObjectEnum(ServerObjectProxy):
     @classmethod
     def from_server(cls, key):
         return cls(key)
+
+
+class KeyedServerObjectEnum(ServerObjectEnum):
+    """Namespaced/keyed enumerations"""
+
+    def __init__(self, key):
+        if ':' not in key:
+            key = 'minecraft:%s' % (key,)
+        return super().__init__(key)
+
+    def __json__(self):
+        return self.key
 
 
 def ProxyType(cls):

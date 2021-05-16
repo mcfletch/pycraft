@@ -180,21 +180,21 @@ def find_entities(name):
     )
 
 
-@expose()
-def clear(type=-1, distance=100, *, user=None) -> 'List[str]':
-    """Clear all entities near the user of given type
+# @expose()
+# def clear(type=-1, distance=100, *, user=None) -> 'List[str]':
+#     """Clear all entities near the user of given type
 
-        clear( 'creeper', 200 ) => ['CREEPER','CREEPER']
+#         clear( 'creeper', 200 ) => ['CREEPER','CREEPER']
 
-    if type == -1 then *all* entities are cleared, including
-    things such as cats, dogs, mine-carts, etc.
+#     if type == -1 then *all* entities are cleared, including
+#     things such as cats, dogs, mine-carts, etc.
 
-    returns a list of the names of the removed entities
-    """
-    user.remove_nearby_entities(
-        type_id=type,
-        distance=distance,
-    )
+#     returns a list of the names of the removed entities
+#     """
+#     user.remove_nearby_entities(
+#         type_id=type,
+#         distance=distance,
+#     )
 
 
 @expose()

@@ -35,7 +35,7 @@ public class WorldHandler extends NamespaceHandler {
 
     @InjectedMethod
     @HelperMethod
-    static public List<List<List<BlockData>>> getBlocks(World world, Vector start, Vector end) {
+    static public List<List<List<String>>> getBlocks(World world, Vector start, Vector end) {
         Location getter = new Location(world, start.getBlockX(), start.getBlockY(), start.getBlockZ());
         int dx = end.getBlockX() - start.getBlockX(), dy = end.getBlockY() - start.getBlockY(),
                 dz = end.getBlockZ() - start.getBlockZ();
@@ -49,14 +49,19 @@ public class WorldHandler extends NamespaceHandler {
         if (dz != 0) {
             zstep = dz / Math.abs(dz);
         }
-        List<List<List<BlockData>>> result = new ArrayList<List<List<BlockData>>>();
+        List<List<List<String>>> result = new ArrayList<List<List<String>>>();
         for (int y = 0; y < dy; y += ystep) {
-            List<List<BlockData>> slab = new ArrayList<List<BlockData>>();
+            List<List<String>> slab = new ArrayList<List<String>>();
             for (int z = 0; z < dz; z += zstep) {
-                List<BlockData> row = new ArrayList<BlockData>();
+                List<String> row = new ArrayList<String>();
                 for (int x = 0; x < dx; x += xstep) {
                     Location tmp = getter.add(x, y, z);
-                    row.add(tmp.getBlock().getBlockData());
+                    BlockData data = tmp.getBlock().getBlockData();
+                    try {
+                        row.add(data.getAsString());
+                    } catch (Exception err) {
+                        row.add(data.getMaterial().getKey().toString());
+                    }
                 }
                 slab.add(row);
             }

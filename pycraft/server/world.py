@@ -2,55 +2,94 @@ import typing
 import uuid
 import logging
 import numpy as np
-from .proxyobjects import ProxyMethod, ServerObjectProxy, ProxyType, ServerObjectEnum
+from .proxyobjects import (
+    ProxyMethod,
+    ServerObjectProxy,
+    ProxyType,
+    ServerObjectEnum,
+    KeyedServerObjectEnum,
+)
 
 
 log = logging.getLogger(__name__)
 
 
 @ProxyType
-class Enchantment(ServerObjectEnum):
+class Art(KeyedServerObjectEnum):
+    __namespace__ = 'Art'
+
+
+@ProxyType
+class Fluid(KeyedServerObjectEnum):
+    __namespace__ = 'Fluid'
+
+
+@ProxyType
+class Sound(KeyedServerObjectEnum):
+    __namespace__ = 'Sound'
+
+
+@ProxyType
+class Statistic(KeyedServerObjectEnum):
+    __namespace__ = 'Statistic'
+
+
+@ProxyType
+class Enchantment(KeyedServerObjectEnum):
     __namespace__ = 'Enchantment'
 
 
 @ProxyType
-class Material(ServerObjectEnum):
+class Material(KeyedServerObjectEnum):
     __namespace__ = 'Material'
 
 
 @ProxyType
-class EntityType(ServerObjectEnum):
+class EntityType(KeyedServerObjectEnum):
     __namespace__ = 'EntityType'
 
 
 @ProxyType
-class Biome(ServerObjectEnum):
+class Biome(KeyedServerObjectEnum):
     __namespace__ = 'Biome'
 
 
 @ProxyType
-class BlockFace(ServerObjectEnum):
+class BlockFace(KeyedServerObjectEnum):
     __namespace__ = 'BlockFace'
 
 
 @ProxyType
-class PistonMoveReaction(ServerObjectEnum):
+class PistonMoveReaction(KeyedServerObjectEnum):
     __namespace__ = 'PistonMoveReaction'
 
 
 @ProxyType
-class Vector(object):
+class Vector(ServerObjectProxy):
     __namespace__ = 'Vector'
     vector: np.ndarray
+
+    @classmethod
+    def from_server(cls, record):
+        return cls(record)
 
     def get_key(self):
         return self.__json__()
 
     def __init__(self, record):
-        self.vector = np.array(record, dtype='d')
+        self.vector = np.array(record[:3], dtype='d')
 
     def __json__(self):
         return list(self.vector)
+
+    def __len__(self):
+        return len(self.vector)
+
+    def __getitem__(self, slice):
+        return self.vector.__getitem__(slice)
+
+    def __add__(self, other):
+        return self.vector + other[:3]
 
     @property
     def x(self):
@@ -78,10 +117,14 @@ class Vector(object):
 
 
 @ProxyType
-class Location(object):
+class Location(ServerObjectProxy):
     __namespace__ = 'Location'
     world: str
     vector: np.ndarray
+
+    @classmethod
+    def from_server(cls, record):
+        return cls(record)
 
     def get_key(self):
         return self.__json__()
@@ -89,18 +132,39 @@ class Location(object):
     def __init__(self, record):
         if isinstance(record, Location):
             record = record.__json__()
-        if len(record) == 6:
-            world, x, y, z, yaw, pitch = record
+        if len(record) == 2:  # world and vector..
+            world = record[0]
+            vector = record[1]
+        elif len(record) == 6:
+            world = record[0]
+            vector = record[1:]
+        elif len(record) == 4:
+            world = record[0]
+            vector = record[1:]
         else:
+            raise TypeError(
+                "Expected a Location, a [world,x,y,z,yaw,pitch], a [world,x,y,z], [world,[x,y,z]] or [world,[x,y,z,pitch,yaw]] value, got: %s"
+                % (record)
+            )
             world, x, y, z = record
             yaw = pitch = 0.0
-        self.world = world
-        self.vector = np.array([x, y, z, yaw, pitch], dtype='d')
+        self.world = world.get_key() if hasattr(world, 'get_key') else world
+        self.vector = np.zeros((5,), dtype='d')
+        self.vector[: len(vector)] = vector
 
     def __json__(self):
         base = list(self.vector)
         base.insert(0, self.world)
         return base
+
+    def __len__(self):
+        return len(self.vector)
+
+    def __getitem__(self, slice):
+        return self.vector.__getitem__(slice)
+
+    def __floor__(self):
+        return Location([self.world, np.floor(self.vector)])
 
     @property
     def x(self):
@@ -153,14 +217,32 @@ class Location(object):
     def __add__(self, other):
         if isinstance(other, (Vector, Location)):
             other = other.vector[:3]
-        other = np.array(other, dtype='d')
-        x, y, z = self.vector[:3] + other
-        return Location([self.world, x, y, z, self.yaw, self.pitch])
+        new_vector = self.vector[:]
+        new_vector[:3] += other
+        return Location([self.world, new_vector])
 
     def block_location(self):
-        return Location(
-            [self.world, round(self.x, 0), round(self.y, 0), round(self.z, 0)]
-        )
+        """Get the block location (block address) for this location"""
+        return Location([self.world, np.floor(self.vector[:3])])
+
+    def direction(self):
+        """Get the direction faced by this location"""
+        angle_deg = self.yaw % 360
+        angle_rad = -(angle_deg / 180 * np.pi)
+        return np.array([np.sin(angle_rad), 0, np.cos(angle_rad)], dtype='d')
+
+    def tilt(self):
+        """Get the rise/run for the angle of the user's gaze
+
+        This is basically "if you move forward 1 block, you should rise
+        N blocks (or fall)
+        """
+        pitch = (self.pitch % 180) / 180 * np.pi
+        if np.allclose(pitch, 0) or np.allclose(pitch, 180):
+            return 0
+        elif np.allclose(pitch, np.pi / 2) or np.allclose(pitch, -np.pi / 2):
+            return 1
+        return np.tan(pitch)
 
 
 @ProxyType
@@ -180,6 +262,26 @@ class Entity(ServerObjectProxy):
 
     def get_key(self):
         return self.uuid
+
+    def position(self):
+        return self.location
+
+    async def set_position(self, location):
+        """Set the user's position to the given location or vector"""
+        if not isinstance(location, Location):
+            location = Location(location)
+        self.teleport(location)
+
+    def tile_position(self):
+        return self.location.__floor__() - (0, 1, 0)
+
+    def direction(self):
+        """Get the direction (3-value array) the entity is facing"""
+        return self.location.direction()
+
+    def tilt(self):
+        """Get the rise/run 1 value float telling how far the entity's gaze rises/falls per unit of run"""
+        return self.location.tilt()
 
 
 @ProxyType
@@ -255,6 +357,9 @@ class ItemStack(ServerObjectProxy):
     amount: int
     enchantments: typing.Dict[Enchantment, int]
 
+    def __json__(self):
+        return self.key
+
     key = None
 
     def get_key(self):
@@ -265,8 +370,8 @@ class ItemStack(ServerObjectProxy):
 class BlockData(ServerObjectProxy):
     """Data describing a particular block (or a potential block)"""
 
-    def __init__(self, string_value):
-        super().__init__(string_value=string_value)
+    def __init__(self, string_value, **named):
+        super().__init__(string_value=string_value, **named)
 
     def __json__(self):
         return self.string_value
@@ -429,6 +534,7 @@ ENUM_CLASSES = [
     'PistonMoveReaction',
     'PotionEffect',
 ]
+KEYED_CLASSES = []
 
 
 def known_enums():

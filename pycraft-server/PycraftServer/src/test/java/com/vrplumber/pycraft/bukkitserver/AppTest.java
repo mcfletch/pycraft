@@ -285,7 +285,7 @@ public class AppTest {
   public void postToChat() {
 
     PycraftAPI api = getMockApi();
-    api.dispatch("1,World.postToChat,[\"Hello Chat\"]", false);
+    api.dispatch("1,Server.broadcastMessage,[\"\",\"Hello Chat\"]", false);
     assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
   }
 

@@ -78,7 +78,8 @@ public class LocationConverter implements Converter {
             } else if (asList.size() == 5) {
                 if (allOfType(asList, Double.class)) {
                     return new Location(world, (Double) asList.get(0), (Double) asList.get(1), (Double) asList.get(2),
-                            (Float) asList.get(3), (Float) asList.get(4));
+                            (Float) ((Double) asList.get(3)).floatValue(),
+                            (Float) ((Double) asList.get(4)).floatValue());
                 } else if (allOfType(asList, Integer.class)) {
                     return new Location(world, Double.valueOf((Integer) asList.get(0)),
                             Double.valueOf((Integer) asList.get(1)), Double.valueOf((Integer) (Integer) asList.get(2)),

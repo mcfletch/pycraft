@@ -147,21 +147,21 @@ async def block(type_name, position=None, offset=0, *, mc=None, user=None):
 
 
 @expose()
-def find_blocks(name):
+async def find_blocks(name):
     """Find blocks with names similar to the given name
 
     find_blocks('granite') => ['GRANITE','POLISHED_GRANITE']
     """
-    return Material.loosely_match(name)
+    return [x.key for x in await Material.loosely_match(name)]
 
 
 @expose()
-def find_entities(name):
+async def find_entities(name):
     """Find entities with names similar to name
 
     find_entities( 'creep' ) => ['CREEPER']
     """
-    return EntityType.loosely_match(name)
+    return [e.key for e in await EntityType.loosely_match(name)]
 
 
 # # @expose()

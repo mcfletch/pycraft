@@ -46,7 +46,7 @@ class Channel(object):
     async def open(self):
         self.wanted = True
         self.reader, self.writer = await asyncio.open_connection(
-            *self.address, limit=1024 * 1024 * 5
+            *self.address, limit=1024 * 1024 * 20
         )
         if self.debug:
             log.info("Opening channel to server: %s", self.address)

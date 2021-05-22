@@ -10,6 +10,7 @@ from .proxyobjects import (
     ServerObjectEnum,
     KeyedServerObjectEnum,
 )
+from pycraft.server import proxyobjects
 
 
 log = logging.getLogger(__name__)
@@ -301,6 +302,9 @@ class Entity(ServerObjectProxy):
     def tilt(self):
         """Get the rise/run 1 value float telling how far the entity's gaze rises/falls per unit of run"""
         return self.location.tilt()
+
+
+proxyobjects.SIMPLE_TYPES["EntityType[]"] = typing.List[Entity]
 
 
 @ProxyType

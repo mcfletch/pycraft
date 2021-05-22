@@ -159,6 +159,9 @@ class ProxyMethod(object):
         )
         return_type_name = self.description.get('returntype')
         if return_type_name:
+            if return_type_name.endswith('[]'):
+                base_type = type_name_to_type(return_type_name[:-2])
+                return [type_coerce(r, base_type) for r in result]
             return_type = type_name_to_type(return_type_name)
             if 'returntype_subtypes' in self.description:
                 sub_types = tuple(
@@ -299,7 +302,8 @@ class ServerObjectEnum(ServerObjectProxy):
     async def loosely_match(cls, name):
         possible = []
         for value in await cls.cached_values():
-            if name in value.name:
+            key = getattr(value, 'key', None)
+            if key and name in key:
                 possible.append(value)
         return possible
 

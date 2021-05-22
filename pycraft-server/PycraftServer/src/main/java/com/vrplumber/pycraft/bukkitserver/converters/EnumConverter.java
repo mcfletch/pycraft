@@ -43,7 +43,11 @@ public class EnumConverter implements Converter {
 
     public String fromJava(PycraftAPI api, Object value) {
         if (value instanceof Keyed) {
-            return registry.fromJava(api, ((Keyed) value).getKey().toString());
+            try {
+                return registry.fromJava(api, ((Keyed) value).getKey().toString());
+            } catch (IllegalArgumentException err) {
+                err.printStackTrace();
+            }
         }
         return registry.fromJava(api, ((Enum) value).name());
     }

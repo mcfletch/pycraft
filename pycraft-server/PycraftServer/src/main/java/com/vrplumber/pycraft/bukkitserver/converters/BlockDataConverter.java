@@ -2,6 +2,7 @@ package com.vrplumber.pycraft.bukkitserver.converters;
 
 import java.security.InvalidParameterException;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Arrays;
@@ -38,6 +39,11 @@ public class BlockDataConverter implements Converter {
         Map<String, Object> asMap = new HashMap<String, Object>();
         asMap.put("__type__", blockdata.getClass().getSimpleName());
         asMap.put("__namespace__", "BlockData");
+        List<String> interfaces = new ArrayList<String>();
+        for (Class provided : blockdata.getClass().getInterfaces()) {
+            interfaces.add(provided.getSimpleName());
+        }
+        asMap.put("interfaces", interfaces);
         try {
             asMap.put("string_value", blockdata.getAsString());
         } catch (Exception err) {

@@ -83,7 +83,7 @@ public class PycraftAPI implements Runnable, IPycraftAPI {
     return world;
   }
 
-  private IHandlerRegistry registry;
+  public IHandlerRegistry registry;
 
   public APIServer server;
   public Socket socket;

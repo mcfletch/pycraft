@@ -286,6 +286,23 @@ class ServerObjectEnum(ServerObjectProxy):
     def from_server(cls, key):
         return cls(key)
 
+    __cached__ = None
+
+    @classmethod
+    async def cached_values(cls):
+        """Get the cached values for the given enumeration"""
+        if cls.__cached__ is None:
+            cls.__cached__ = await cls.values()
+        return cls.__cached__
+
+    @classmethod
+    async def loosely_match(cls, name):
+        possible = []
+        for value in await cls.cached_values():
+            if name in value.name:
+                possible.append(value)
+        return possible
+
 
 class KeyedServerObjectEnum(ServerObjectEnum):
     """Namespaced/keyed enumerations"""

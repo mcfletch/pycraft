@@ -31,6 +31,7 @@ setuptools.setup(
         'console_scripts': [
             'pycraft-chat-server = pycraft.chatserver:main',
             'pycraft-channel-test = pycraft.server.operations:main',
+            'pycraft-chatter = pycraft.achatserver:main',
         ]
     },
     python_requires='>=3.6',

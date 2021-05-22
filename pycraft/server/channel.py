@@ -116,11 +116,17 @@ class Channel(object):
             except KeyError as err:
                 pending = None
             if not pending:
-                if error_flag == 2:
-                    # subscription
-                    queue = self.subscriptions.get(message_id)
-                    if queue:
-                        await queue.put(payload)
+                # if error_flag == 2:
+                # subscription
+                sub_queue = self.subscriptions.get(message_id)
+                if sub_queue:
+                    from . import world, proxyobjects
+
+                    await sub_queue[0].put(
+                        proxyobjects.type_coerce(payload, world.AsyncPlayerChatEvent)
+                    )
+                else:
+                    log.info("Stale or unexpected response to %s", record)
             else:
                 if error_flag == 1:
                     pending.set_exception(MethodInvocationError(*payload))
@@ -131,6 +137,8 @@ class Channel(object):
         """1:1 RPC call to the remote server"""
         ts = time.time()
         try:
+            if self.debug:
+                log.info("call remote: %s", method)
             self.count += 1
             id = self.count
             message = "%s,%s,%s" % (
@@ -156,16 +164,18 @@ class Channel(object):
         Returns an awaitable queue producing event records,
         a None in the queue indicates deletion
         """
-        self.subscriptions[EventClass] = asyncio.Queue()
-        await self.call_remote("subscribe", EventClass, True)
-        return self.subscriptions[EventClass]
+        queue = asyncio.Queue()
+        result = await self.call_remote("subscribe", EventClass, True)
+        log.info("Subscribe result: %s", result)
+        self.subscriptions[self.count] = (queue, EventClass)
+        return queue
 
     async def unsubscribe(self, EventClass):
         """Unsubscribe to an Event Type from the server"""
-        queue = self.subscriptions.get(EventClass)
-        if queue:
-            await queue.put(None)
-            del self.subscriptions[EventClass]
+        for id, (q, ec) in list(self.subscriptions.items()):
+            if ec == EventClass:
+                del self.subscriptions[id]
+                await q.put(None)
         return await self.call_remote("subscribe", EventClass, False)
 
     async def get_methods(self, namespace=None):
@@ -224,3 +234,10 @@ class Channel(object):
                 continue
             seen_classes[proxy] = True
             proxy.inject_methods(self, seen[proxy.__namespace__])
+
+    @property
+    def server(self):
+        """Get configured server instance for this connection"""
+        from .world import Server
+
+        return Server()

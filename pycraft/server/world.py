@@ -89,7 +89,9 @@ class Vector(ServerObjectProxy):
     def get_key(self):
         return self.__json__()
 
-    def __init__(self, record):
+    def __init__(self, record, *args):
+        if isinstance(record, (int, float)) and args:
+            record = (record,) + args
         self.vector = np.array(record[:3], dtype='d')
 
     def __json__(self):
@@ -141,6 +143,9 @@ class Location(ServerObjectProxy):
 
     def get_key(self):
         return self.__json__()
+
+    def get_world(self):
+        return World(name=self.world)
 
     def __init__(self, record):
         if isinstance(record, Location):
@@ -238,6 +243,7 @@ class Location(ServerObjectProxy):
         """Get the block location (block address) for this location"""
         return Location([self.world, np.floor(self.vector[:3])])
 
+    @property
     def direction(self):
         """Get the direction faced by this location"""
         angle_deg = self.yaw % 360
@@ -316,6 +322,18 @@ class Player(Entity):
 
     def get_key(self):
         return self.uuid
+
+    @property
+    def id(self):
+        return self.uuid
+
+    @property
+    def position(self):
+        return self.location
+
+    @property
+    def direction(self):
+        return self.location.direction
 
 
 @ProxyType
@@ -551,6 +569,8 @@ class Enum(ServerObjectProxy):
     def __json__(self):
         return self.name
 
+    __cached__ = None
+
 
 ENUM_CLASSES = [
     'BlockFace',
@@ -569,7 +589,7 @@ ENUM_CLASSES = [
 KEYED_CLASSES = []
 
 
-def known_enums():
+def _known_enums():
     for name in ENUM_CLASSES:
         enum_class = ProxyType(
             type(
@@ -581,3 +601,14 @@ def known_enums():
             )
         )
         setattr(Enum, name, enum_class)
+
+
+# _known_enums()
+
+
+@ProxyType
+class AsyncPlayerChatEvent(ServerObjectProxy):
+    __namespace__ = 'Event'
+    type: str
+    message: str
+    player: Player

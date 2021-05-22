@@ -89,6 +89,8 @@ class MethodHandler implements MessageHandler {
          */
         Method[] methods = cls.getMethods();
         List<MethodHandler> handlers = new ArrayList<MethodHandler>();
+        Set<Integer> seen = new HashSet<Integer>();
+
         for (Method method : methods) {
             String methodName = method.getName();
             if (methodName.equals("spigot") || methodName.equals("clone") || methodName.equals("wait")) {
@@ -104,6 +106,10 @@ class MethodHandler implements MessageHandler {
                 continue;
             }
             if (names == null || names.indexOf(method.getName()) > -1) {
+                if (seen.contains(method.hashCode())) {
+                    continue;
+                }
+                seen.add(method.hashCode());
                 MethodHandler handler = new MethodHandler(cls, method, Modifier.isStatic(modifiers));
                 handlers.add(handler);
             }

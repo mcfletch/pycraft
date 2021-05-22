@@ -1,5 +1,7 @@
 package com.vrplumber.pycraft.bukkitserver;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import com.vrplumber.pycraft.bukkitserver.APIServer;
 import com.vrplumber.pycraft.bukkitserver.MessageHandler;
 import com.vrplumber.pycraft.bukkitserver.EchoHandler;
@@ -25,6 +27,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
@@ -77,7 +80,32 @@ class HandlerRegistry implements IHandlerRegistry {
         return result;
     }
 
+    public void exposeClass(Class cls) {
+        /* Expose the class, its interfaces and any return types it needs */
+        String name = cls.getSimpleName();
+        if (implementations.get(name) == null) {
+            registerImplementation(cls.getSimpleName(), new GenericHandler(cls));
+            for (Class interfaceClass : cls.getInterfaces()) {
+                exposeClass(interfaceClass);
+            }
+            for (java.lang.reflect.Method method : cls.getMethods()) {
+                Class returnType = method.getReturnType();
+                if (!returnType.isPrimitive()) {
+                    exposeClass(returnType);
+                }
+                for (Class paramType : method.getParameterTypes()) {
+                    if (!paramType.isPrimitive()) {
+                        exposeClass(paramType);
+                    }
+                }
+            }
+        }
+
+    }
+
     public void registerHandlers() {
+        exposeClass(Chest.class);
+
         for (EntityType entityType : EntityType.values()) {
             GenericHandler handler = new GenericHandler(entityType.getEntityClass());
             if (handler.cls != null) {
@@ -93,6 +121,7 @@ class HandlerRegistry implements IHandlerRegistry {
         registerImplementation("Vector", new GenericHandler(Vector.class));
         registerImplementation("ItemStack", new GenericHandler(ItemStack.class));
         registerImplementation("Inventory", new GenericHandler(Inventory.class));
+        registerImplementation("InventoryHolder", new GenericHandler(InventoryHolder.class));
         registerImplementation("Enchantment", new GenericHandler(Enchantment.class));
         registerImplementation("Entity", new GenericHandler(Entity.class));
         registerImplementation("EntityType", new GenericHandler(EntityType.class));

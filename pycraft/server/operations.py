@@ -173,18 +173,18 @@ async def test_api():
             # await nice_armour(player)
             # await nice_pickaxe(player)
             # await nice_item(player, 'minecraft:bow')
-            # if player.name == 'BlockPlumber':
-            if player.name == 'VRPlumber':
+            if player.name == 'BlockPlumber':
+                # if player.name == 'VRPlumber':
                 # if player.name in ('BlockPlumber', 'VRPlumber'):
                 # await nice_item(player, 'minecraft:elytra')
                 inventory = await player.getInventory()
                 await inventory.setItem(inventory.firstEmpty, ['minecraft:salmon', 64])
 
-                # await nice_item(player, 'minecraft:bow')
-                # await nice_armour(player)
-                # await nice_sword(player)
-                # await nice_pickaxe(player)
-                # await nice_item(player, 'minecraft:shield')
+                await nice_item(player, 'minecraft:bow')
+                await nice_armour(player)
+                await nice_sword(player)
+                await nice_pickaxe(player)
+                await nice_item(player, 'minecraft:shield')
                 # inventory = await player.getInventory()
                 # await inventory.setItem(inventory.firstEmpty, ['minecraft:arrow', 64])
                 # inventory = await player.getInventory()

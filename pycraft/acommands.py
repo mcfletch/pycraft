@@ -181,9 +181,9 @@ async def find_entities(name):
 # #     )
 
 
-# @expose()
-# def users(*, user=None):
-#     return user.api.players()
+@expose()
+def users(*, world=None):
+    return world.getPlayers()
 
 
 # @expose()
@@ -214,15 +214,28 @@ async def find_entities(name):
 #         return None
 
 
-# @expose()
-# def bed(position=None, *, user=None, mc=None):
-#     if position is None:
-#         position = user.position + user.direction + V(0, 1, 0)
-#     x, y, z = position
-#     # Bed can only be put together from matching
-#     # directional pieces, here a N/S bed
-#     mc.setBlock(x, y, z + 1, blocks.BED.id, 8)
-#     mc.setBlock(x, y, z, blocks.BED.id, 0)
+@expose()
+async def getblocks(depth=5, width=5, height=5, *, user=None, world=None):
+    return await world.getBlocks(
+        list(user.location[:3]), list((user.location + (depth, height, width))[:3])
+    )
+
+
+@expose()
+async def bed(position=None, *, user=None, mc=None):
+    if position is None:
+        position = user.position + user.direction
+    await Block(location=(position + Vector(0, 0, 1)).block_location()).setBlockData(
+        'minecraft:cyan_bed[part=head,facing=north]',
+    )
+    await Block(location=position.block_location()).setBlockData(
+        'minecraft:cyan_bed[part=foot,facing=north]',
+    )
+    # x, y, z = position
+    # # Bed can only be put together from matching
+    # # directional pieces, here a N/S bed
+    # mc.setBlock(x, y, z + 1, blocks.BED.id, 8)
+    # mc.setBlock(x, y, z, blocks.BED.id, 0)
 
 
 # @expose()

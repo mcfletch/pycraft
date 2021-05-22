@@ -1,5 +1,5 @@
 import logging, asyncio, pprint
-from pycraft.server.proxyobjects import ProxyMethod
+from pycraft.server.proxyobjects import ProxyMethod, type_coerce
 from .channel import Channel
 from .world import (
     World,
@@ -68,23 +68,40 @@ async def enchanted(stack):
             )
 
 
-async def nice_sword(player):
+async def armoury_chest(location):
+    location = type_coerce(location, Location)
+    block = await location.getBlock()
+    await block.setBlockData('minecraft:chest')
+    chest = await block.getBlockData()
+    inventory = await chest.getBlockInventory()
+    await nice_sword(inventory)
+    await nice_pickaxe(inventory)
+    await nice_armour(inventory)
+
+
+async def nice_sword(inventoryHolder):
     """Give the player a nice sword for running about"""
-    return nice_item(player, 'minecraft:netherite_sword')
+    return await nice_item(inventoryHolder, 'minecraft:netherite_sword')
 
 
-async def nice_pickaxe(player):
-    return nice_item(player, 'minecraft:netherite_pickaxe')
+async def nice_pickaxe(inventoryHolder):
+    return await nice_item(inventoryHolder, 'minecraft:netherite_pickaxe')
 
 
-async def nice_item(player, item):
-    inventory = await player.getInventory()
-    if inventory.firstEmpty == -1:
-        log.warning("Your inventory is full")
-        return
+async def nice_item(inventory, item, index=None, count=1):
+    """Add a nice item to the given inventory, assumes content is up to date"""
+    if not isinstance(inventory, Inventory):
+        inventory = await inventory.getInventory()
     assert isinstance(inventory, Inventory), inventory
-    await inventory.setItem(inventory.firstEmpty, [item, 1])
-    stack = inventory.get_stack(inventory.firstEmpty)
+    if index is None:
+        empty = inventory.empty_slots()
+        if not empty:
+            raise RuntimeError("Inventory is full")
+        else:
+            index = empty[0]
+    await inventory.setItem(index, [item, count])
+    stack = inventory.get_stack(index)
+    inventory.contents[index] = stack
     await enchanted(stack)
 
 
@@ -95,7 +112,7 @@ async def nice_armour(player):
         'minecraft:netherite_leggings',
         'minecraft:netherite_boots',
     ]:
-        nice_item(player, item)
+        await nice_item(player, item)
         inventory = await player.getInventory()
 
 
@@ -116,9 +133,16 @@ async def block(player, blockdata):
     await block.setBlockData(blockdata)
 
 
+async def fill_inventory(player, material, count):
+    inventory = await player.getInventory()
+    while inventory.firstEmpty > -1:
+        await inventory.setItem(inventory.firstEmpty, [material, count])
+        inventory = await player.getInventory()
+
+
 async def test_api():
 
-    server = Channel(debug=False)
+    server = Channel(debug=True)
     await server.open()
     await server.introspect()
 
@@ -126,6 +150,8 @@ async def test_api():
 
     log.info("getWorlds => %s", worlds)
     for world in worlds:
+        # if world.name == 'world':
+        #     await armoury_chest(['world', -136, 63, 91])
         # blocks = await world.getBlocks([0, 0, 0], [5, 5, 5])
         # pprint.pprint(blocks)
         # if world.name == 'world':  # default world name...
@@ -137,15 +163,61 @@ async def test_api():
         #     print("Enchantments")
         #     for enchantment in await server.call_remote("Enchantment.values"):
         #         print(enchantment)
-        # for player in world.players:
-        #     #     # print(await structured.getBlockAt([structured.name, 0, 0, 0]))
-        #     #     # if player.name == 'VRPlumber':
-        #     if player.name == 'BlockBrave':
-        #         #         # await nice_item(player, 'minecraft:elytra')
-        #         await nice_item(player, 'minecraft:trident')
-        # await nice_sword(player)
-        # await nice_armour(player)
-        # await nice_pickaxe(player)
+        for player in world.players:
+            #     #     # print(await structured.getBlockAt([structured.name, 0, 0, 0]))
+            #     #     # if player.name == 'VRPlumber':
+            #     if player.name == 'BlockBrave':
+            #         #         # await nice_item(player, 'minecraft:elytra')
+            #         await nice_item(player, 'minecraft:trident')
+            # await nice_sword(player)
+            # await nice_armour(player)
+            # await nice_pickaxe(player)
+            # await nice_item(player, 'minecraft:bow')
+            # if player.name == 'BlockPlumber':
+            if player.name == 'VRPlumber':
+                # if player.name in ('BlockPlumber', 'VRPlumber'):
+                # await nice_item(player, 'minecraft:elytra')
+                inventory = await player.getInventory()
+                await inventory.setItem(inventory.firstEmpty, ['minecraft:salmon', 64])
+
+                # await nice_item(player, 'minecraft:bow')
+                # await nice_armour(player)
+                # await nice_sword(player)
+                # await nice_pickaxe(player)
+                # await nice_item(player, 'minecraft:shield')
+                # inventory = await player.getInventory()
+                # await inventory.setItem(inventory.firstEmpty, ['minecraft:arrow', 64])
+                # inventory = await player.getInventory()
+                # await inventory.setItem(
+                #     inventory.firstEmpty, ['minecraft:flint_and_steel', 1]
+                # )
+                # inventory = await player.getInventory()
+                # await nice_item(player, 'minecraft:golden_boots')
+                # await inventory.setItem(inventory.firstEmpty, ['minecraft:shield', 1])
+                # await inventory.setItem(
+                #     inventory.firstEmpty, ['minecraft:obsidian', 64]
+                # )
+                # await nice_item(player, 'minecraft:netherite_shovel')
+                # inventory = await player.getInventory()
+                # await inventory.setItem(inventory.firstEmpty, ['minecraft:arrow', 64])
+                # inventory = await player.getInventory()
+                # await inventory.setItem(
+                #     inventory.firstEmpty, ['minecraft:firework_rocket', 64]
+                # )
+
+                # for material in [
+                #     # 'minecraft:obsidian',
+                #     # 'minecraft:smooth_quartz_stairs',
+                #     # 'minecraft:arrow',
+                #     # 'minecraft:diamond',
+                #     # 'minecraft:stick',
+                #     # 'minecraft:soul_sand',
+                #     'minecraft:water_bucket',
+                # ]:
+                #     inventory = await player.getInventory()
+                #     await inventory.setItem(inventory.firstEmpty, [material, 1])
+                # await fill_inventory(player, material = 'minecraft:water_bucket',count=1)
+
         # await block(player, 'netherite_block')
         # for item in [
         #     'minecraft:netherite_axe',
@@ -171,12 +243,12 @@ async def test_api():
         # await world.strikeLightningEffect(player.location)
         # await player.sendMessage("Hello from the new api")
 
-        for player in world.players:
-            #     # print(await structured.getBlockAt([structured.name, 0, 0, 0]))
-            #     # if player.name == 'VRPlumber':
-            if player.name == 'VRPlumber':
-                #         # await nice_item(player, 'minecraft:elytra')
-                await block(player, 'minecraft:netherite_block')
+        # for player in world.players:
+        #     #     # print(await structured.getBlockAt([structured.name, 0, 0, 0]))
+        #     #     # if player.name == 'VRPlumber':
+        #     if player.name == 'VRPlumber':
+        #         #         # await nice_item(player, 'minecraft:elytra')
+        #         await block(player, 'minecraft:netherite_block')
 
         # response = await server.call_remote("World.getBlock", [world, 0, 0, 0])
         # log.info("%s block(0,0,0) => %s", world, response)

@@ -3,7 +3,8 @@ import typing
 import uuid
 import logging
 import numpy as np
-from functools import lru_cache, wraps
+from asyncstdlib.functools import lru_cache
+from functools import wraps
 
 log = logging.getLogger(__name__)
 
@@ -29,21 +30,6 @@ PROXY_TYPES = {
 }
 
 RETURN_TYPES = {}
-
-
-def acache(function):
-    """Dumb cache operation for async no-arg functions"""
-    cache = []
-
-    @wraps(function)
-    async def with_acache(target):
-        if cache:
-            return cache[0]
-        result = await function(target)
-        cache.append(result)
-        return result
-
-    return with_acache
 
 
 def type_name_to_type(name):
@@ -102,11 +88,30 @@ def _type_coerce(value, typ):
             for key, value in value.items():
                 result[type_coerce(key, key_typ)] = type_coerce(value, value_typ)
             return result
+
         else:
             if hasattr(typ, 'from_server'):
                 return typ.from_server(value)
             else:
                 return typ(value)
+    if hasattr(typ, '__args__'):
+        # WTF? Why can't I test for "is this a union"
+        for possible in typ.__args__:
+            if isinstance(value, possible):
+                return value
+        for possible in typ.__args__:
+            try:
+                return type_coerce(value, possible)
+            except (ValueError, TypeError) as err:
+                pass
+        raise ValueError(
+            "Union type %s we don't know how to convert %r"
+            % (
+                typ,
+                value,
+            )
+        )
+
     raise ValueError(
         "Do not know how to convert type %s with value %r"
         % (
@@ -214,6 +219,7 @@ class ServerObjectProxy(object):
     @classmethod
     def inject_methods(cls, channel, method_descriptions):
         """Inject the methods the server reports are available for this namespace"""
+        to_cache = getattr(cls, '__cached_methods__', set())
         for description in method_descriptions.get('commands', ()):
             if description.get('type') not in ('method', 'multidispatch'):
                 continue
@@ -221,6 +227,8 @@ class ServerObjectProxy(object):
                 method = MultiMethod(description, cls.__namespace__)
             else:
                 method = ProxyMethod(description, cls.__namespace__)
+            # if description.get('name') in to_cache:
+            #     method = lru_cache(maxsize=1024)(method)
             setattr(cls, method.__name__, method)
 
     def __init__(self, **named):
@@ -258,7 +266,7 @@ class ServerObjectEnum(ServerObjectProxy):
     key: str
 
     @classmethod
-    @acache
+    @lru_cache(maxsize=1)
     async def values(cls):
         """Get the enumerated values in this class"""
         result = []

@@ -3,6 +3,7 @@ import uuid
 import logging
 import numpy as np
 from .proxyobjects import (
+    PROXY_TYPES,
     ProxyMethod,
     ServerObjectProxy,
     ProxyType,
@@ -37,6 +38,18 @@ class Statistic(KeyedServerObjectEnum):
 @ProxyType
 class Enchantment(KeyedServerObjectEnum):
     __namespace__ = 'Enchantment'
+    __cached_methods__ = set(
+        [
+            'conflictsWith',
+            'getItemTarget',
+            'getKey',
+            'getMaxLevel',
+            'getName',
+            'getStartLevel',
+            'isTreasure',
+            'toString',
+        ]
+    )
 
 
 @ProxyType
@@ -370,6 +383,15 @@ class ItemStack(ServerObjectProxy):
 class BlockData(ServerObjectProxy):
     """Data describing a particular block (or a potential block)"""
 
+    @classmethod
+    def from_server(cls, named):
+        interfaces = named.get('interfaces')
+        if interfaces:
+            for interface in interfaces:
+                if interface in PROXY_TYPES and PROXY_TYPES[interface] is not cls:
+                    return PROXY_TYPES[interface].from_server(named)
+        return cls(**named)
+
     def __init__(self, string_value, **named):
         super().__init__(string_value=string_value, **named)
 
@@ -475,8 +497,16 @@ class Inventory(ServerObjectProxy):
     inventoryType: str
     size: int
     contents: typing.List[ItemStack]
-    holder: typing.Union[Entity, Player, Block, BlockData, None]
+    holder: typing.Union[Entity, Player, Block, BlockData, Location, None]
     firstEmpty: int
+
+    def empty_slots(self):
+        """Local introspection to find empty content slots"""
+        empty = []
+        for index, stack in enumerate(self.contents):
+            if stack is None:
+                empty.append(index)
+        return empty
 
     def __init__(self, *args, **named):
         super().__init__(*args, **named)
@@ -489,6 +519,8 @@ class Inventory(ServerObjectProxy):
             return self.holder.uuid
         elif isinstance(self.holder, Block):
             return self.holder.location
+        elif isinstance(self.holder, Location):
+            return self.holder
         raise RuntimeError(
             "Can't calculate the key of an inventory that doesn't belong to something",
             self,

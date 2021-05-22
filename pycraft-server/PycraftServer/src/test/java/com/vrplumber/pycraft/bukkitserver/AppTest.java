@@ -198,6 +198,17 @@ public class AppTest {
   }
 
   @Test
+  public void describe_methods_chest() {
+
+    PycraftAPI api = getMockApi();
+    NamespaceHandler chestHandlers = (NamespaceHandler) api.registry.getHandler("Chest");
+
+    assertNotNull(chestHandlers.getHandler("getBlockInventory"));
+    assertNotNull(chestHandlers.getHandler("getLightLevel"));
+
+  }
+
+  @Test
   public void describe_methods_root() {
 
     PycraftAPI api = getMockApi();

@@ -89,7 +89,6 @@ class MethodHandler implements MessageHandler {
          */
         Method[] methods = cls.getMethods();
         List<MethodHandler> handlers = new ArrayList<MethodHandler>();
-        Set<Integer> seen = new HashSet<Integer>();
 
         for (Method method : methods) {
             String methodName = method.getName();
@@ -106,10 +105,6 @@ class MethodHandler implements MessageHandler {
                 continue;
             }
             if (names == null || names.indexOf(method.getName()) > -1) {
-                if (seen.contains(method.hashCode())) {
-                    continue;
-                }
-                seen.add(method.hashCode());
                 MethodHandler handler = new MethodHandler(cls, method, Modifier.isStatic(modifiers));
                 handlers.add(handler);
             }
@@ -166,7 +161,8 @@ class MethodHandler implements MessageHandler {
         List<Class> parameterTypes = Arrays.asList(this.pointer.getParameterTypes());
         List<Object> parameters = new ArrayList<Object>();
         if (parameterTypes.size() != arguments.size()) {
-            return null;
+            throw new RuntimeException(
+                    String.format("Wrong parameter count, expect %d got %d", parameterTypes.size(), arguments.size()));
         }
         for (int index = 0; index < arguments.size(); index++) {
             parameters.add(api.converterRegistry.toJava(parameterTypes.get(index), api, arguments.get(index)));

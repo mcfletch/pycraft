@@ -68,17 +68,6 @@ async def enchanted(stack):
             )
 
 
-async def armoury_chest(location):
-    location = type_coerce(location, Location)
-    block = await location.getBlock()
-    await block.setBlockData('minecraft:chest')
-    chest = await block.getBlockData()
-    inventory = await chest.getBlockInventory()
-    await nice_sword(inventory)
-    await nice_pickaxe(inventory)
-    await nice_armour(inventory)
-
-
 async def nice_sword(inventoryHolder):
     """Give the player a nice sword for running about"""
     return await nice_item(inventoryHolder, 'minecraft:netherite_sword')
@@ -128,7 +117,7 @@ async def copy_block(world, start, stop):
 
 
 async def block(player, blockdata):
-    location = player.location + player.direction()
+    location = player.location + player.direction
     block = await location.getBlock()
     await block.setBlockData(blockdata)
 
@@ -173,18 +162,22 @@ async def test_api():
             # await nice_armour(player)
             # await nice_pickaxe(player)
             # await nice_item(player, 'minecraft:bow')
-            if player.name == 'BlockPlumber':
+            if player.name == 'BlockBrave':
+                await nice_item(player, 'minecraft:diamond_horse_armor')
+                pass
+                # await nice_item(player, 'minecraft:wooden_hoe')
                 # if player.name == 'VRPlumber':
                 # if player.name in ('BlockPlumber', 'VRPlumber'):
                 # await nice_item(player, 'minecraft:elytra')
-                inventory = await player.getInventory()
-                await inventory.setItem(inventory.firstEmpty, ['minecraft:salmon', 64])
+                # inventory = await player.getInventory()
+                # await inventory.setItem(inventory.firstEmpty, ['minecraft:salmon', 64])
 
-                await nice_item(player, 'minecraft:bow')
-                await nice_armour(player)
-                await nice_sword(player)
-                await nice_pickaxe(player)
-                await nice_item(player, 'minecraft:shield')
+                # await nice_item(player, 'minecraft:netherite_boots')
+                # await nice_item(player, 'minecraft:bow')
+                # await nice_armour(player)
+                # await nice_sword(player)
+                # await nice_pickaxe(player)
+                # await nice_item(player, 'minecraft:shield')
                 # inventory = await player.getInventory()
                 # await inventory.setItem(inventory.firstEmpty, ['minecraft:arrow', 64])
                 # inventory = await player.getInventory()
@@ -234,8 +227,8 @@ async def test_api():
         # )
 
         # await world.spawnEntity(player.location, 'SHEEP')
-        # await world.setStorm(False)
-        # await world.setThundering(False)
+        # await world.setStorm(True)
+        # await world.setThundering(True)
 
         # await world.spawnEntity(player.location, 'minecraft:pufferfish')
 

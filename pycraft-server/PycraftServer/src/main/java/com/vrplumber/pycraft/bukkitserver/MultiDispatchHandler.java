@@ -79,23 +79,23 @@ class MultiDispatchHandler implements MessageHandler {
 
     public Object handle(PycraftAPI api, PycraftMessage message) {
         List<Object> arguments = message.payload;
-        String errorResponse = null;
+        List<String> errorResponse = new ArrayList<String>();
         for (MethodHandler handler : methodHandlers) {
             if (arguments.size() == handler.parameterCount) {
                 /* Potential match */
                 try {
                     return handler.handle(api, message);
                 } catch (InvalidParameterException err) {
-                    errorResponse = err.getMessage();
+                    errorResponse.add(String.format("%s => %s", handler.pointer.toGenericString(), err.getMessage()));
+                } catch (RuntimeException err) {
+                    errorResponse.add(String.format("%s => %s", handler.pointer.toGenericString(), err.getMessage()));
                 }
             }
         }
         if (errorResponse != null) {
-            throw new RuntimeException(errorResponse);
+            throw new RuntimeException(String.join("\n", errorResponse));
         }
-        throw new RuntimeException(String.format("No multi-dispatch %s method matched arguments %s", getMethod(),
-                formatArgList(message.payload)));
-
+        return (Object) null;
     }
 
 }

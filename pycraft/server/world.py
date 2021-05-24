@@ -105,7 +105,21 @@ class Vector(ServerObjectProxy):
         return self.vector.__getitem__(slice)
 
     def __add__(self, other):
-        return self.vector + other[:3]
+        return self.vector.copy() + other[:3]
+
+    def __eq__(self, other):
+        if isinstance(other, (Vector, Location)):
+            return np.allclose(self.vector, other.vector[:3])
+        else:
+            return np.allclose(self.vector, other)
+
+    def __neg__(self):
+        return Vector(-self.vector)
+
+    def __mul__(self, other):
+        if isinstance(other, (Vector, Location)):
+            other = other.vector[:3]
+        return Vector(self.vector * other)
 
     @property
     def x(self):
@@ -119,7 +133,7 @@ class Vector(ServerObjectProxy):
     def y(self):
         return self.vector[1]
 
-    @x.setter
+    @y.setter
     def y(self, value):
         self.vector[1] = value
 
@@ -127,7 +141,7 @@ class Vector(ServerObjectProxy):
     def z(self):
         return self.vector[2]
 
-    @x.setter
+    @z.setter
     def z(self, value):
         self.vector[2] = value
 
@@ -180,7 +194,7 @@ class Location(ServerObjectProxy):
         return len(self.vector)
 
     def __getitem__(self, slice):
-        return self.vector.__getitem__(slice)
+        return self.vector.copy().__getitem__(slice)
 
     def __floor__(self):
         return Location([self.world, np.floor(self.vector)])
@@ -236,8 +250,15 @@ class Location(ServerObjectProxy):
     def __add__(self, other):
         if isinstance(other, (Vector, Location)):
             other = other.vector[:3]
-        new_vector = self.vector[:]
+        new_vector = self.vector.copy()
         new_vector[:3] += other
+        return Location([self.world, new_vector])
+
+    def __sub__(self, other):
+        if isinstance(other, (Vector, Location)):
+            other = other.vector[:3]
+        new_vector = self.vector.copy()
+        new_vector[:3] -= other
         return Location([self.world, new_vector])
 
     def block_location(self):
@@ -292,12 +313,14 @@ class Entity(ServerObjectProxy):
             location = Location(location)
         self.teleport(location)
 
+    @property
     def tile_position(self):
         return self.location.__floor__() - (0, 1, 0)
 
+    @property
     def direction(self):
         """Get the direction (3-value array) the entity is facing"""
-        return self.location.direction()
+        return self.location.direction
 
     def tilt(self):
         """Get the rise/run 1 value float telling how far the entity's gaze rises/falls per unit of run"""

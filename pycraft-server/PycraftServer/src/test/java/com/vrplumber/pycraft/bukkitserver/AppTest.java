@@ -31,6 +31,7 @@ import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.util.Vector;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.inventory.ItemStack;
@@ -200,11 +201,12 @@ public class AppTest {
   // @Test
   // public void describe_methods_chest() {
 
-  //   PycraftAPI api = getMockApi();
-  //   NamespaceHandler chestHandlers = (NamespaceHandler) api.registry.getHandler("Chest");
+  // PycraftAPI api = getMockApi();
+  // NamespaceHandler chestHandlers = (NamespaceHandler)
+  // api.registry.getHandler("Chest");
 
-  //   assertNotNull(chestHandlers.getHandler("getBlockInventory"));
-  //   assertNotNull(chestHandlers.getHandler("getLightLevel"));
+  // assertNotNull(chestHandlers.getHandler("getBlockInventory"));
+  // assertNotNull(chestHandlers.getHandler("getLightLevel"));
 
   // }
 
@@ -225,22 +227,6 @@ public class AppTest {
     PycraftAPI api = getMockApi();
     api.dispatch("1,Server.getWorlds,[\"server\"]", false);
     assertTrue(api.lastResponse.indexOf("sample-world") > -1, api.lastResponse);
-  }
-
-  @Test
-  public void getMaterialTypes() {
-
-    PycraftAPI api = getMockApi();
-    api.dispatch("1,World.getMaterialTypes,[]", false);
-    assertTrue(api.lastResponse.indexOf("netherite_block") > -1);
-  }
-
-  @Test
-  public void getEntityTypes() {
-
-    PycraftAPI api = getMockApi();
-    api.dispatch("1,World.getEntityTypes,[]", false);
-    assertTrue(api.lastResponse.indexOf("spider") > -1);
   }
 
   // @Test
@@ -265,6 +251,26 @@ public class AppTest {
   // PycraftAPI api = getMockApi();
   // api.dispatch("1,World.setBlocks,[null,[0,0,0],[5,5,5],\"air\"]", false);
   // assertEquals("1,0,[[0,0,0],[5,5,5],\"air\"]", api.lastResponse);
+  // }
+  // @Test
+  // public void setBlockData() {
+  // PycraftAPI api = getMockApi();
+  // api.dispatch("12,Block.setBlockData,[[\"sample-world\", 0,0,0, 0,0],
+  // \"netherite_block\"]", false);
+  // assertTrue(api.lastResponse.startsWith("1,0"));
+
+  // }
+
+  // Bukkit Mock unimplemented
+  // @Test
+  // public void killEntity() {
+  // PycraftAPI api = getMockApi();
+  // for (Entity e : server.getWorld("sample-world").getEntities()) {
+  // api.dispatch(String.format("12,Entity.remove,[\"%s\"]",
+  // e.getUniqueId().toString()), false);
+  // assertTrue(api.lastResponse.startsWith("1,0"));
+
+  // }
   // }
 
   @Test
@@ -428,6 +434,13 @@ public class AppTest {
 
     Enchantment ench = (Enchantment) registry.toJava(Enchantment.class, api, "minecraft:flame");
     assertEquals(ench.getKey().toString(), "minecraft:flame");
+
+  }
+
+  @Test
+  public void noNamespaceBlockName() {
+    api.dispatch("1,Material.isItem,[\"arrow\"]", false);
+    assertTrue(api.lastResponse.startsWith("1,0,true"), api.lastResponse);
 
   }
 

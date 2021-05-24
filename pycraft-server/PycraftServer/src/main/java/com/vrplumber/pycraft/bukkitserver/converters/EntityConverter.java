@@ -31,13 +31,19 @@ public class EntityConverter implements Converter {
 
     public Object toJava(PycraftAPI api, Object value, Class finalType) {
         if (value instanceof String) {
+            UUID identifier = null;
             try {
-                UUID identifier = UUID.fromString((String) value);
-                if (identifier != null) {
-                    return api.getServer().getEntity(identifier);
-                }
+                identifier = UUID.fromString((String) value);
             } catch (Exception e) {
 
+            }
+            if (identifier != null) {
+                Entity byUUID = api.getServer().getEntity(identifier);
+                if (byUUID == null) {
+                    throw new InvalidParameterException(
+                            String.format("Entity with UUID %s does not appear on the server", identifier.toString()));
+                }
+                return byUUID;
             }
             Player player = api.getServer().getPlayer((String) value);
             if (player != null) {
@@ -52,7 +58,7 @@ public class EntityConverter implements Converter {
 
             }
             throw new InvalidParameterException(
-                    String.format("Could not find player by uuid or name: %s", value.toString()));
+                    String.format("Could not find entity by uuid or name: %s", value.toString()));
         }
         throw new InvalidParameterException(
                 String.format("Need a UUID or name for entity lookup in String format, got %s", value.toString()));

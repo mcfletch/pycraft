@@ -15,7 +15,7 @@ from .expose import (
 from . import (
     acommands,
     # parabolic,
-    # bulldozer,
+    bulldozer,
     # buildings,
     # farm,
     # tunnels,
@@ -24,6 +24,7 @@ from . import (
 import queue, time
 from . import entity
 import numpy as np
+
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ class AInterpreter(object):
         namespace['mc'] = self.channel
         namespace['event'] = message
         namespace['user'] = sender
+        namespace['player'] = sender
         namespace['server'] = self.channel.server
         namespace['world'] = sender.location.get_world()
         return namespace
@@ -218,8 +220,8 @@ class AInterpreter(object):
         elif isinstance(arg, ast.BinOp):
             left, op, right = arg.left, arg.op, arg.right
             first, second = (
-                self.interpret_expr(left, namespace),
-                self.interpret_expr(right, namespace),
+                await self.interpret_expr(left, namespace),
+                await self.interpret_expr(right, namespace),
             )
             impl = self.BINOP_TO_OPERATOR[op.__class__]
             return impl(first, second)
@@ -252,7 +254,7 @@ class AInterpreter(object):
         """Iterate a single ast generator evalulation within a namespace"""
         source = await self.interpret_expr(gen.iter, namespace)
         log.info('Source %s', source)
-        for item in gen:
+        for item in source:
             passes = True
             update = self.unpack_target(gen.target, item)
             namespace.update(update)
@@ -294,11 +296,11 @@ class AInterpreter(object):
             working.update(update)
             if dc:
                 yield (
-                    self.interpret_expr(gen.key, working),
-                    self.interpret_expr(gen.value, working),
+                    await self.interpret_expr(gen.key, working),
+                    await self.interpret_expr(gen.value, working),
                 )
             else:
-                yield self.interpret_expr(gen.elt, working)
+                yield await self.interpret_expr(gen.elt, working)
 
     async def iterate_generator_updates(self, generators, namespace):
         if generators:

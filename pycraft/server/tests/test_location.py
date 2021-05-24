@@ -23,7 +23,7 @@ def test_location_operations():
     assert np.allclose(
         player.location[:3], [-136.7073, 63, 95.5307], rtol=0.1, atol=0.01
     )
-    forward = player.location + player.direction()
+    forward = player.location + player.direction
     assert np.allclose(forward[:3], [-136.7073, 63, 96.5307], rtol=0.1, atol=0.01)
 
     block = player.location.block_location()

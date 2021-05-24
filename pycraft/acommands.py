@@ -1,8 +1,17 @@
 """Common commands exposed over chat server"""
 from . import entity, blocks, fuzzymatch
 from .expose import expose, command_details, command_list
-from .lockedmc import locked
-from .server.world import EntityType, Vector, World, Location, Player, Block, Material
+from .directions import roughly_forward
+from .server.world import (
+    EntityType,
+    Vector,
+    World,
+    Location,
+    Player,
+    Block,
+    Material,
+    Enchantment,
+)
 import time, re, os, json
 import numpy as np
 import asyncio
@@ -11,8 +20,8 @@ Vec3 = Vector
 
 
 @expose()
-def echo(message, *, user=None):
-    """Return the message to the user"""
+def echo(message, *, player=None):
+    """Return the message to the player"""
     return message
 
 
@@ -48,57 +57,59 @@ def dir_(*args, namespace=None):
 
 @expose()
 async def spawn(
-    type_name, position=None, *, mc=None, user: Player = None, world: World = None
+    type_name, position=None, *, mc=None, player: Player = None, world: World = None
 ):
-    """Spawn a new entity of type_id at position (default in front of user)
+    """Spawn a new entity of type_id at position (default in front of player)
 
     type_name -- full minecraft ID for the entity to spawn
     """
     if position is None:
-        position = user.position + user.direction
+        position = player.position + player.direction
     if not ':' in type_name:
         type_name = 'minecraft:%s' % (type_name,)
     await world.spawnEntity(position, type_name)
 
 
 @expose()
-async def spawn_drop(type_id, *, mc=None, user=None, world=None):
+async def spawn_drop(type_id, *, mc=None, player=None, world=None):
     """Spawn an entity 50m overhead dropping onto your location
 
     Use this to e.g. drop a creeper to their death and generate gunpowder
     """
-    position = user.position + Vector(0, 50, 0)
-    return await spawn(type_id, position=position, mc=mc, user=user, world=world)
+    position = player.position + Vector(0, 50, 0)
+    return await spawn(type_id, position=position, mc=mc, player=player, world=world)
 
 
 @expose()
-async def spawn_shower(type_id, count=30, height=50, *, mc=None, user=None, world=None):
+async def spawn_shower(
+    type_id, count=30, height=50, *, mc=None, player=None, world=None
+):
     """Spawn an entity 50m overhead dropping onto your location
 
     Use this to e.g. drop a creeper to their death and generate gunpowder
     """
-    position = user.position + user.direction + Vector(0, height, 0)
+    position = player.position + player.direction + Vector(0, height, 0)
     for i in range(count):
-        await spawn(type_id, position=position, mc=mc, user=user, world=world)
+        await spawn(type_id, position=position, mc=mc, player=player, world=world)
         await asyncio.sleep(0.1)
     return count
 
 
 @expose()
-async def block(type_name, position=None, offset=0, *, mc=None, user=None):
+async def block(type_name, position=None, offset=(0, 0, 0), *, mc=None, player=None):
     """Create a block with the given type_id at position"""
     if position is None:
-        position = user.position + user.direction
+        position = player.location + player.location.direction
     if offset:
         position = position + offset
     if not ':' in type_name:
         type_name = 'minecraft:%s' % (type_name,)
-    block = Block(location=position)
+    block = await position.getBlock()
     return await block.setBlockData(type_name)
 
 
 # @expose()
-# def click_create(type_id, *, clicks=None, mc=None, user=None):
+# def click_create(type_id, *, clicks=None, mc=None, player=None):
 #     """When you right-click with a sword, create block-type there"""
 #     typ = blocks.Block.as_instance(type_id)
 
@@ -106,22 +117,22 @@ async def block(type_name, position=None, offset=0, *, mc=None, user=None):
 #         target = V(event.pos) + V(event.direction)
 #         mc.setBlock(*target, typ)
 
-#     return clicks.register_user(user, on_click)
+#     return clicks.register_user(player, on_click)
 
 
 # @expose()
-# def click_delete(*, clicks=None, mc=None, user=None):
+# def click_delete(*, clicks=None, mc=None, player=None):
 #     typ = blocks.Block.as_instance('AIR')
 
 #     def on_click(event):
 #         target = V(event.pos)
 #         mc.setBlock(*target, typ)
 
-#     return clicks.register_user(user, on_click)
+#     return clicks.register_user(player, on_click)
 
 
 # # @expose()
-# # def click_describe(*,clicks=None,mc=None,user=None):
+# # def click_describe(*,clicks=None,mc=None,player=None):
 # #     def on_click(event):
 # #         try:
 # #             target = event.pos
@@ -137,13 +148,13 @@ async def block(type_name, position=None, offset=0, *, mc=None, user=None):
 # #             ))
 # #         except Exception as err:
 # #             print("Failed: %s", err)
-# #     return clicks.register_user(user,on_click)
+# #     return clicks.register_user(player,on_click)
 
 
 # @expose()
-# def click_cancel(*, clicks=None, user=None):
+# def click_cancel(*, clicks=None, player=None):
 #     """Cancel click operations"""
-#     clicks.register_user(user, None)
+#     clicks.register_user(player, None)
 
 
 @expose()
@@ -164,160 +175,193 @@ async def find_entities(name):
     return [e.key for e in await EntityType.loosely_match(name)]
 
 
-# # @expose()
-# # def clear(type=-1, distance=100, *, user=None) -> 'List[str]':
-# #     """Clear all entities near the user of given type
-
-# #         clear( 'creeper', 200 ) => ['CREEPER','CREEPER']
-
-# #     if type == -1 then *all* entities are cleared, including
-# #     things such as cats, dogs, mine-carts, etc.
-
-# #     returns a list of the names of the removed entities
-# #     """
-# #     user.remove_nearby_entities(
-# #         type_id=type,
-# #         distance=distance,
-# #     )
-
-
 @expose()
 def users(*, world=None):
     return world.getPlayers()
 
 
 # @expose()
-# def V(*args, **named):
-#     """Construct a Vector from a list, tuple or 3 values
-
-#     Vectors represent (X,Y,Z) coordinates in 3D space,
-#     with X (East => West), Y (Down => Up), Z (South => North)
-#     """
-#     if named:
-#         return Vec3(*args, **named)
-#     if len(args) == 1 and isinstance(args[0], (list, tuple, Vec3, np.ndarray)):
-#         return Vec3(*args[0])
-#     else:
-#         return Vec3(*args)
-
-
-# @expose()
-# def last_hit(index=-1, *, mc=None, user=None, clicks=None):
-#     """Return the index-th last click by the sending user
+# def last_hit(index=-1, *, mc=None, player=None, clicks=None):
+#     """Return the index-th last click by the sending player
 
 #     If we don't have that click, will return None
 #     """
 #     try:
-#         click = clicks.user_clicks(user)[index]
+#         click = clicks.user_clicks(player)[index]
 #         return click
 #     except IndexError:
 #         return None
 
 
 @expose()
-async def getblocks(depth=5, width=5, height=5, *, user=None, world=None):
+async def getblocks(depth=5, width=5, height=5, *, player=None, world=None):
+
     return await world.getBlocks(
-        list(user.location[:3]), list((user.location + (depth, height, width))[:3])
+        list(player.location[:3]), list((player.location + (depth, height, width))[:3])
     )
 
 
 @expose()
-async def bed(position=None, *, user=None, mc=None):
+async def give(item, count=1, *, player=None):
+    inventory = await player.getInventory()
+    empty = inventory.empty_slots()
+    if not empty:
+        raise RuntimeError("Inventory is full")
+    else:
+        index = empty[0]
+    await inventory.setItem(index, [item, count])
+    stack = inventory.get_stack(index)
+    inventory.contents[index] = stack
+    return stack
+
+
+@expose()
+async def nice_item(item, count=1, *, player=None):
+    """Add a nice item to the given inventory, assumes content is up to date"""
+    stack = await give(item, count=count, player=player)
+    await enchanted(stack)
+
+
+@expose()
+async def nice_gear(*, player=None):
+    for item in [
+        'minecraft:netherite_helmet',
+        'minecraft:netherite_chestplate',
+        'minecraft:netherite_leggings',
+        'minecraft:netherite_boots',
+        'minecraft:shield',
+        'minecraft:netherite_sword',
+        'minecraft:netherite_pickaxe',
+        'minecraft:netherite_shovel',
+        'minecraft:bow',
+    ]:
+        await nice_item(item, player=player)
+    await give('arrow', 64, player=player)
+
+
+DESIRABLE_ENCHANTMENTS = [
+    x.strip()
+    for x in """minecraft:fire_protection
+        minecraft:sharpness
+        minecraft:flame
+        minecraft:soul_speed
+        minecraft:aqua_affinity
+        minecraft:punch
+        minecraft:loyalty
+        minecraft:depth_strider
+        minecraft:unbreaking
+        minecraft:knockback
+        minecraft:luck_of_the_sea
+        minecraft:fortune
+        minecraft:protection
+        minecraft:efficiency
+        minecraft:mending
+        minecraft:frost_walker
+        minecraft:lure
+        minecraft:looting
+        minecraft:piercing
+        minecraft:blast_protection
+        minecraft:smite
+        minecraft:multishot
+        minecraft:fire_aspect
+        minecraft:channeling
+        minecraft:sweeping
+        minecraft:thorns
+        minecraft:bane_of_arthropods
+        minecraft:respiration
+        minecraft:silk_touch
+        minecraft:quick_charge
+        minecraft:projectile_protection
+        minecraft:impaling
+        minecraft:feather_falling
+        minecraft:power
+        minecraft:infinity""".splitlines()
+]
+
+
+async def enchanted(stack):
+    """Enchant the item stack with all available enchantments"""
+    for enchantment in DESIRABLE_ENCHANTMENTS:
+        ench = Enchantment(enchantment)
+        if await ench.canEnchantItem(stack):
+            await stack.addEnchantment(
+                ench,
+                await ench.getMaxLevel(),
+            )
+
+
+@expose()
+async def bed(*, player=None, mc=None):
+    return await give('minecraft:cyan_bed', player=player)
+
+
+@expose()
+async def killall(name, *, player=None, world=None):
+    """Kill all entities with exactly "name" as their name"""
+    for entity in await world.getEntities():
+        if entity.name == name:
+            await entity.remove()
+
+
+@expose()
+async def help(command=None, *args, player=None, mc=None):
+    """Help, a command list if no command specified, otherwise per-command details
+
+    help() => Show list of available commands
+    help('command') => show detailed usage for the given command
+    help('entity-list') => Show list of available entitity names
+    help('entity-list', 'name') => Show list of available entitity names matching name
+    help('block-list') => Show list of available block names
+    help('block-list', 'name') => Show list of available block names matching name
+    """
+    if not command:
+        output = command_list()
+    elif command == 'entity-list':
+        names = []
+        for entityType in await EntityType.cached_values():
+            names.append(entityType.key)
+        return ", ".join(sorted(names))
+    elif command == 'block-list':
+        names = []
+        for entityType in await EntityType.cached_values():
+            names.append(entityType.key)
+        if args:
+            names = [n for n in names if args[0] in n]
+        return ", ".join(sorted(names))
+    else:
+        output = command_details(command)
+    return "\n".join(output)
+
+
+@expose()
+async def stairs(
+    depth=10,
+    ystep=1,
+    clearance=3,
+    position=None,
+    direction=None,
+    material='minecraft:obsidian',
+    *,
+    player=None,
+):
+    """Create an ascending or descending staircase (based on ystep)"""
+
+    if direction is None:
+        direction = player.direction
+    direction = roughly_forward(direction)
+
+    if not direction:
+        raise RuntimeError("Unable to find direction")
+
+    step = Vector(direction.x, ystep, direction.z)
     if position is None:
-        position = user.position + user.direction
-    await Block(location=(position + Vector(0, 0, 1)).block_location()).setBlockData(
-        'minecraft:cyan_bed[part=head,facing=north]',
-    )
-    await Block(location=position.block_location()).setBlockData(
-        'minecraft:cyan_bed[part=foot,facing=north]',
-    )
-    # x, y, z = position
-    # # Bed can only be put together from matching
-    # # directional pieces, here a N/S bed
-    # mc.setBlock(x, y, z + 1, blocks.BED.id, 8)
-    # mc.setBlock(x, y, z, blocks.BED.id, 0)
+        position = player.tile_position + (step if ystep < 0 else direction)
 
-
-# @expose()
-# def help(command=None, *args, user=None, mc=None):
-#     """Help, a command list if no command specified, otherwise per-command details
-
-#     help() => Show list of available commands
-#     help('command') => show detailed usage for the given command
-#     help('entity-list') => Show list of available entitity names
-#     help('entity-list', 'name') => Show list of available entitity names matching name
-#     help('block-list') => Show list of available block names
-#     help('block-list', 'name') => Show list of available block names matching name
-#     """
-#     if not command:
-#         output = command_list()
-#     elif command == 'entity-list':
-#         if args:
-#             entities = find_entities(args[0])
-#             if not entities:
-#                 return f'No entities matching {args[0]} found'
-#             else:
-#                 return ", ".join(entities)
-#         return ", ".join(entity_list())
-#     elif command == 'block-list':
-#         if args:
-#             entities = find_blocks(args[0])
-#             if not entities:
-#                 return f'No blocks matching {args[0]} found'
-#             else:
-#                 return ", ".join(entities)
-#         return ", ".join(block_list())
-#     else:
-#         output = command_details(command)
-#     return "\n".join(output)
-
-
-# def entity_list():
-#     from .entity import ENTITY_NAMES
-
-#     names = sorted(ENTITY_NAMES.keys())
-#     return " ".join(names)
-
-
-# def block_list(search=None):
-#     from .blocks import BLOCK_NAMES
-
-#     names = sorted(BLOCK_NAMES.keys())
-#     return " ".join(names)
-
-
-# @expose()
-# def stairs(
-#     depth=10,
-#     ystep=1,
-#     position=None,
-#     direction=None,
-#     material='granite',
-#     *,
-#     mc=None,
-#     user=None,
-# ):
-#     """Read blocks to create a template that can be stamped elsewhere"""
-#     from .bulldozer import roughly_forward
-
-#     if direction is None:
-#         direction = user.direction
-#     direction = roughly_forward(direction)
-
-#     if not direction:
-#         raise RuntimeError("Unable to find direction")
-
-#     material = blocks.Block.as_instance(material)
-
-#     step = Vec3(direction.x, ystep, direction.z)
-#     if position is None:
-#         position = user.tile_position + (step if ystep < 0 else direction)
-
-#     current = position
-#     air = material.as_instance('AIR')
-#     for i in range(depth):
-#         mc.setBlock(current.x, current.y, current.z, material)
-#         mc.setBlock(current.x, current.y + 1, current.z, air)
-#         mc.setBlock(current.x, current.y + 2, current.z, air)
-#         mc.setBlock(current.x, current.y + 3, current.z, air)
-#         current = current + step
+    current = position
+    air = 'minecraft:air'
+    working = position
+    for i in range(depth):
+        await Block(location=current).setBlockData(material)
+        for clear in range(1, clearance + 1):
+            await Block(location=current + (0, clear, 0)).setBlockData(air)
+        current = current + step

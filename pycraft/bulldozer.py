@@ -1,93 +1,68 @@
-"""Clear (create) a set of blocks in front of the user"""
-from mcpi import minecraft, vec3
+"""Clear (create) a set of blocks in front of the player"""
 import numpy as np
 import logging
+from .server.world import Vector, Block, Location, World
+from . import expose
+from .directions import roughly_forward, as_cube
 
 log = logging.getLogger(__name__)
-from . import expose
-from .commands import V
-from . import entity
-from . import uniqueblocks
-from . import blocks
-
-
-def roughly_forward(direction):
-    """Given a direction, figure out cartesian forward"""
-    dx, dy, dz = direction
-    if dx and dz:
-        adx = np.abs(dx)
-        adz = np.abs(dz)
-        if adx > adz:
-            if dx > 0:
-                forward = vec3.Vec3(1, 0, 0)
-            else:
-                forward = vec3.Vec3(-1, 0, 0)
-        else:
-            if dz > 0:
-                forward = vec3.Vec3(0, 0, 1)
-            else:
-                forward = vec3.Vec3(0, 0, -1)
-    elif dx:
-        if dx < 0:
-            return vec3.Vec3(-1, 0, 0)
-        else:
-            return vec3.Vec3(1, 0, 0)
-    elif dz:
-        if dz < 0:
-            return vec3.Vec3(0, 0, -1)
-        else:
-            return vec3.Vec3(0, 0, 1)
-        return direction
-    else:
-        if dy > 0:
-            forward = vec3.Vec3(0, 1, 0)
-        else:
-            forward = vec3.Vec3(0, -1, 0)
-    return forward
 
 
 @expose.expose()
-def bulldoze(depth=10, width=6, height=2, material=blocks.AIR, *, user=None, mc=None):
-    """Set blocks ahead of the user to the given material
+async def bulldoze(
+    depth=10, width=6, height=2, material='minecraft:air', *, player=None, mc=None
+):
+    """Set blocks ahead of the player to the given material
 
     This (loosely) aligns the block of material with the direction
-    the user is currently facing, so it wipes out whatever
+    the player is currently facing, so it wipes out whatever
     is in front of you.
     """
-    x, y, z = position = user.position
-    material = blocks.Block.as_instance(material)
-    direction = user.direction
+    # x, y, z = position = player.position[:3]
+    position = player.position.block_location()
+    direction = player.direction
+    log.info("Raw position: %s and direction %s", position, direction)
 
     forward = roughly_forward(direction)
-    if forward == vec3.Vec3(0, 1, 0):
-        cross = vec3.Vec3(1, 0, 0)
+    if forward == Vector(0, 1, 0):
+        cross = Vector(1, 0, 0)
     else:
-        cross = vec3.Vec3(*tuple(forward)[::-1])
+        cross = Vector(forward[::-1])
+
+    log.info("Forward: %s Cross: %s", forward, cross)
 
     start = position + forward + (-cross * (width // 2))
-    stop = start + (cross * width) + (forward * depth) + (vec3.Vec3(0, 1, 0) * height)
+    stop = (
+        start
+        + (cross * (width - 1))
+        + (forward * (depth - 1))
+        + (Vector(0, 1, 0) * (height - 1))
+    )
+    log.info("Start: %s Stop: %s", start, stop)
 
-    mc.setBlocks(*start, *stop, material)
+    start, size = as_cube(start, stop)
+
+    log.info("Start: %s Size: %s", start, size)
+
+    await World(name=player.location.world).setBlocks(
+        start,
+        size,
+        material,
+    )
 
 
 @expose.expose()
-def strip_mine(offset=7, depth=50, *, user=None, mc=None):
+async def strip_mine(depth=50, offset=7, *, player=None, mc=None):
     """Set explosive charges every step steps forward"""
-    x, y, z = position = user.position
-    direction = user.direction
+    position = player.position
+    direction = player.direction
     forward = one_step = roughly_forward(direction)
-    forward = vec3.Vec3(forward.x, forward.y, forward.z)
-    current = position
+    forward = Vector(forward.x, forward.y, forward.z)
+    current = position + (forward * offset)
     for i in range(offset):
         current = current + forward
-    material = blocks.TNT
-    torch = blocks.REDSTONE_TORCH_ON
-    for i in range(
-        offset,
-        depth,
-    ):
-        current = current + forward
-        mc.setBlock(current.x, current.y, current.z, material)
+    start, size = as_cube(current, current + forward * depth)
+    await World(name=player.location.world).setBlocks(start, size, 'tnt')
     in_front = current - one_step
-    mc.setBlock(in_front.x, in_front.y - 1, in_front.z, blocks.DIRT)
-    mc.setBlock(in_front.x, in_front.y, in_front.z, torch)
+    await Block(location=in_front).setBlockData('redstone_torch')
+    return "Fire in the hold!"

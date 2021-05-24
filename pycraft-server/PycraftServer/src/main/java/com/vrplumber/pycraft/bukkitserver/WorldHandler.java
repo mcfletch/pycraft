@@ -72,27 +72,19 @@ public class WorldHandler extends NamespaceHandler {
 
     @HelperMethod
     @InjectedMethod
-    public BlockData setBlocks(World world, Vector start, Vector end, BlockData data) {
-        /* Set Blocks to the given BlockData value */
+    public BlockData setBlocks(World world, Vector start, Vector size, BlockData data) {
+        /* Set blocks starting at start for (x,y,z) size to given blockdata */
         Location setter = new Location(world, start.getBlockX(), start.getBlockY(), start.getBlockZ());
-        int dx = end.getBlockX() - start.getBlockX(), dy = end.getBlockY() - start.getBlockY(),
-                dz = end.getBlockZ() - start.getBlockZ();
-        int xstep = 0, ystep = 0, zstep = 0;
-        if (dx != 0) {
-            xstep = dx / Math.abs(dx);
-        }
-        if (dy != 0) {
-            ystep = dy / Math.abs(dy);
-        }
-        if (dz != 0) {
-            zstep = dz / Math.abs(dz);
-        }
-
-        for (int y = 0; y < dy; y += ystep) {
-            for (int z = 0; z < dz; z += zstep) {
-                for (int x = 0; x < dx; x += xstep) {
-                    Location tmp = setter.add(x, y, z);
-                    tmp.getBlock().setBlockData(data);
+        int x_start = start.getBlockX();
+        int y_start = start.getBlockY();
+        int z_start = start.getBlockZ();
+        for (int y = 0; y < size.getY(); y++) {
+            setter.setY(y_start + y);
+            for (int z = 0; z < size.getZ(); z++) {
+                setter.setZ(z_start + z);
+                for (int x = 0; x < size.getX(); x++) {
+                    setter.setX(x_start + x);
+                    setter.getBlock().setBlockData(data);
                 }
             }
         }
@@ -106,37 +98,6 @@ public class WorldHandler extends NamespaceHandler {
         }
         MethodHandler.forHandler(World.class, this);
 
-    }
-
-    @HelperMethod
-    @InjectedMethod
-    public List<Material> getMaterialTypes() {
-        /* Get all *non-legacy* material types */
-        List<Material> result = new ArrayList<Material>();
-        for (Material material : Material.values()) {
-            // So *how* do you go about supporting all materials without
-            // relying on deprecated legacy prefix???
-            if (!material.name().startsWith(Material.LEGACY_PREFIX)) {
-                result.add(material);
-            }
-        }
-        return result;
-    }
-
-    @HelperMethod
-    @InjectedMethod
-    public List<EntityType> getEntityTypes() {
-        /*
-         * Get set of all materials for reference by the client-side software (filtering
-         * unknown)
-         */
-        List<EntityType> result = new ArrayList<EntityType>();
-        for (EntityType entityType : EntityType.values()) {
-            if (entityType != EntityType.UNKNOWN) {
-                result.add(entityType);
-            }
-        }
-        return result;
     }
 
 }

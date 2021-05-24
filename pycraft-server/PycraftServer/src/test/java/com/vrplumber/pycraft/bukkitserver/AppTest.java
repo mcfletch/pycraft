@@ -435,6 +435,11 @@ public class AppTest {
     Enchantment ench = (Enchantment) registry.toJava(Enchantment.class, api, "minecraft:flame");
     assertEquals(ench.getKey().toString(), "minecraft:flame");
 
+    List<Location> locationList = new ArrayList<Location>();
+    locationList.add(new Location(server.getWorld("sample-world"), 0, 0, 0));
+    result = registry.toJava(locationList.getClass(), api, locationList);
+    assertNotNull(result);
+
   }
 
   @Test
@@ -450,5 +455,13 @@ public class AppTest {
     assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
 
   }
+
+  // @Test
+  // public void setBlockList() {
+  // api.dispatch("1,World.setBlockList,[\"sample-world\",[[\"sample-world\",0,0,0]],[\"minecraft:air\"]]",
+  // false);
+  // assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
+
+  // }
 
 }

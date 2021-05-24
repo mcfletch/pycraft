@@ -20,7 +20,7 @@ class ProxyEncoder(JSONEncoder):
             return o.__json__()
         elif isinstance(o, uuid.UUID):
             return str(o)
-        raise TypeError("No __json__ on type %s" % (o.__class__,))
+        raise TypeError("No __json__ on type %s: %s" % (o.__class__, o))
 
 
 class MethodInvocationError(RuntimeError):

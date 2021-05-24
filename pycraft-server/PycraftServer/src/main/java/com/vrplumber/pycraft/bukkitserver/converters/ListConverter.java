@@ -1,6 +1,7 @@
 package com.vrplumber.pycraft.bukkitserver.converters;
 
 import java.lang.Math;
+import java.lang.reflect.ParameterizedType;
 import java.security.InvalidParameterException;
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.converters.Converter;

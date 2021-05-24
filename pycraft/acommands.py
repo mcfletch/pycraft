@@ -360,8 +360,12 @@ async def stairs(
     current = position
     air = 'minecraft:air'
     working = position
+    locations, materials = [], []
     for i in range(depth):
-        await Block(location=current).setBlockData(material)
+        locations.append(current)
+        materials.append(material)
         for clear in range(1, clearance + 1):
-            await Block(location=current + (0, clear, 0)).setBlockData(air)
+            locations.append(current + (0, clear, 0))
+            materials.append('air')
         current = current + step
+    await World(name=position.world).setBlockList(locations, materials)

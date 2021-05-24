@@ -5,6 +5,7 @@ import java.security.InvalidParameterException;
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.converters.Converter;
 import java.util.List;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class ArrayConverter implements Converter {
@@ -20,12 +21,15 @@ public class ArrayConverter implements Converter {
             return value;
         }
         if (value instanceof List) {
-            List result = new ArrayList<Object>();
+            Class subType = finalType.componentType();
             List asList = (List) value;
-            for (Object item : asList) {
-                result.add(registry.toJava(finalType.arrayType(), api, item));
+            Object result = Array.newInstance(subType, (int) asList.size());
+            for (int i = 0; i < asList.size(); i++) {
+                Object item = asList.get(i);
+                Object converted = registry.toJava(subType, api, item);
+                Array.set(result, i, subType.cast(converted));
             }
-            return finalType.cast(result.toArray());
+            return result;
         }
         return null;
     }

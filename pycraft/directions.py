@@ -58,3 +58,15 @@ def as_cube(start, stop):
             max(sz, ez) - min(sz, ez) + 1,
         ),
     )
+
+
+def forward_and_cross(direction):
+    if hasattr(direction, 'direction'):
+        direction = direction.direction
+
+    forward = roughly_forward(direction)
+    if forward == Vector(0, 1, 0):
+        cross = Vector(1, 0, 0)
+    else:
+        cross = Vector(forward[::-1])
+    return forward, cross

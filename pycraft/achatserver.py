@@ -6,7 +6,7 @@ from . import (
     # commands,
     parabolic,
     bulldozer,
-    # buildings,
+    buildings,
     # farm,
     # tunnels,
     # copypaste,

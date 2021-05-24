@@ -3,7 +3,7 @@ import numpy as np
 import logging
 from .server.world import Vector, Block, Location, World
 from . import expose
-from .directions import roughly_forward, as_cube
+from .directions import roughly_forward, as_cube, forward_and_cross
 
 log = logging.getLogger(__name__)
 
@@ -23,11 +23,7 @@ async def bulldoze(
     direction = player.direction
     log.info("Raw position: %s and direction %s", position, direction)
 
-    forward = roughly_forward(direction)
-    if forward == Vector(0, 1, 0):
-        cross = Vector(1, 0, 0)
-    else:
-        cross = Vector(forward[::-1])
+    forward, cross = forward_and_cross(direction)
 
     log.info("Forward: %s Cross: %s", forward, cross)
 

@@ -105,7 +105,10 @@ class Vector(ServerObjectProxy):
         return self.vector.__getitem__(slice)
 
     def __add__(self, other):
-        return self.vector.copy() + other[:3]
+        return Vector(self.vector.copy() + other[:3])
+
+    def __sub__(self, other):
+        return Vector(self.vector.copy() - other[:3])
 
     def __eq__(self, other):
         if isinstance(other, (Vector, Location)):
@@ -120,6 +123,16 @@ class Vector(ServerObjectProxy):
         if isinstance(other, (Vector, Location)):
             other = other.vector[:3]
         return Vector(self.vector * other)
+
+    def __div__(self, other):
+        if isinstance(other, (Vector, Location)):
+            other = other.vector[:3]
+        return Vector(self.vector / other)
+
+    def __floordiv__(self, other):
+        if isinstance(other, (Vector, Location)):
+            other = other.vector[:3]
+        return Vector(self.vector // other)
 
     @property
     def x(self):

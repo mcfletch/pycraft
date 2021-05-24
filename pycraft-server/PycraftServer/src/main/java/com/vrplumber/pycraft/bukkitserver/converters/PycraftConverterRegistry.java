@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 import java.lang.Class;
+import java.lang.reflect.Type;
+
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Entity;
@@ -40,6 +42,7 @@ import com.vrplumber.pycraft.bukkitserver.converters.UUIDConverter;
 public class PycraftConverterRegistry {
     /* Registers .class => Converter.toJava(api, value, finalType) converter */
     public Map<Class<?>, Converter> mapping;
+    public ArrayConverter arrayConverter;
 
     private class InterfaceConverter {
         Class cls;
@@ -65,6 +68,7 @@ public class PycraftConverterRegistry {
     public PycraftConverterRegistry() {
         mapping = new HashMap<Class<?>, Converter>();
         interfaceConverters = new ArrayList<InterfaceConverter>();
+        arrayConverter = new ArrayConverter(this);
         mapping.put(String.class, new StringConverter());
         mapping.put(Boolean.class, new BooleanConverter());
         mapping.put(Integer.class, new IntegerConverter());
@@ -77,12 +81,12 @@ public class PycraftConverterRegistry {
 
         mapping.put(HashMap.class, new MapConverter(this));
         mapping.put(ArrayList.class, new ListConverter(this));
-        mapping.put(String[].class, new ArrayConverter(this));
-        mapping.put(Integer[].class, new ArrayConverter(this));
-        mapping.put(Double[].class, new ArrayConverter(this));
-        mapping.put(int[].class, new ArrayConverter(this));
-        mapping.put(float[].class, new ArrayConverter(this));
-        mapping.put(double[].class, new ArrayConverter(this));
+        mapping.put(String[].class, this.arrayConverter);
+        mapping.put(Integer[].class, this.arrayConverter);
+        mapping.put(Double[].class, this.arrayConverter);
+        mapping.put(int[].class, this.arrayConverter);
+        mapping.put(float[].class, this.arrayConverter);
+        mapping.put(double[].class, this.arrayConverter);
 
         mapping.put(Vector.class, new VectorConverter(this, 3, Vector.class));
         mapping.put(Location.class, new LocationConverter(this, Location.class));
@@ -125,6 +129,9 @@ public class PycraftConverterRegistry {
     }
 
     public Converter getConverterByTarget(Class targetType) {
+        if (targetType.isArray()) {
+            return this.arrayConverter;
+        }
         for (InterfaceConverter converter : interfaceConverters) {
             if (converter.target(targetType)) {
                 return converter.converter;
@@ -154,7 +161,7 @@ public class PycraftConverterRegistry {
         if (converter == null) {
             if (cls.isArray()) {
                 /* Use the String array's Converter */
-                converter = mapping.get(String[].class);
+                converter = this.arrayConverter;
             } else {
                 converter = getConverterByInterface(value);
             }

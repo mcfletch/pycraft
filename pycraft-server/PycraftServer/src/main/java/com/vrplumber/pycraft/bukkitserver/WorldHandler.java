@@ -91,6 +91,27 @@ public class WorldHandler extends NamespaceHandler {
         return data;
     }
 
+    @HelperMethod
+    @InjectedMethod
+    public int setBlockList(World world, Location[] locations, BlockData[] datas) {
+        int count = 0;
+        for (Location location : locations) {
+            Block block = location.getBlock();
+            if (block != null) {
+                BlockData blockData = datas[count];
+                if (blockData != null) {
+                    block.setBlockData(blockData);
+                } else {
+                    throw new InvalidParameterException(String.format("Missing blockData at index %d", count));
+                }
+            } else {
+                throw new InvalidParameterException(String.format("Unable to resolve location at index %d", count));
+            }
+            count += 1;
+        }
+        return count;
+    }
+
     public void register(HandlerRegistry registry) {
         /* Called when we are registered with the registry (api likely not up yet) */
         for (MessageHandler handler : MethodHandler.forClass(World.class)) {

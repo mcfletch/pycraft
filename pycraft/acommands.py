@@ -16,6 +16,8 @@ import time, re, os, json
 import numpy as np
 import asyncio
 
+from pycraft import directions
+
 Vec3 = Vector
 
 
@@ -291,8 +293,17 @@ async def enchanted(stack):
 
 
 @expose()
-async def bed(*, player=None, mc=None):
-    return await give('minecraft:cyan_bed', player=player)
+async def bed(position=None, *, player=None, world=None):
+
+    if position is None:
+        position = player.position + player.direction
+
+    await Block(location=position + Vector(0, 0, 1)).setBlockData(
+        'minecraft:cyan_bed[facing=south,occupied=false,part=head]'
+    )
+    await Block(location=position).setBlockData(
+        'minecraft:cyan_bed[facing=south,occupied=false,part=foot]'
+    )
 
 
 @expose()
@@ -369,3 +380,30 @@ async def stairs(
             materials.append('air')
         current = current + step
     await World(name=position.world).setBlockList(locations, materials)
+
+
+@expose()
+async def get_blocks(
+    depth=10,
+    width=10,
+    height=10,
+    position=None,
+    direction=None,
+    *,
+    world=None,
+    player=None,
+):
+    if direction is None:
+        direction = player.direction
+    if position is None:
+        position = player.position
+    forward, cross = directions.forward_and_cross(direction)
+    start = position + forward - (cross * (width // 2))
+    end = (
+        start
+        + (forward * (depth - 1))
+        + (cross * (width - 1))
+        + (Vector(0, 1, 0) * (height - 1))
+    )
+
+    return await world.getBlockArray(start[:3], end[:3])

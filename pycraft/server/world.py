@@ -396,11 +396,27 @@ class World(ServerObjectProxy):
     def get_key(self):
         return self.name
 
-    async def setBlock(self, vector, material_or_blockdata):
+    # Provide old-style apis to ease code reuse
+    async def setBlock(self, x, y, z, material_or_blockdata):
         """Set a specific block in this world to given material (blockdata)"""
-        return await ProxyMethod.channel.call_remote(
-            "World.setBlock", [self.name] + vector, material_or_blockdata
-        )
+        return await Block(
+            location=Location([self.name, x, y, z]).block_location()
+        ).setBlockData(material_or_blockdata)
+
+    async def oldSetBlocks(self, sx, sy, sz, ex, ey, ez, material):
+        """Use old style code for mcpi setBlocks"""
+        from ..directions import as_cube
+
+        start, size = as_cube((sx, sy, sz), (ex, ey, ez))
+        return await self.setBlocks(start, size, material)
+
+    async def getBlockArray(self, start, end):
+        """Get block array by start and end coordinates"""
+        from .. import directions
+
+        start, size = directions.as_cube(start, end)
+
+        return await self.getBlocks(start, size)
 
 
 @ProxyType

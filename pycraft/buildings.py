@@ -4,7 +4,7 @@ from mcpi import minecraft, vec3
 import numpy as np
 import random, os
 import logging
-from . import expose, uniqueblocks, directions
+from . import expose, uniqueblocks, directions, randomchoice
 from .server.world import World, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -46,230 +46,250 @@ async def pyramid(
         depth = depth - 2
 
 
-# @expose.expose()
-# def hall(
-#     position=None,
-#     width=8,
-#     depth=12,
-#     height=4,
-#     wall_material='STONE',
-#     floor_material='DARK_OAK_WOOD_SLAB',
-#     carpet_material='RED_CARPET',
-#     roof_material='RED_GLAZED_TERRACOTTA',
-#     *,
-#     mc=None,
-#     player=None,
-# ):
-#     if position is None:
-#         position = player.position
-#     x, y, z = [int(c) for c in position]
-#     left = x - width // 2
-#     right = left + width
-#     front = z - depth // 2
-#     back = front + depth
-#     bottom = y - 1
-#     top = y + height
-#     floor_material = blocks.Block.as_instance(floor_material)
-#     carpet_material = blocks.Block.as_instance(carpet_material)
-#     wall_material = blocks.Block.as_instance(wall_material)
-#     roof_material = blocks.Block.as_instance(roof_material)
+@expose.expose()
+async def hall(
+    position=None,
+    width=8,
+    depth=13,
+    height=4,
+    wall_material='minecraft:polished_andesite',
+    floor_material='minecraft:stone_bricks',
+    carpet_material='minecraft:red_carpet',
+    roof_material='minecraft:red_glazed_terracotta',
+    *,
+    mc=None,
+    player=None,
+):
+    if position is None:
+        position = player.position
+    x, y, z = [int(c) for c in position[:3]]
+    left = x - width // 2
+    right = left + width
+    front = z - depth // 2
+    back = front + depth
+    bottom = y - 1
+    top = y + height
+    world = World(name=position.world)
 
-#     # clear
-#     mc.setBlocks(
-#         left + 1,
-#         bottom + 1,
-#         front + 1,
-#         right - 1,
-#         top,
-#         back - 1,
-#         blocks.AIR,
-#     )
-#     # subfloor...
-#     mc.setBlocks(
-#         left,
-#         bottom - 1,
-#         front,
-#         right,
-#         bottom,
-#         back,
-#         floor_material,
-#     )
-#     if width > 4 and depth > 4:
-#         # Carpet on top...
-#         mc.setBlocks(
-#             left + 2,
-#             bottom,
-#             front + 2,
-#             right - 2,
-#             bottom,
-#             back - 2,
-#             carpet_material,
-#         )
-#     # walls...
-#     for start, stop in [
-#         ((left, bottom, front), (right, top, front)),
-#         ((left, bottom, front), (left, top, back)),
-#         ((left, bottom, back), (right, top, back)),
-#         ((right, bottom, front), (right, top, back)),
-#     ]:
-#         mc.setBlocks(
-#             *start,
-#             *stop,
-#             wall_material,
-#         )
-#     # front doorway
-#     front_blocks = width - 1
-#     log.info("Front blocks: %s", front_blocks)
-#     if front_blocks % 2:
-#         doorwidth = 1
-#     else:
-#         doorwidth = 2
-#     log.info("Width of %s means door width is %s", width, doorwidth)
-#     delta = (front_blocks - doorwidth) // 2
-#     log.info("delta %s", delta)
-#     doorleft = left + delta + 1
-#     mc.setBlocks(
-#         doorleft,
-#         bottom + 1,
-#         front,
-#         doorleft + (doorwidth - 1),
-#         bottom + 2,
-#         front,
-#         blocks.AIR,
-#     )
-#     mc.setBlock(doorleft, bottom + 1, front, (197, 3))  # facing North
-#     mc.setBlock(doorleft, bottom + 2, front, (197, 3 | 8))  # upper part
-#     # Cornice...
-#     roofstart, roofstop = left - 1, right + 1
-#     roofy = top
-#     while roofstart <= roofstop:
-#         mc.setBlocks(
-#             roofstart,
-#             roofy,
-#             front - 1,
-#             roofstart,
-#             roofy,
-#             back + 1,
-#             roof_material,
-#         )
-#         mc.setBlocks(
-#             roofstop,
-#             roofy,
-#             front - 1,
-#             roofstop,
-#             roofy,
-#             back + 1,
-#             roof_material,
-#         )
-#         mc.setBlocks(
-#             roofstart + 1,
-#             roofy,
-#             front,
-#             roofstop - 1,
-#             roofy,
-#             front,
-#             wall_material,
-#         )
-#         mc.setBlocks(
-#             roofstart + 1,
-#             roofy,
-#             back,
-#             roofstop - 1,
-#             roofy,
-#             back,
-#             wall_material,
-#         )
-#         roofstart += 1
-#         roofstop -= 1
-#         roofy += 1
+    # clear
+    await world.oldSetBlocks(
+        left + 1,
+        bottom + 1,
+        front + 1,
+        right - 1,
+        top,
+        back - 1,
+        'air',
+    )
+    # subfloor...
+    await world.oldSetBlocks(
+        left,
+        bottom - 1,
+        front,
+        right,
+        bottom,
+        back,
+        floor_material,
+    )
+    if width > 4 and depth > 4:
+        # Carpet on top...
+        await world.oldSetBlocks(
+            left + 2,
+            bottom,
+            front + 2,
+            right - 2,
+            bottom,
+            back - 2,
+            carpet_material,
+        )
+    # walls...
+    for start, stop in [
+        ((left, bottom, front), (right, top, front)),
+        ((left, bottom, front), (left, top, back)),
+        ((left, bottom, back), (right, top, back)),
+        ((right, bottom, front), (right, top, back)),
+    ]:
+        await world.oldSetBlocks(
+            *start,
+            *stop,
+            wall_material,
+        )
+    # front doorway
+    front_blocks = width - 1
+    log.info("Front blocks: %s", front_blocks)
+    if front_blocks % 2:
+        doorwidth = 1
+    else:
+        doorwidth = 2
+    log.info("Width of %s means door width is %s", width, doorwidth)
+    delta = (front_blocks - doorwidth) // 2
+    log.info("delta %s", delta)
+    doorleft = left + delta + 1
+    await world.oldSetBlocks(
+        doorleft,
+        bottom + 1,
+        front,
+        doorleft + (doorwidth - 1),
+        bottom + 2,
+        front,
+        'air',
+    )
+    await world.setBlock(
+        doorleft,
+        bottom + 1,
+        front,
+        'minecraft:dark_oak_door[facing=north,half=lower,hinge=right,open=false,powered=false]',
+    )  # facing North
+    await world.setBlock(
+        doorleft,
+        bottom + 2,
+        front,
+        'minecraft:dark_oak_door[facing=north,half=upper,hinge=right,open=false,powered=false]',
+    )  # upper part
+    # Cornice...
+    roofstart, roofstop = left - 1, right + 1
+    roofy = top
+    while roofstart <= roofstop:
+        await world.oldSetBlocks(
+            roofstart,
+            roofy,
+            front - 1,
+            roofstart,
+            roofy,
+            back + 1,
+            roof_material,
+        )
+        await world.oldSetBlocks(
+            roofstop,
+            roofy,
+            front - 1,
+            roofstop,
+            roofy,
+            back + 1,
+            roof_material,
+        )
+        await world.oldSetBlocks(
+            roofstart + 1,
+            roofy,
+            front,
+            roofstop - 1,
+            roofy,
+            front,
+            wall_material,
+        )
+        await world.oldSetBlocks(
+            roofstart + 1,
+            roofy,
+            back,
+            roofstop - 1,
+            roofy,
+            back,
+            wall_material,
+        )
+        roofstart += 1
+        roofstop -= 1
+        roofy += 1
 
-#     # Torches...
-#     torches = []
-#     for step in range(front + 2, back - 2, 3):
-#         torches.append(step)
-#         mc.setBlock(
-#             left + 1,
-#             bottom + 3,
-#             step,
-#             blocks.TORCH.id,
-#             1,
-#         )
-#         mc.setBlock(
-#             right - 1,
-#             bottom + 3,
-#             step,
-#             blocks.TORCH.id,
-#             2,
-#         )
-#         mc.setBlocks(
-#             left + 1,
-#             top + 1,
-#             step,
-#             right - 1,
-#             top + 1,
-#             step,
-#             blocks.WOODEN_SLAB,
-#         )
-#     glass_material = blocks.WHITE_STAINED_GLASS.random_subtype()
-#     for step in range(front + 1, back - 1):
-#         if not step in torches:
-#             mc.setBlocks(
-#                 left,
-#                 bottom + 1,
-#                 step,
-#                 left,
-#                 top - 1,
-#                 step,
-#                 glass_material,
-#             )
-#             mc.setBlocks(
-#                 right,
-#                 bottom + 1,
-#                 step,
-#                 right,
-#                 top - 1,
-#                 step,
-#                 glass_material,
-#             )
+    # Torches...
+    torches = []
+    for step in range(front + 2, back - 2, 3):
+        torches.append(step)
+        await world.setBlock(
+            left + 1,
+            bottom + 3,
+            step,
+            'minecraft:wall_torch[facing=east]',
+        )
+        await world.setBlock(
+            right - 1,
+            bottom + 3,
+            step,
+            'minecraft:wall_torch[facing=west]',
+        )
+        await world.oldSetBlocks(
+            left + 1,
+            top + 1,
+            step,
+            right - 1,
+            top + 1,
+            step,
+            'minecraft:dark_oak_log[axis=x]',
+        )
+    glass_material = randomchoice.RANDOM_STAINED_GLASS
+    for step in range(front + 1, back - 1):
+        if not step in torches:
+            await world.oldSetBlocks(
+                left,
+                bottom + 1,
+                step,
+                left,
+                top - 1,
+                step,
+                glass_material,
+            )
+            await world.oldSetBlocks(
+                right,
+                bottom + 1,
+                step,
+                right,
+                top - 1,
+                step,
+                glass_material,
+            )
+    await world.setBlock(left + 2, bottom, back - 4, 'minecraft:air')
+    await world.setBlock(left + 2, bottom, back - 5, 'minecraft:air')
 
-#     commands.bed(
-#         (left + 1, bottom, back - 3),
-#         mc=mc,
-#     )
-#     crafting = left + (width // 2)
-#     mc.setBlock(
-#         crafting,
-#         bottom,
-#         back - 1,
-#         blocks.CRAFTING_TABLE,
-#     )
-#     mc.setBlock(
-#         crafting - 1,
-#         bottom,
-#         back - 1,
-#         blocks.FURNACE,
-#     )
-#     mc.setBlock(
-#         crafting + 1,
-#         bottom,
-#         back - 1,
-#         blocks.CHEST,
-#     )
-#     mc.setBlock(
-#         crafting + 2,
-#         bottom,
-#         back - 1,
-#         blocks.ENCHANTMENT_TABLE,
-#     )
-#     mc.setBlock(
-#         crafting - 2,
-#         bottom,
-#         back - 1,
-#         blocks.BREWING_STAND,
-#     )
-#     mc.setBlock(
-#         crafting - 2,
-#         bottom,
-#         back - 2,
-#         blocks.ANVIL,
-#     )
+    await world.setBlock(
+        left + 2,
+        bottom,
+        back - 4,
+        'minecraft:cyan_bed[facing=south,occupied=false,part=head]',
+    )
+    await world.setBlock(
+        left + 2,
+        bottom,
+        back - 5,
+        'minecraft:cyan_bed[facing=south,occupied=false,part=foot]',
+    )
+
+    # commands.bed(
+    #     (left + 1, bottom, back - 3),
+    #     mc=mc,
+    # )
+    crafting = left + (width // 2)
+    await world.setBlock(
+        crafting,
+        bottom,
+        back - 1,
+        'crafting_table',
+    )
+    await world.setBlock(
+        crafting - 1,
+        bottom,
+        back - 1,
+        'furnace',
+    )
+    await world.setBlock(
+        crafting + 1,
+        bottom,
+        back - 1,
+        'chest',
+    )
+    await world.setBlock(
+        crafting + 2,
+        bottom,
+        back - 1,
+        'enchanting_table',
+    )
+    await world.setBlock(
+        crafting - 2,
+        bottom,
+        back - 1,
+        'brewing_stand',
+    )
+    await world.setBlock(
+        crafting - 2,
+        bottom,
+        back - 2,
+        'anvil',
+    )

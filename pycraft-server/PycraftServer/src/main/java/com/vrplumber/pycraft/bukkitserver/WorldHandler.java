@@ -35,28 +35,21 @@ public class WorldHandler extends NamespaceHandler {
 
     @InjectedMethod
     @HelperMethod
-    static public List<List<List<String>>> getBlocks(World world, Vector start, Vector end) {
+    static public List<List<List<String>>> getBlocks(World world, Vector start, Vector size) {
         Location getter = new Location(world, start.getBlockX(), start.getBlockY(), start.getBlockZ());
-        int dx = end.getBlockX() - start.getBlockX(), dy = end.getBlockY() - start.getBlockY(),
-                dz = end.getBlockZ() - start.getBlockZ();
-        int xstep = 0, ystep = 0, zstep = 0;
-        if (dx != 0) {
-            xstep = dx / Math.abs(dx);
-        }
-        if (dy != 0) {
-            ystep = dy / Math.abs(dy);
-        }
-        if (dz != 0) {
-            zstep = dz / Math.abs(dz);
-        }
+        int x_start = start.getBlockX();
+        int y_start = start.getBlockY();
+        int z_start = start.getBlockZ();
         List<List<List<String>>> result = new ArrayList<List<List<String>>>();
-        for (int y = 0; y < dy; y += ystep) {
+        for (int y = 0; y < size.getY(); y++) {
             List<List<String>> slab = new ArrayList<List<String>>();
-            for (int z = 0; z < dz; z += zstep) {
+            getter.setY(y_start + y);
+            for (int z = 0; z < size.getZ(); z++) {
                 List<String> row = new ArrayList<String>();
-                for (int x = 0; x < dx; x += xstep) {
-                    Location tmp = getter.add(x, y, z);
-                    BlockData data = tmp.getBlock().getBlockData();
+                getter.setZ(z_start + z);
+                for (int x = 0; x < size.getX(); x++) {
+                    getter.setX(x_start + x);
+                    BlockData data = getter.getBlock().getBlockData();
                     try {
                         row.add(data.getAsString());
                     } catch (Exception err) {

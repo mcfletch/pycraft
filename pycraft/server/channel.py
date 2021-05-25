@@ -5,6 +5,7 @@ from json import encoder
 import uuid
 import logging
 import time
+import numpy as np
 from functools import lru_cache
 
 from json.encoder import JSONEncoder
@@ -20,6 +21,14 @@ class ProxyEncoder(JSONEncoder):
             return o.__json__()
         elif isinstance(o, uuid.UUID):
             return str(o)
+        elif isinstance(o, np.ndarray):
+            result = []
+            for item in o:
+                if isinstance(item, np.ndarray):
+                    result.append(self.default(item))
+                else:
+                    result.append(item)
+            return result
         raise TypeError("No __json__ on type %s: %s" % (o.__class__, o))
 
 

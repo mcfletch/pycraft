@@ -40,11 +40,17 @@ async def bulldoze(
 
     log.info("Start: %s Size: %s", start, size)
 
-    await World(name=player.location.world).setBlocks(
-        start,
-        size,
-        material,
-    )
+    if material:
+        await World(name=player.location.world).setBlocks(
+            start,
+            size,
+            material,
+        )
+    else:
+        await World(name=player.location.world).breakBlocks(
+            start,
+            size,
+        )
 
 
 @expose.expose()

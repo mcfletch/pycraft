@@ -9,14 +9,18 @@ log = logging.getLogger(__name__)
 
 @expose.expose(name='circle')
 async def draw_circle(
-    center,
-    radius,
+    center=None,
+    radius=4,
     material='stone',
     start_angle=0,
     stop_angle=np.pi * 2,
     steps=None,
+    *,
+    player=None,
 ):
     """Draw a horizontal circle around center with radius"""
+    if center is None:
+        center = player.position
     locations, materials = generate_circle(
         center,
         radius,
@@ -25,14 +29,14 @@ async def draw_circle(
         stop_angle=stop_angle,
         steps=steps,
     )
-    await World(center.world).setBlockList(locations, materials)
+    await World(name=center.world).setBlockList(locations, materials)
 
 
 def generate_circle(
-    center, radius, material, start_angle=0, stop_angle=np.pi * 2 + 0.01, steps=64
+    center, radius, material, start_angle=0, stop_angle=np.pi * 2, steps=None
 ):
     x, y, z = center[:3]
-    steps = steps or radius * 20
+    steps = steps or (2 * np.pi * radius)
 
     def coord(angle):
         return (
@@ -41,12 +45,12 @@ def generate_circle(
             (np.cos(angle) * radius),
         )
 
-    positions = uniqueblocks.unique_blocks_only(
-        [
-            coord(angle)
-            for angle in np.arange(0, 2 * np.pi + 0.01, (2 * np.pi) / (steps))
-        ]
-    )
+    raw_positions = [
+        coord(angle) for angle in np.arange(0, stop_angle + 0.01, (2 * np.pi) / (steps))
+    ]
+    # log.info('Raw positions: %s', raw_positions)
+    # positions = uniqueblocks.unique_blocks_only(raw_positions)
+    positions = raw_positions
     locations, materials = [], []
     for position in positions:
         # print([round(x),round(y),round(z)])
@@ -111,9 +115,8 @@ async def dome(
     yes = np.arange(1, radius + 1)
     angles = np.arcsin(yes / radius)
     zes = np.cos(angles * radius)
-    x, y, z = center
     for h, rad in zip(yes, zes):
-        await draw_circle((x, y + height - h, z), rad, material=material)
+        await draw_circle(center + (0, height - h, 0), rad, material=material)
 
 
 @expose.expose()

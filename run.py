@@ -5,9 +5,12 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 DATA = os.path.join(HERE, 'data')
 URL = 'https://github.com/zhuowei/RaspberryJuice/raw/a2d49279de9396a56fbb3f10c477192d5b5ba28a/jars/raspberryjuice-1.12.1.jar'
 GEYSER_URL = 'https://ci.opencollab.dev//job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/target/Geyser-Spigot.jar'
+SLIME_FUN_URL = 'https://thebusybiscuit.github.io/builds/TheBusyBiscuit/Slimefun4/master/Slimefun4-923.jar'
 PLUGINS = 'plugins'
+PLUGIN_SOURCE = os.path.join(HERE, PLUGINS)
 JARFILE = URL.split('/')[-1]
 GEYSER_JARFILE = GEYSER_URL.split('/')[-1]
+SLIME_FUN_JARFILE = SLIME_FUN_URL.split('/')[-1]
 log = logging.getLogger('pycraft-setup')
 docker_name = 'minecraft'
 MEGA = 1024 * 1024
@@ -52,6 +55,12 @@ def get_options():
         help='If specified, do not install the Geyser plugin in the world',
     )
     parser.add_argument(
+        '--slime-fun',
+        default=False,
+        action='store_true',
+        help='If specified, install the SlimeFun Bukkit plugin',
+    )
+    parser.add_argument(
         '-a',
         '--authentication',
         default=False,
@@ -67,7 +76,7 @@ def get_options():
     return parser
 
 
-def install_raspberry_juice(data, bedrock=True):
+def install_raspberry_juice(data, bedrock=True, slime_fun=False):
     """Install extension to allow for mcpi coding
 
     If bedrock is True, then *also* install the geyser
@@ -83,11 +92,12 @@ def install_raspberry_juice(data, bedrock=True):
         for x in [
             URL,
             GEYSER_URL if bedrock else None,
+            SLIME_FUN_URL if slime_fun else None,
         ]
         if x
     ]:
         base = url.split('/')[-1]
-        cache = os.path.join(HERE, base)
+        cache = os.path.join(PLUGIN_SOURCE, base)
         jarfile = os.path.join(plugins, base)
         if not os.path.exists(cache):
             log.info("Downloading %s plugin", base)
@@ -157,7 +167,7 @@ def main():
         parser.error('You have not accepted the EULA (read and add the -e) flag')
         return
     data = os.path.abspath(options.data)
-    install_raspberry_juice(data, options.bedrock)
+    install_raspberry_juice(data, options.bedrock, options.slime_fun)
     if options.bedrock:
         configure_geyser(data, options.authentication)
     update_config(data, overwrite=options.wipe_config)

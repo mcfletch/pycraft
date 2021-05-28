@@ -14,11 +14,11 @@ from .expose import (
 )
 from . import (
     acommands,
-    # parabolic,
+    parabolic,
     bulldozer,
-    # buildings,
+    buildings,
     # farm,
-    # tunnels,
+    tunnels,
     # copypaste,
 )
 import queue, time
@@ -75,10 +75,10 @@ class AInterpreter(object):
             user_namespace = self.user_namespace(sender)
             log.debug('user namespace %r', user_namespace)
 
-            def user_storage():
+            def player_storage():
                 return user_namespace
 
-            namespace['user_storage'] = user_storage
+            namespace['player_storage'] = player_storage
             namespace.update(user_namespace)
             try:
                 top = ast.parse(message.message, 'chat.py', 'eval')

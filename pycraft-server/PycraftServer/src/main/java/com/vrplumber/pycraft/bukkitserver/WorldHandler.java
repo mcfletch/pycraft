@@ -86,6 +86,26 @@ public class WorldHandler extends NamespaceHandler {
 
     @HelperMethod
     @InjectedMethod
+    public void breakBlocks(World world, Vector start, Vector size) {
+        /* Set blocks starting at start for (x,y,z) size to given blockdata */
+        Location setter = new Location(world, start.getBlockX(), start.getBlockY(), start.getBlockZ());
+        int x_start = start.getBlockX();
+        int y_start = start.getBlockY();
+        int z_start = start.getBlockZ();
+        for (int y = 0; y < size.getY(); y++) {
+            setter.setY(y_start + y);
+            for (int z = 0; z < size.getZ(); z++) {
+                setter.setZ(z_start + z);
+                for (int x = 0; x < size.getX(); x++) {
+                    setter.setX(x_start + x);
+                    setter.getBlock().breakNaturally();
+                }
+            }
+        }
+    }
+
+    @HelperMethod
+    @InjectedMethod
     public int setBlockList(World world, Location[] locations, BlockData[] datas) {
         int count = 0;
         for (Location location : locations) {

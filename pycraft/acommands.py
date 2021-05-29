@@ -2,6 +2,7 @@
 from . import entity, blocks, fuzzymatch
 from .expose import expose, command_details, command_list
 from .directions import roughly_forward
+from .server import proxyobjects
 from .server.world import (
     EntityType,
     Vector,
@@ -293,10 +294,12 @@ async def enchanted(stack):
 
 
 @expose()
-async def bed(position=None, *, player=None, world=None):
+async def bed(position=None, direction=None, *, player=None, world=None):
 
+    if direction is None:
+        direction = player.direction
     if position is None:
-        position = player.position + player.direction
+        position = player.position + direction
 
     await Block(location=position + Vector(0, 0, 1)).setBlockData(
         'minecraft:cyan_bed[facing=south,occupied=false,part=head]'

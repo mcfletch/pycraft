@@ -12,6 +12,9 @@ import com.vrplumber.pycraft.bukkitserver.IHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashMap;
+import java.util.HashSet;
 
 import org.bukkit.Art;
 import org.bukkit.Fluid;
@@ -34,12 +37,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
-import java.util.HashMap;
 import java.util.logging.Handler;
 import org.bukkit.block.data.type.*;
 
 class HandlerRegistry implements IHandlerRegistry {
     private static List<Class> handlers;
+    public Set<String> notExposed;
 
     static {
         handlers = new ArrayList<Class>();
@@ -59,6 +62,9 @@ class HandlerRegistry implements IHandlerRegistry {
 
     public HandlerRegistry() {
         implementations = new HashMap<String, MessageHandler>();
+        notExposed = new HashSet<String>();
+        notExposed.add("org.bukkit.material.Directional");
+        notExposed.add("org.bukkit.material.MaterialData");
     }
 
     public void registerImplementation(String name, MessageHandler payload) {
@@ -79,31 +85,49 @@ class HandlerRegistry implements IHandlerRegistry {
         return result;
     }
 
+    public boolean shouldExpose(Class cls) {
+        /* Should we expose the given class namespace??? */
+
+        if (cls.getPackage() == null) {
+            return false;
+        } else if (!cls.getPackage().getName().startsWith("org.bukkit")) {
+            return false;
+        } else if (cls.getPackage().getName().startsWith("org.bukkit.material")) {
+            /* all of it is deprecated */
+            return false;
+        }
+        /* Now some special cases.. */
+        if (notExposed.contains(cls.getCanonicalName())) {
+            return false;
+        }
+        return true;
+    }
+
     public void exposeClass(Class cls) {
         /* Expose the class, its interfaces and any return types it needs */
         if (cls == null) {
+            return;
+        } else if (!shouldExpose((cls))) {
             return;
         }
         String name = cls.getSimpleName();
         if (implementations.get(name) == null) {
             registerImplementation(cls.getSimpleName(), new GenericHandler(cls));
             for (Class interfaceClass : cls.getInterfaces()) {
-                if (interfaceClass.getPackage() != null
-                        && interfaceClass.getPackage().getName().startsWith("org.bukkit")) {
+                if (shouldExpose(interfaceClass)) {
                     exposeClass(interfaceClass);
                 }
             }
             for (java.lang.reflect.Method method : cls.getMethods()) {
                 Class returnType = method.getReturnType();
                 if (!returnType.isPrimitive()) {
-                    if (returnType.getPackage() != null && returnType.getPackage().getName().startsWith("org.bukkit")) {
+                    if (shouldExpose(returnType)) {
                         exposeClass(returnType);
                     }
                 }
                 for (Class paramType : method.getParameterTypes()) {
                     if (!paramType.isPrimitive()) {
-                        if (paramType.getPackage() != null
-                                && paramType.getPackage().getName().startsWith("org.bukkit")) {
+                        if (shouldExpose(paramType)) {
                             exposeClass(paramType);
                         }
                     }

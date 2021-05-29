@@ -40,10 +40,10 @@ public class EnumConverter implements Converter {
                 }
             }
             // Okay, maybe a simple string enum-name
-            asString = (String) value;
+            asString = ((String) value).toLowerCase();
             for (Object defined : finalType.getEnumConstants()) {
                 Enum asEnum = (Enum) defined;
-                if (asEnum.name().toLowerCase() == asString.toLowerCase()) {
+                if (asString.equals(asEnum.name().toLowerCase())) {
                     return defined;
                 }
             }

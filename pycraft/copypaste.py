@@ -12,15 +12,23 @@ log = logging.getLogger(__name__)
 async def copy(
     name='stamp',
     depth=5,
-    height=5,
     width=5,
+    height=5,
     position=None,
     direction=None,
     *,
     world=None,
     player=None,
 ):
-    """Read blocks to create a template that can be stamped elsewhere"""
+    """Read blocks to create a template that can be stamped elsewhere
+
+    name -- name that you can use to reference this copy when pasting
+    depth, width, height -- dimensions of the cube to copy
+    position, direction -- middle of the lowest slice of the cube will be just
+                           in front of position with cube extending in direction
+
+    returns message with name and the content copied
+    """
 
     name = sanitize(name)
 
@@ -52,7 +60,10 @@ async def paste(
     world=None,
     player=None,
 ):
-    """Paste previously copied blocks into the current location"""
+    """Paste previously copied blocks into the current location (see copy)
+
+    position, direction -- template will be directly in front of this position in direction
+    """
 
     name = sanitize(name)
     template = load_template(player, name)

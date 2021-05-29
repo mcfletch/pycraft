@@ -28,6 +28,10 @@ public class WorldHandler extends NamespaceHandler {
         return "World";
     }
 
+    public WorldHandler() {
+        super(World.class);
+    }
+
     private List<String> error(PycraftMessage message, String category, String description) {
         List<String> response = Arrays.asList(category, description);
         return response;

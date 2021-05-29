@@ -246,10 +246,10 @@ class MethodHandler implements MessageHandler {
         List<Object> parameters = coerceParameters(api, message, arguments);
         Object result;
         try {
-            api.getLogger().info(String.format("%s result call", pointer.getName()));
+            api.getLogger().info(String.format("call: %s(%s)", pointer.getName(), parameters.toString()));
             result = pointerInvoke(api, message, parameters);
             api.getLogger().info(
-                    String.format("%s result %s", pointer.getName(), result == null ? "null" : result.toString()));
+                    String.format("return: %s <= %s", pointer.getName(), result == null ? "null" : result.toString()));
             if (pointer.getReturnType() == Void.TYPE) {
                 result = Boolean.TRUE;
             } else if (pointer == null) {

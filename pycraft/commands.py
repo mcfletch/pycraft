@@ -1,4 +1,5 @@
 """Common commands exposed over chat server"""
+raise ImportError('blah')
 from . import entity, blocks, fuzzymatch
 from .expose import expose, command_details, command_list
 from .lockedmc import locked

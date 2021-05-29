@@ -6,7 +6,7 @@ from . import randomchoice
 import numpy as np
 import random, os
 import logging
-from . import expose, blocks, uniqueblocks, commands
+from . import expose
 from .bulldozer import roughly_forward
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -26,7 +26,7 @@ async def tunnel(
     *,
     player=None,
     player_storage=None,
-    mc=None
+    mc=None,
 ):
     """Create a pyramid centered at position in material
 
@@ -147,80 +147,85 @@ async def tunnel_continue(depth=25, *, player=None, player_storage=None):
     return await tunnel(depth, *params, player=player, player_storage=player_storage)
 
 
-# @expose.expose(name='fr')
-# async def fast_rail(
-#     depth=100, position=None, direction=None, base=None, *, player=None, mc=None
-# ):
-#     """Create a powered railroad going forward from the player's position
+@expose.expose(name='fr')
+async def fast_rail(
+    depth=100,
+    position=None,
+    direction=None,
+    base=None,
+    *,
+    player=None,
+    world=None,
+):
+    """Create a powered railroad going forward from the player's position
 
-#     Creates powered rail sections so that your minecart will accelerate down the rail-path
-#     """
-#     if direction is None:
-#         direction = player.direction
-#     if position is None:
-#         position = player.position + player.direction + Vector(0, 1, 0)
-#     direction = roughly_forward(direction)
-#     print('Direction: %s', direction)
+    Creates powered rail sections so that your minecart will accelerate down the rail-path
+    """
+    if direction is None:
+        direction = player.direction
+    if position is None:
+        position = player.tile_position + player.direction
+    direction, cross = directions.forward_and_cross(direction)
+    if depth < 0:
+        direction = direction * np.array((-1, -1, -1))
+        depth = -depth
 
+    #     # 0 z-straight
+    #     # 1 x-straight
+    #     # 2 up-west
+    #     # 3 up-east
+    #     # 4 up-south
+    #     # 5 up-north
+    #     # 6 NW join
+    #     # 7 NE join
+    #     # 8 SE join
+    #     # 9 SW join
 
-#     if depth < 0:
-#         direction = direction * np.array((-1, -1, -1))
-#         depth = -depth
+    if np.abs(direction[2]):  # N/S direction
+        shape = 'north_south'
+    else:
+        shape = 'east_west'
 
-#     # 0 z-straight
-#     # 1 x-straight
-#     # 2 up-west
-#     # 3 up-east
-#     # 4 up-south
-#     # 5 up-north
-#     # 6 NW join
-#     # 7 NE join
-#     # 8 SE join
-#     # 9 SW join
+    if base:
+        await world.oldSetBlocks(
+            *(position[:3]),
+            *(position + (direction * depth))[:3],
+            base,
+        )
+    down = Vector(0, -1, 0)
 
-#     if np.abs(direction[2]):  # N/S direction
-#         forward = 0
-#         # if direction[2] < 0: # south
-#         #     turn_right = 9
-#         #     turn_left = 8
-#         # else: # north
-#         #     turn_right = 7
-#         #     turn_left = 6
-#     else:
-#         forward = 1
-#         # if direction[0] < 0: # south
-#         #     turn_right = 9
-#         #     turn_left = 8
-#         # else: # north
-#         #     turn_right = 7
-#         #     turn_left = 6
+    air_start = position + Vector(0, 1, 0)
+    air_end = air_start + (direction * depth) + Vector(0, 1, 0)
+    await world.oldSetBlocks(
+        *(air_start[:3]),
+        *(air_end[:3]),
+        'air',
+    )
 
-#     # mc.setBlock((197, 3))  # facing North
-#     air_end = position + (depth * direction) + np.array((0, 1, 0))
-#     rail_end = position + (depth * direction)
-#     down = np.array((0, -1, 0))
+    # Now generate the actual track segments...
+    # Always start and end with a powered-rail that has no power...
 
-#     if base_mat:
-#         mc.setBlocks(
-#             *(position + down),
-#             *(rail_end + down),
-#             base_mat,
-#         )
-#     mc.setBlocks(*position, *(air_end), blocks.AIR)
+    locations, blocks = [
+        air_start,
+        air_start + direction,
+    ], [f'powered_rail[shape={shape}]', f'rail[shape={shape}]']
 
-#     # generate sections of powered rail every 4 until the end of the rail...
-#     side = np.array((direction[2], 0, direction[0]))
-#     last_end = position
-#     for rangestart in range(1, depth - 1, 8):
-#         start = position + (rangestart * direction)
-#         end = start + (4 * direction)
-#         # regular rail to this position...
-#         mc.setBlocks(*(last_end), *(start), (66, forward))
-#         # powered rail...
-#         mc.setBlocks(*start, *(end), (27, forward))
-#         if base_mat:
-#             mc.setBlock(*(start + side + down), base_mat)
-#         mc.setBlock(*(start + side), blocks.AIR)
-#         mc.setBlock(*(start + side), (blocks.REDSTONE_TORCH_ON.id, 5))
-#         last_end = end
-#     mc.setBlocks(*(last_end), *(rail_end), (66, forward))
+    for offset in range(2, depth - 2, 8):
+        for i in range(8):
+            locations.append(air_start + (direction * (offset + i)))
+            if i <= 4:
+                blocks.append(f'powered_rail[shape={shape}]')
+            else:
+                blocks.append(f'rail[shape={shape}]')
+        if base:
+            locations.append(air_start + (direction * (offset + 4)) + cross + down)
+            blocks.append(base)
+        locations.append(air_start + (direction * (offset + 4)) + cross)
+        blocks.append('redstone_torch')
+
+    locations.append(air_start + (direction * (depth - 1)))
+    blocks.append(f'rail[shape={shape}]')
+    locations.append(air_start + (direction * depth))
+    blocks.append(f'powered_rail[shape={shape}]')
+
+    await world.setBlockList(locations, blocks)

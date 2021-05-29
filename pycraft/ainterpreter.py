@@ -7,6 +7,7 @@ import contextlib, functools
 from typing import Coroutine
 from .server import world
 from .server.world import Vector
+from .server import proxyobjects
 from .expose import (
     DEFAULT_COMMANDS,
     DEFAULT_NAMESPACE,
@@ -19,7 +20,7 @@ from . import (
     buildings,
     # farm,
     tunnels,
-    # copypaste,
+    copypaste,
 )
 import queue, time
 from . import entity
@@ -38,6 +39,7 @@ class AInterpreter(object):
 
     def base_namespace(self, message=None, sender=None, **kwargs):
         namespace = DEFAULT_NAMESPACE.copy()
+        namespace.update(proxyobjects.PROXY_TYPES)
         namespace.update(DEFAULT_COMMANDS)
         namespace['mc'] = self.channel
         namespace['event'] = message

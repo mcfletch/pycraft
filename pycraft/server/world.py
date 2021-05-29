@@ -37,6 +37,11 @@ class Statistic(KeyedServerObjectEnum):
 
 
 @ProxyType
+class TreeType(ServerObjectEnum):
+    __namespace__ = 'TreeType'
+
+
+@ProxyType
 class Enchantment(KeyedServerObjectEnum):
     __namespace__ = 'Enchantment'
     __cached_methods__ = set(
@@ -264,7 +269,7 @@ class Location(ServerObjectProxy):
         if isinstance(other, (Vector, Location)):
             other = other.vector[:3]
         new_vector = self.vector.copy()
-        new_vector[:3] += other
+        new_vector[:3] += other[:3]
         return Location([self.world, new_vector])
 
     def __sub__(self, other):
@@ -324,7 +329,7 @@ class Entity(ServerObjectProxy):
         """Set the user's position to the given location or vector"""
         if not isinstance(location, Location):
             location = Location(location)
-        self.teleport(location)
+        await self.teleport(location)
 
     @property
     def tile_position(self):

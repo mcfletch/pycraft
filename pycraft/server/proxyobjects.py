@@ -276,7 +276,7 @@ class ServerObjectEnum(ServerObjectProxy):
         for key in await ProxyMethod.channel.call_remote(
             "%s.values" % (cls.__namespace__,),
         ):
-            result.append(cls(key))
+            result.append(cls(key=key))
         return result
 
     def __init__(self, key):

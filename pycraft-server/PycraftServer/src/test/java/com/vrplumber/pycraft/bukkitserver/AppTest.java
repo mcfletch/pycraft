@@ -456,6 +456,22 @@ public class AppTest {
 
   }
 
+  @Test
+  public void treeTypeLookup() {
+    api.dispatch("1,TreeType.valueOf,[\"MEGA_REDWOOD\"]", false);
+    assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
+
+  }
+
+  // Bukkit unimplemented...
+  // @Test
+  // public void treeTypeConverter() {
+  // api.dispatch("1,World.generateTree,[\"sample-world\",[\"sample-world\",0,0,0],\"MEGA_REDWOOD\"]",
+  // false);
+  // assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
+
+  // }
+
   // @Test
   // public void setBlockList() {
   // api.dispatch("1,World.setBlockList,[\"sample-world\",[[\"sample-world\",0,0,0]],[\"minecraft:air\"]]",

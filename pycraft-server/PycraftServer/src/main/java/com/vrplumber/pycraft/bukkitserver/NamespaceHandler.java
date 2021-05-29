@@ -3,6 +3,10 @@ package com.vrplumber.pycraft.bukkitserver;
 import com.vrplumber.pycraft.bukkitserver.MessageHandler;
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.PycraftMessage;
+
+import org.bukkit.Keyed;
+
+import java.lang.reflect.Class;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 import java.util.HashMap;
@@ -13,16 +17,40 @@ import java.util.Arrays;
 
 public abstract class NamespaceHandler implements MessageHandler {
     /* Interface for things which need to handle messages */
+    public Class cls = null;
     public Map<String, MessageHandler> subcommands;
 
     NamespaceHandler() {
         subcommands = new HashMap<String, MessageHandler>();
     }
 
+    NamespaceHandler(Class cls) {
+        this.cls = cls;
+        subcommands = new HashMap<String, MessageHandler>();
+    }
+
+    public Map<String, Object> getClassDescription(Class cls) {
+        /* Describe the class if it is present */
+        Map<String, Object> clsDesc = new HashMap<String, Object>();
+        clsDesc.put("name", cls.getSimpleName());
+        clsDesc.put("isEnum", cls.isEnum());
+        clsDesc.put("isKeyed", Keyed.class.isAssignableFrom(cls));
+        List<String> interfaceNames = new ArrayList<String>();
+        for (Class interfaceClass : cls.getInterfaces()) {
+            interfaceNames.add(interfaceClass.getSimpleName());
+        }
+        clsDesc.put("interfaces", interfaceNames);
+        return clsDesc;
+
+    }
+
     public Map<String, Object> getDescription() {
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("type", "namespace");
         result.put("name", getMethod());
+        if (cls != null) {
+            result.put("cls", getClassDescription(cls));
+        }
         List<Map<String, Object>> commands = new ArrayList<Map<String, Object>>();
         for (String key : subcommands.keySet()) {
             MessageHandler handler = subcommands.get(key);

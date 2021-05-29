@@ -22,10 +22,9 @@ import org.bukkit.entity.Player;
 
 public class GenericHandler extends NamespaceHandler {
     /* Interface for things which need to handle messages */
-    Class cls = null;
 
     public GenericHandler(Class cls) {
-        this.cls = cls;
+        super(cls);
     }
 
     public String getMethod() {

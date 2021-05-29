@@ -37,7 +37,10 @@ public abstract class NamespaceHandler implements MessageHandler {
         clsDesc.put("isKeyed", Keyed.class.isAssignableFrom(cls));
         List<String> interfaceNames = new ArrayList<String>();
         for (Class interfaceClass : cls.getInterfaces()) {
-            interfaceNames.add(interfaceClass.getSimpleName());
+            if (interfaceClass.getPackage() != null
+                    && interfaceClass.getPackage().getName().startsWith("org.bukkit.")) {
+                interfaceNames.add(interfaceClass.getSimpleName());
+            }
         }
         clsDesc.put("interfaces", interfaceNames);
         return clsDesc;

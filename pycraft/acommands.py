@@ -1,5 +1,4 @@
 """Common commands exposed over chat server"""
-from . import entity, blocks, fuzzymatch
 from .expose import expose, command_details, command_list
 from .directions import roughly_forward
 from .server import proxyobjects

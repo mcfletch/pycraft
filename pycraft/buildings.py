@@ -1,6 +1,5 @@
 """Create building-like structures for players"""
 from pycraft.directions import as_cube
-from mcpi import minecraft, vec3
 import numpy as np
 import random, os
 import logging

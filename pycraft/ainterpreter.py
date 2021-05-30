@@ -1,5 +1,3 @@
-# from mcpi import minecraft, block, connection
-# from mcpi.vec3 import Vec3
 import logging, operator
 import ast
 from collections import deque
@@ -23,7 +21,6 @@ from . import (
     copypaste,
 )
 import queue, time
-from . import entity
 import numpy as np
 
 

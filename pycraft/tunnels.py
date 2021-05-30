@@ -1,5 +1,4 @@
 """Create transportation"""
-# from mcpi import minecraft, vec3
 from pycraft import directions
 from .server.world import Vector, World, Block, Location
 from . import randomchoice

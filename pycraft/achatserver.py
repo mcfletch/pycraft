@@ -12,14 +12,12 @@ from . import (
     # copypaste,
 )
 
-# from mcpi import minecraft
-
 log = logging.getLogger(__name__)
 
 
 def get_options():
     parser = argparse.ArgumentParser(
-        description='Run minecraft mcpi chat-command server'
+        description='Run minecraft pycraft chat-command server'
     )
     parser.add_argument(
         '-H',

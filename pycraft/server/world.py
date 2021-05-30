@@ -308,6 +308,15 @@ class Location(ServerObjectProxy):
 class Entity(ServerObjectProxy):
     """A particular entity, such as a mob, or item stack on the server"""
 
+    @classmethod
+    def from_server(cls, named):
+        interfaces = named.get('interfaces')
+        if interfaces:
+            subclass = cls.get_subclass(interfaces)
+            if subclass:
+                cls = subclass
+        return cls(**named)
+
     def __json__(self):
         return self.uuid
 

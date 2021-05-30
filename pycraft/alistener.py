@@ -1,6 +1,4 @@
 """Expose commands via chat on a minecraft instance"""
-from mcpi import minecraft, block, connection
-from mcpi.vec3 import Vec3
 import asyncio
 import logging
 import re, time
@@ -12,7 +10,6 @@ from .expose import (
 import queue
 
 # from .lockedmc import locked
-from . import entity
 import numpy as np
 
 log = logging.getLogger(__name__)

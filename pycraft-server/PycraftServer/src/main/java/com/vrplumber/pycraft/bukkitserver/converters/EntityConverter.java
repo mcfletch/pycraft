@@ -18,6 +18,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
+import com.vrplumber.pycraft.bukkitserver.NamespaceHandler;
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.converters.Converter;
 
@@ -76,6 +77,12 @@ public class EntityConverter implements Converter {
         } catch (Exception e) {
             // Mock bukkit exception...
         }
+        List<String> interfaces = new ArrayList<String>();
+        for (Class provided : NamespaceHandler.removeInterfaceSuperclasses(asEntity.getClass().getInterfaces())) {
+            interfaces.add(provided.getSimpleName());
+        }
+        asMap.put("interfaces", interfaces);
+
         asMap.put("type", asEntity.getType());
         asMap.put("name", asEntity.getName());
         return asMap;

@@ -28,6 +28,9 @@ SIMPLE_TYPES = {
 PROXY_TYPES = {
     # Namespace:str => ProxyObject class
 }
+PROXY_RELATIONS = {
+    # Name: {ParentName...}
+}
 
 RETURN_TYPES = {}
 
@@ -74,10 +77,6 @@ def _type_coerce(value, typ):
         else:
             log.warning("No type for dictionary: %s", value)
 
-    # if typ == world.Inventory.__annotations__['contents']:
-    #     import pdb
-
-    #     pdb.set_trace()
     if isinstance(typ, type):
         if issubclass(typ, typing.List):
             sub_type = typ.__args__[0]  # YUCK!
@@ -207,8 +206,46 @@ class BoundProxyMethod(object):
         )
 
 
-class ServerObjectProxy(object):
+class ServerObjectMeta(type):
+    def __getattr__(cls, key):
+        log.info('Lookup method on %s: %s', cls, key)
+        interfaces = cls.__interfaces__
+        for interface_name in interfaces:
+            cls = PROXY_TYPES.get(interface_name)
+            if cls is not None:
+                result = getattr(cls, key, None)
+                if result is not None:
+                    log.info('Found in method on %s: %s', interface_name, key)
+                    return result
+        raise AttributeError(key)
+
+    def implements(cls, interface):
+        """Does the given cls implement interface name?"""
+        if isinstance(interface, type):
+            interface = interface.__namespace__
+        if interface in cls.__interfaces__:
+            return True
+        for implemented in cls.__interfaces__:
+            target = PROXY_TYPES.get(implemented)
+            if target is not None:
+                if target.implements(interface):
+                    return True
+        return False
+
+    def get_subclass(cls, interfaces):
+        """Given a cls, determine if interfaces contains a subclass we can prefer to this cls"""
+
+        for interface_name in interfaces:
+            interface = PROXY_TYPES.get(interface_name)
+            if interface and interface.implements(cls):
+                return interface
+        return cls
+
+
+class ServerObjectProxy(metaclass=ServerObjectMeta):
     """Object reference on the server which we are proxying"""
+
+    # __metaclass__ = ServerObjectMeta
 
     @classmethod
     def from_server(cls, struct):
@@ -219,10 +256,13 @@ class ServerObjectProxy(object):
         instance = cls(**struct)
         return instance
 
+    __interfaces__ = ()
+    __cached_methods__ = None
+
     @classmethod
     def inject_methods(cls, channel, method_descriptions):
         """Inject the methods the server reports are available for this namespace"""
-        to_cache = getattr(cls, '__cached_methods__', set())
+        to_cache = cls.__cached_methods__ or set()
         for description in method_descriptions.get('commands', ()):
             if description.get('type') not in ('method', 'multidispatch'):
                 continue
@@ -233,6 +273,15 @@ class ServerObjectProxy(object):
             # if description.get('name') in to_cache:
             #     method = lru_cache(maxsize=1024)(method)
             setattr(cls, method.__name__, method)
+        if 'cls' in method_descriptions:
+            cls.interfaces = method_descriptions['cls'].get('interfaces', [])
+            for interface in cls.interfaces:
+                PROXY_RELATIONS.setdefault(interface, set()).add(cls.__namespace__)
+                log.info(
+                    "Class %s implements %s",
+                    cls.__namespace__,
+                    interface,
+                )
 
     def __init__(self, **named):
         """Set each named key/value as an attribute on object"""

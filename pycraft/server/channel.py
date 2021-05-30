@@ -205,44 +205,70 @@ class Channel(object):
             self.method_cache_lock.release()
 
     async def introspect(self):
-        """Get methods for all registered namespaces"""
+        """Get methods for all registered namespaces
+
+        Needs to do all of:
+
+            * Query for the (huge) data-structure
+            * Figure out dependency resolution orders for classes
+            * Generate the final classes
+
+        """
         seen = {}
         seen_classes = {}
 
         automatic = await self.call_remote("__methods__")
 
-        for declarations in automatic.get('commands', []):
-            if not isinstance(declarations, dict):
-                log.warning("Non dictionary type in declarations: %s", declarations)
-                continue
-            if declarations.get('type') == 'namespace':
-                name = declarations['name']
-                cls = proxyobjects.PROXY_TYPES.get(name)
-                if cls is None:
-                    proxyobjects.PROXY_TYPES[name] = cls = type(
-                        name,
-                        (proxyobjects.ServerObjectProxy,),
-                        {
-                            '__namespace__': name,
-                        },
-                    )
-                seen[name] = declarations
+        unfinished = [
+            x
+            for x in automatic.get('commands', [])
+            if (isinstance(x, dict) and x.get('type') == 'namespace')
+        ]
+        for declaration in unfinished:
+            try:
+                name = declaration['name']
+            except KeyError:
+                raise KeyError('name', declaration)
+            if not (
+                declaration.get('cls') and declaration.get('cls').get('interfaces')
+            ):
+                bases = declaration.get('cls').get('interfaces')
+            else:
+                bases = []
+            base = proxyobjects.ServerObjectProxy
+            clsDeclaration = declaration.get('cls')
+            if clsDeclaration:
+                if clsDeclaration.get('isKeyed'):
+                    base = proxyobjects.KeyedServerObjectEnum
+                elif clsDeclaration.get('isEnum'):
+                    base = proxyobjects.ServerObjectEnum
 
-        for proxy in proxyobjects.PROXY_TYPES.values():
-            if proxy.__namespace__ not in seen:
-                if self.debug:
-                    log.info("Manual Introspect: %s", proxy.__namespace__)
-                try:
-                    seen[proxy.__namespace__] = await self.get_methods(
-                        proxy.__namespace__
-                    )
-                except MethodInvocationError as err:
-                    log.warning("Unable to introspect: %s %s", proxy.__namespace__, err)
-                    continue
-            if proxy in seen_classes:
-                continue
-            seen_classes[proxy] = True
-            proxy.inject_methods(self, seen[proxy.__namespace__])
+            cls = proxyobjects.PROXY_TYPES.get(name)
+            if cls is None:
+                cls = proxyobjects.PROXY_TYPES[name] = type(
+                    name,
+                    (base,),
+                    {
+                        '__namespace__': name,
+                        '__declaration__': declaration,
+                        '__interfaces__': clsDeclaration.get('interfaces', [])
+                        if clsDeclaration
+                        else [],
+                    },
+                )
+            else:
+                cls.__namespace__ = name
+                cls.__declaration__ = declaration
+                cls.__interfaces__ = (
+                    clsDeclaration.get('interfaces', []) if clsDeclaration else []
+                )
+
+            seen_classes[name] = cls
+
+        for name, proxy in seen_classes.items():
+            proxy.inject_methods(self, proxy.__declaration__)
+            proxyobjects.PROXY_TYPES[name] = proxy
+            setattr(world, name, proxy)
 
     @property
     def server(self):

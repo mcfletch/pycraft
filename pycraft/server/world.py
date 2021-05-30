@@ -466,9 +466,9 @@ class BlockData(ServerObjectProxy):
     def from_server(cls, named):
         interfaces = named.get('interfaces')
         if interfaces:
-            for interface in interfaces:
-                if interface in PROXY_TYPES and PROXY_TYPES[interface] is not cls:
-                    return PROXY_TYPES[interface].from_server(named)
+            subclass = cls.get_subclass(interfaces)
+            if subclass:
+                cls = subclass
         return cls(**named)
 
     def __init__(self, string_value, **named):

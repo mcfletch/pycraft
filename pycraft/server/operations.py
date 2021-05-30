@@ -138,139 +138,25 @@ async def test_api():
     worlds = await Server(name="server").getWorlds()
 
     log.info("getWorlds => %s", worlds)
-    for world in worlds:
-        # if world.name == 'world':
-        #     await armoury_chest(['world', -136, 63, 91])
-        # blocks = await world.getBlocks([0, 0, 0], [5, 5, 5])
-        # pprint.pprint(blocks)
-        # if world.name == 'world':  # default world name...
-        #     print("Materials")
-        #     for material in await server.call_remote(
-        #         "World.getMaterialTypes",
-        #     ):
-        #         print(material)
-        #     print("Enchantments")
-        #     for enchantment in await server.call_remote("Enchantment.values"):
-        #         print(enchantment)
-        for player in world.players:
-            #     #     # print(await structured.getBlockAt([structured.name, 0, 0, 0]))
-            #     #     # if player.name == 'VRPlumber':
-            #     if player.name == 'BlockBrave':
-            #         #         # await nice_item(player, 'minecraft:elytra')
-            #         await nice_item(player, 'minecraft:trident')
-            # await nice_sword(player)
-            # await nice_armour(player)
-            # await nice_pickaxe(player)
-            # await nice_item(player, 'minecraft:bow')
-            if player.name == 'BlockBrave':
-                await nice_item(player, 'minecraft:diamond_horse_armor')
-                pass
-                # await nice_item(player, 'minecraft:wooden_hoe')
-                # if player.name == 'VRPlumber':
-                # if player.name in ('BlockPlumber', 'VRPlumber'):
-                # await nice_item(player, 'minecraft:elytra')
-                # inventory = await player.getInventory()
-                # await inventory.setItem(inventory.firstEmpty, ['minecraft:salmon', 64])
 
-                # await nice_item(player, 'minecraft:netherite_boots')
-                # await nice_item(player, 'minecraft:bow')
-                # await nice_armour(player)
-                # await nice_sword(player)
-                # await nice_pickaxe(player)
-                # await nice_item(player, 'minecraft:shield')
-                # inventory = await player.getInventory()
-                # await inventory.setItem(inventory.firstEmpty, ['minecraft:arrow', 64])
-                # inventory = await player.getInventory()
-                # await inventory.setItem(
-                #     inventory.firstEmpty, ['minecraft:flint_and_steel', 1]
-                # )
-                # inventory = await player.getInventory()
-                # await nice_item(player, 'minecraft:golden_boots')
-                # await inventory.setItem(inventory.firstEmpty, ['minecraft:shield', 1])
-                # await inventory.setItem(
-                #     inventory.firstEmpty, ['minecraft:obsidian', 64]
-                # )
-                # await nice_item(player, 'minecraft:netherite_shovel')
-                # inventory = await player.getInventory()
-                # await inventory.setItem(inventory.firstEmpty, ['minecraft:arrow', 64])
-                # inventory = await player.getInventory()
-                # await inventory.setItem(
-                #     inventory.firstEmpty, ['minecraft:firework_rocket', 64]
-                # )
+    from .. import acommands
+    from . import proxyobjects
 
-                # for material in [
-                #     # 'minecraft:obsidian',
-                #     # 'minecraft:smooth_quartz_stairs',
-                #     # 'minecraft:arrow',
-                #     # 'minecraft:diamond',
-                #     # 'minecraft:stick',
-                #     # 'minecraft:soul_sand',
-                #     'minecraft:water_bucket',
-                # ]:
-                #     inventory = await player.getInventory()
-                #     await inventory.setItem(inventory.firstEmpty, [material, 1])
-                # await fill_inventory(player, material = 'minecraft:water_bucket',count=1)
+    loc = Location(['world', [0, 0, 0]])
+    await acommands.bed(position=loc, direction=(0, 0, 1))
 
-        # await block(player, 'netherite_block')
-        # for item in [
-        #     'minecraft:netherite_axe',
-        #     'minecraft:netherite_sword',
-        #     'minecraft:netherite_hoe',
-        #     'minecraft:netherite_shovel',
-        # ]:
-        #     await nice_item(player, item)
-        # await nice_item(player, 'minecraft:crossbow')
-
-        # location = player.location.block_location() + (0, -1, 0)
-        # await world.setBlock(
-        #     list(location.vector[:3]), 'minecraft:netherite_block'
-        # )
-
-        # await world.spawnEntity(player.location, 'SHEEP')
-        # await world.setStorm(True)
-        # await world.setThundering(True)
-
-        # await world.spawnEntity(player.location, 'minecraft:pufferfish')
-
-        # await world.strikeLightning(player.location)
-        # await world.strikeLightningEffect(player.location)
-        # await player.sendMessage("Hello from the new api")
-
-        # for player in world.players:
-        #     #     # print(await structured.getBlockAt([structured.name, 0, 0, 0]))
-        #     #     # if player.name == 'VRPlumber':
-        #     if player.name == 'VRPlumber':
-        #         #         # await nice_item(player, 'minecraft:elytra')
-        #         await block(player, 'minecraft:netherite_block')
-
-        # response = await server.call_remote("World.getBlock", [world, 0, 0, 0])
-        # log.info("%s block(0,0,0) => %s", world, response)
-        # response = await server.call_remote(
-        #     "World.setBlock", [world, 0, 74, 0], 'minecraft:netherite_block'
-        # )
-    #     # for entity in await server.call_remote("World.getEntityTypes"):
-    #     #     print(entity)
-    #     for i in range(1, 5):
-    #         response = await server.call_remote(
-    #             "World.setBlock",
-    #             [
-    #                 'world',
-    #                 193,
-    #                 110 + i,
-    #                 277,
-    #             ],
-    #             "minecraft:netherite_block",
-    #         )
-
-    # for entity in await server.call_remote("World.getEntities", world):
-    #     print(entity)
-    #     if entity.get('type') == 'SKELETON':
-    #         await server.call_remote("Entity.remove", entity['uuid'])
-    queue = await server.subscribe("AsyncPlayerChatEvent")
-    while True:
-        event = await queue.get()
-        print('Event: %s', event)
-    await server.close()
+    # bed = proxyobjects.PROXY_TYPES['Bed'](location=loc)
+    bed = await Block(location=loc).getBlockData()
+    # from Bed
+    assert hasattr(bed, 'isOccupied'), bed
+    # from BlockData
+    assert hasattr(bed, 'getMaterial'), bed
+    print('Bed Material', await bed.getMaterial())
+    # queue = await server.subscribe("AsyncPlayerChatEvent")
+    # while True:
+    #     event = await queue.get()
+    #     print('Event: %s', event)
+    # await server.close()
 
 
 def main():

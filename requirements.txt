@@ -4,3 +4,4 @@ pillow
 requests 
 pyyaml
 asyncstdlib
+pytest-asyncio

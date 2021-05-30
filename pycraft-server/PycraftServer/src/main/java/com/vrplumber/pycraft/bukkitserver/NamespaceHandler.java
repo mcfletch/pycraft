@@ -7,7 +7,7 @@ import com.vrplumber.pycraft.bukkitserver.PycraftMessage;
 import org.bukkit.Keyed;
 import org.bukkit.block.data.Directional;
 
-import java.lang.reflect.Class;
+import java.lang.Class;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 import java.util.HashMap;

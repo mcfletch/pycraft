@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.UUID;
 import java.lang.Class;
@@ -113,6 +114,7 @@ public class PycraftConverterRegistry {
         interfaceConverters.add(new InterfaceConverter(Server.class, new ServerConverter(this)));
         interfaceConverters.add(new InterfaceConverter(ItemStack.class, new ItemStackConverter(this)));
         interfaceConverters.add(new InterfaceConverter(Enchantment.class, new EnchantmentConverter(this)));
+        interfaceConverters.add(new InterfaceConverter(Collection.class, new CollectionConverter(this)));
 
     }
 

@@ -3,18 +3,11 @@
 This repository includes the following:
 
 * dockerised setup to allow developers to easily create a 
-  Minecraft Java Edition Server that includes the 
-  [RaspberryJuice](https://github.com/zhuowei/RaspberryJuice) 
-  remote API that follows the Minecraft Pi Edition API
+  Minecraft Java Edition Server (using [Docker Minecraft Server](https://github.com/itzg/docker-minecraft-server))
 * dockerised setup to allow BedRock clients (that is,
   tablet, game console, pocket edition, and Windows native
   clients) to be proxied into the game using
   [Geyser](https://geysermc.org/)
-* a bunch of sample code for using the mcpi python
-  library to construct simple tools
-* a nice image-to-maze tool that lets children draw a 
-  low-resolution maze on paper and turn it into a 3D
-  maze/building
 * a sample daemon `pycraft-chat-server` that lets you
   write simple scripts that users can call from the
   text chat in-game via "magic commands"
@@ -25,6 +18,16 @@ THE SERVER IS INSECURE BY DEFAULT. It is intended for
 developers to work with the API. It is *not* configured
 such that it should be exposed on the internet!
 
+The server is insecure by default due to the broken nature
+of the Pocket Edition Minecraft client, where it will only
+allow users to connect to an authenticating server with their
+*java edition* login... and if they had a java edition login
+they would use the java edition.
+
+Additionally, the pycraft-chat-server gives players *in game*
+incredible power, allowing them to do almost anything that
+the Bukkit API allows you to do.
+
 ## Creating a Minecraft Java Edition Server with API
 
 Important Note: Do *not* run this install outside
@@ -32,6 +35,8 @@ of a firewalled network. By default the server allows
 anyone to connect. Particularly if you are going
 to allow API access you should not allow untrusted
 users to connect.
+
+You have to abide by the [Minecraft EULA](https://www.minecraft.net/en-us/eula)
 
 On your (Ubuntu) Linux machine:
 
@@ -42,20 +47,20 @@ cd pycraft
 virtualenv -p python3 env
 source env/bin/activate
 pip install -r requirements.txt
-# NOTE: -e declares that you accept the server EULA
-# NOTE: -b installs the Geyser plugin to allow BedRock clients to connect
-./run.py -e -b -d YOURWORLDDIRECTORY
+# NOTE: -e declares that you accept the Minecraft EULA (see link above)
+./run.py -e -d YOURWORLDDIRECTORY
 ```
 
 At this point, you have a vanilla Bukkit server running 
-in docker with the RaspberryJuice API bridge installed.
+in docker with the Geyser bridge installed.
 
 You can connect to your server by choosing Multiuser
 in Minecraft Java Edition and typing in the 
 IP of your docker host as the server to join.
 
-The server is running on TCP and UDP on port 25565
-on your docker host.
+The Java server is running on TCP and UDP on port `25565`
+on your docker host. If enabled (default) the bedrock server
+is running on port `19132`.
 
 ## Letting Pocket/iOS/Android/XBox/Windows Editions Connect
 

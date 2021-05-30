@@ -48,9 +48,9 @@ class AInterpreter(object):
 
     def user_namespace(self, sender):
         """Get the user's personal namespace"""
-        current = self.user_namespaces.get(sender.id)
+        current = self.user_namespaces.get(sender.uuid)
         if current is None:
-            self.user_namespaces[sender.id] = current = {}
+            self.user_namespaces[sender.uuid] = current = {}
         return current
 
     async def interpret(self, message):
@@ -229,7 +229,7 @@ class AInterpreter(object):
             return value
         elif isinstance(arg, ast.GeneratorExp):
             tmp = []
-            async for update in self.iterate_generator(arg, namespace):
+            async for update in self.interpret_generator(arg, namespace):
                 tmp.append(update)
             return tmp
         elif isinstance(arg, ast.ListComp):
@@ -251,6 +251,7 @@ class AInterpreter(object):
 
     async def iterate_generator(self, gen, namespace):
         """Iterate a single ast generator evalulation within a namespace"""
+
         source = await self.interpret_expr(gen.iter, namespace)
         log.info('Source %s', source)
         for item in source:

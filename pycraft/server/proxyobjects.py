@@ -20,6 +20,7 @@ SIMPLE_TYPES = {
     # "Map": dict,
     "UUID": uuid.UUID,
     "List": typing.List,
+    "Collection": typing.List,
     "Set": typing.Set,
     "String[]": typing.List[str],
     "void": bool,
@@ -79,8 +80,12 @@ def _type_coerce(value, typ):
 
     if isinstance(typ, type):
         if issubclass(typ, typing.List):
-            sub_type = typ.__args__[0]  # YUCK!
-            return [type_coerce(item, sub_type) for item in value]
+            if typ.__args__:
+                sub_type = typ.__args__[0]  # YUCK!
+                return [type_coerce(item, sub_type) for item in value]
+            else:
+                log.warning("No sub-type on %s", typ)
+                return value
         elif issubclass(typ, typing.Dict):
             key_typ, value_typ = typ.__args__
             result = {}
@@ -150,7 +155,7 @@ class ProxyMethod(object):
 
     async def __call__(self, *args):
         method = self.get_full_method()
-        log.info("Call method: %s(%s)", method, ",".join([repr(x) for x in args]))
+        log.debug("Call method: %s(%s)", method, ",".join([repr(x) for x in args]))
 
         result = await self.channel.call_remote(
             method,
@@ -208,7 +213,6 @@ class BoundProxyMethod(object):
 
 class ServerObjectMeta(type):
     def __getattr__(cls, key):
-        log.info('Lookup method on %s: %s', cls, key)
         interfaces = cls.__interfaces__
         for interface_name in interfaces:
             cls = PROXY_TYPES.get(interface_name)
@@ -277,11 +281,11 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
             cls.interfaces = method_descriptions['cls'].get('interfaces', [])
             for interface in cls.interfaces:
                 PROXY_RELATIONS.setdefault(interface, set()).add(cls.__namespace__)
-                log.info(
-                    "Class %s implements %s",
-                    cls.__namespace__,
-                    interface,
-                )
+                # log.info(
+                #     "Class %s implements %s",
+                #     cls.__namespace__,
+                #     interface,
+                # )
 
     def __init__(self, **named):
         """Set each named key/value as an attribute on object"""

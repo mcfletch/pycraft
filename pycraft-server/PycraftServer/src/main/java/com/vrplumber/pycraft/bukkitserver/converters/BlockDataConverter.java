@@ -12,6 +12,7 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.util.Vector;
 import org.bukkit.Location;
 
+import com.vrplumber.pycraft.bukkitserver.NamespaceHandler;
 import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.converters.Converter;
 
@@ -40,7 +41,7 @@ public class BlockDataConverter implements Converter {
         asMap.put("__type__", blockdata.getClass().getSimpleName());
         asMap.put("__namespace__", "BlockData");
         List<String> interfaces = new ArrayList<String>();
-        for (Class provided : blockdata.getClass().getInterfaces()) {
+        for (Class provided : NamespaceHandler.removeInterfaceSuperclasses(blockdata.getClass().getInterfaces())) {
             interfaces.add(provided.getSimpleName());
         }
         asMap.put("interfaces", interfaces);

@@ -29,6 +29,8 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.World;
+import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.type.Bed;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.Entity;
@@ -42,6 +44,7 @@ import org.junit.jupiter.api.TestInstance;
 
 import com.google.gson.Gson;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 // import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -479,5 +482,28 @@ public class AppTest {
   // assertTrue(api.lastResponse.startsWith("1,0"), api.lastResponse);
 
   // }
+
+  @Test
+  public void getBedDescription() {
+    NamespaceHandler handler = (NamespaceHandler) api.registry.getHandler("Directional");
+    assertNotNull(handler);
+    assertEquals(handler.cls, Directional.class);
+    Map<String, Object> desc = handler.getClassDescription(handler.cls);
+    assertNotNull(desc);
+    List<String> interfaces = (List<String>) desc.get("interfaces");
+    assertNotNull(interfaces);
+    assertTrue(interfaces.indexOf("BlockData") > -1);
+
+    handler = (NamespaceHandler) api.registry.getHandler("Bed");
+    assertNotNull(handler);
+    assertEquals(handler.cls, Bed.class);
+    desc = handler.getClassDescription(handler.cls);
+    assertNotNull(desc);
+    interfaces = (List<String>) desc.get("interfaces");
+    assertNotNull(interfaces);
+    assertFalse(interfaces.indexOf("BlockData") > -1);
+    assertTrue(interfaces.indexOf("Directional") > -1);
+
+  }
 
 }

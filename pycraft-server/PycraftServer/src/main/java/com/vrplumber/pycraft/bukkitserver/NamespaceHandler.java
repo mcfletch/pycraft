@@ -5,6 +5,7 @@ import com.vrplumber.pycraft.bukkitserver.PycraftAPI;
 import com.vrplumber.pycraft.bukkitserver.PycraftMessage;
 
 import org.bukkit.Keyed;
+import org.bukkit.block.data.Directional;
 
 import java.lang.reflect.Class;
 import java.util.regex.Pattern;
@@ -29,17 +30,45 @@ public abstract class NamespaceHandler implements MessageHandler {
         subcommands = new HashMap<String, MessageHandler>();
     }
 
+    // Directional
+    public static List<Class> removeInterfaceSuperclasses(Class[] interfaces) {
+        /* Very expensive x*y check for duplicate interfaces */
+        List<Class> result = new ArrayList<Class>();
+        for (Class first : interfaces) {
+            boolean found = false;
+            for (Class second : interfaces) {
+                if (first == second) {
+                    continue;
+                } else if (first.isAssignableFrom(second)) {
+                    found = true;
+                }
+            }
+            if (!found) {
+                result.add(first);
+            }
+        }
+        return result;
+    }
+
     public Map<String, Object> getClassDescription(Class cls) {
         /* Describe the class if it is present */
         Map<String, Object> clsDesc = new HashMap<String, Object>();
+
         clsDesc.put("name", cls.getSimpleName());
         clsDesc.put("isEnum", cls.isEnum());
         clsDesc.put("isKeyed", Keyed.class.isAssignableFrom(cls));
         List<String> interfaceNames = new ArrayList<String>();
-        for (Class interfaceClass : cls.getInterfaces()) {
+        List<Class> interfaces = NamespaceHandler.removeInterfaceSuperclasses(cls.getInterfaces());
+        for (Class interfaceClass : interfaces) {
             if (interfaceClass.getPackage() != null
                     && interfaceClass.getPackage().getName().startsWith("org.bukkit.")) {
                 interfaceNames.add(interfaceClass.getSimpleName());
+            }
+        }
+        Class superClass = cls.getSuperclass();
+        if (superClass != null) {
+            if (superClass.getPackage() != null && superClass.getPackage().getName().startsWith("org.bukkit.")) {
+                interfaceNames.add(superClass.getSimpleName());
             }
         }
         clsDesc.put("interfaces", interfaceNames);

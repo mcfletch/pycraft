@@ -31,6 +31,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -39,6 +40,7 @@ import org.bukkit.util.Vector;
 
 import java.util.logging.Handler;
 import org.bukkit.block.data.type.*;
+import org.bukkit.configuration.MemorySection;
 
 class HandlerRegistry implements IHandlerRegistry {
     private static List<Class> handlers;
@@ -87,12 +89,16 @@ class HandlerRegistry implements IHandlerRegistry {
 
     public boolean shouldExpose(Class cls) {
         /* Should we expose the given class namespace??? */
-
         if (cls.getPackage() == null) {
             return false;
-        } else if (!cls.getPackage().getName().startsWith("org.bukkit")) {
+        }
+        String packageName = cls.getPackage().getName();
+
+        if (!packageName.startsWith("org.bukkit")) {
             return false;
-        } else if (cls.getPackage().getName().startsWith("org.bukkit.material")) {
+        } else if (packageName.equals("org.bukkit.material") && cls.getSimpleName().equals("Colorable")) {
+            return true;
+        } else if (packageName.startsWith("org.bukkit.material")) {
             /* all of it is deprecated */
             return false;
         }
@@ -220,6 +226,9 @@ class HandlerRegistry implements IHandlerRegistry {
         exposeClass(TurtleEgg.class);
         exposeClass(Wall.class);
         exposeClass(WallSign.class);
+
+        exposeClass(EntityEvent.class);
+        exposeClass(MemorySection.class);
 
         registerImplementation("World", new WorldHandler());
         registerImplementation("echo", new EchoHandler());

@@ -59,7 +59,7 @@ def dir_(*args, namespace=None):
 
 @expose()
 async def spawn(
-    type_name, position=None, *, mc=None, player: Player = None, world: World = None
+    type_name, position=None, *, player: Player = None, world: World = None
 ):
     """Spawn a new entity of type_id at position (default in front of player)
 
@@ -316,34 +316,34 @@ async def killall(name, *, player=None, world=None):
             await entity.remove()
 
 
-@expose()
-async def help(command=None, *args, player=None, mc=None):
-    """Help, a command list if no command specified, otherwise per-command details
+# @expose()
+# async def help(command=None, *args, player=None, mc=None):
+#     """Help, a command list if no command specified, otherwise per-command details
 
-    help() => Show list of available commands
-    help('command') => show detailed usage for the given command
-    help('entity-list') => Show list of available entitity names
-    help('entity-list', 'name') => Show list of available entitity names matching name
-    help('block-list') => Show list of available block names
-    help('block-list', 'name') => Show list of available block names matching name
-    """
-    if not command:
-        output = command_list()
-    elif command == 'entity-list':
-        names = []
-        for entityType in await EntityType.cached_values():
-            names.append(entityType.key)
-        return ", ".join(sorted(names))
-    elif command == 'block-list':
-        names = []
-        for entityType in await EntityType.cached_values():
-            names.append(entityType.key)
-        if args:
-            names = [n for n in names if args[0] in n]
-        return ", ".join(sorted(names))
-    else:
-        output = command_details(command)
-    return "\n".join(output)
+#     help() => Show list of available commands
+#     help('command') => show detailed usage for the given command
+#     help('entity-list') => Show list of available entitity names
+#     help('entity-list', 'name') => Show list of available entitity names matching name
+#     help('block-list') => Show list of available block names
+#     help('block-list', 'name') => Show list of available block names matching name
+#     """
+#     if not command:
+#         output = command_list()
+#     elif command == 'entity-list':
+#         names = []
+#         for entityType in await EntityType.cached_values():
+#             names.append(entityType.key)
+#         return ", ".join(sorted(names))
+#     elif command == 'block-list':
+#         names = []
+#         for entityType in await EntityType.cached_values():
+#             names.append(entityType.key)
+#         if args:
+#             names = [n for n in names if args[0] in n]
+#         return ", ".join(sorted(names))
+#     else:
+#         output = command_details(command)
+#     return "\n".join(output)
 
 
 @expose()

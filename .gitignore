@@ -7,3 +7,6 @@ data
 raspberryjuice-*.jar
 pycraft/items.tsv
 env
+node_modules
+
+pycraft-server/pkg/**

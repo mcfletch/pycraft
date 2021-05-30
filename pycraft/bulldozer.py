@@ -1,71 +1,70 @@
-"""Clear (create) a set of blocks in front of the user"""
-from mcpi import minecraft, vec3
+"""Clear (create) a set of blocks in front of the player"""
 import numpy as np
 import logging
-log = logging.getLogger(__name__)
+from .server.world import Vector, Block, Location, World
 from . import expose
-from .commands import V
-from . import entity
-from . import uniqueblocks
-from . import blocks
+from .directions import roughly_forward, as_cube, forward_and_cross
 
-def roughly_forward(direction):
-    """Given a direction, figure out cartesian forward"""
-    dx,dy,dz = direction
-    if dx and dz:
-        adx = np.abs(dx)
-        adz = np.abs(dz)
-        if adx > adz:
-            if dx > 0:
-                forward = vec3.Vec3(1,0,0)
-            else:
-                forward = vec3.Vec3(-1,0,0)
-        else:
-            if dz > 0:
-                forward = vec3.Vec3(0,0,1)
-            else:
-                forward = vec3.Vec3(0,0,-1)
-    elif dx:
-        if dx < 0:
-            return vec3.Vec3(-1,0,0)
-        else:
-            return vec3.Vec3(1,0,0)
-    elif dz:
-        if dz < 0:
-            return vec3.Vec3(0,0,-1)
-        else:
-            return vec3.Vec3(0,0,1)
-        return direction
-    else:
-        if dy > 0:
-            forward = vec3.Vec3(0,1,0)
-        else:
-            forward = vec3.Vec3(0,-1,0)
-    return forward
+log = logging.getLogger(__name__)
+
 
 @expose.expose()
-def bulldoze(depth=10,width=6,height=2,material=blocks.AIR,*,user=None,mc=None):
-    """Set blocks ahead of the user to the given material
+async def bulldoze(
+    depth=10, width=6, height=2, material='minecraft:air', *, player=None, mc=None
+):
+    """Set blocks ahead of the player to the given material
 
     This (loosely) aligns the block of material with the direction
-    the user is currently facing, so it wipes out whatever
+    the player is currently facing, so it wipes out whatever
     is in front of you.
     """
-    x,y,z = position = user.position
-    material = blocks.Block.as_instance(material)
-    direction = user.direction
+    # x, y, z = position = player.position[:3]
+    position = player.position.block_location()
+    direction = player.direction
+    log.info("Raw position: %s and direction %s", position, direction)
 
-    forward = roughly_forward(direction)
-    if forward == vec3.Vec3(0,1,0):
-        cross = vec3.Vec3(1,0,0)
-    else:
-        cross = vec3.Vec3(*tuple(forward)[::-1])
+    forward, cross = forward_and_cross(direction)
 
-    start = position+ forward + (-cross * (width//2))
-    stop = start + (cross*width) + (forward*depth) + (vec3.Vec3(0,1,0)*height)
+    log.info("Forward: %s Cross: %s", forward, cross)
 
-    mc.setBlocks(
-        *start,
-        *stop,
-        material
+    start = position + forward + (-cross * (width // 2))
+    stop = (
+        start
+        + (cross * (width - 1))
+        + (forward * (depth - 1))
+        + (Vector(0, 1, 0) * (height - 1))
     )
+    log.info("Start: %s Stop: %s", start, stop)
+
+    start, size = as_cube(start, stop)
+
+    log.info("Start: %s Size: %s", start, size)
+
+    if material:
+        await World(name=player.location.world).setBlocks(
+            start,
+            size,
+            material,
+        )
+    else:
+        await World(name=player.location.world).breakBlocks(
+            start,
+            size,
+        )
+
+
+@expose.expose()
+async def strip_mine(depth=50, offset=7, *, player=None, mc=None):
+    """Set explosive charges every step steps forward"""
+    position = player.position
+    direction = player.direction
+    forward = one_step = roughly_forward(direction)
+    forward = Vector(forward.x, forward.y, forward.z)
+    current = position + (forward * offset)
+    for i in range(offset):
+        current = current + forward
+    start, size = as_cube(current, current + forward * depth)
+    await World(name=player.location.world).setBlocks(start, size, 'tnt')
+    in_front = current - one_step
+    await Block(location=in_front).setBlockData('redstone_torch')
+    return "Fire in the hold!"

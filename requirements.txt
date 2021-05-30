@@ -1,6 +1,7 @@
 ipython
-mcpi
 numpy
 pillow
 requests 
 pyyaml
+asyncstdlib
+pytest-asyncio

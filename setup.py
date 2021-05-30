@@ -8,7 +8,7 @@ with open(os.path.join(HERE, "README.md"), "r") as fh:
 
 setuptools.setup(
     name="pycraft",  # Replace with your own username
-    version="0.1.0",
+    version="2.0.0",
     author="Simon Ditner and Mike C. Fletcher",
     author_email="mcfletch@vrplumber.com",
     description="Automated dockerised Python-for-Minecraft (PycraftServer) server setup with API samples and live coding in text chat",

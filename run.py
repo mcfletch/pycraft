@@ -3,14 +3,12 @@ import os, requests, subprocess, argparse, logging, shutil, yaml
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 DATA = os.path.join(HERE, 'data')
-URL = 'https://github.com/zhuowei/RaspberryJuice/raw/a2d49279de9396a56fbb3f10c477192d5b5ba28a/jars/raspberryjuice-1.12.1.jar'
 GEYSER_URL = 'https://ci.opencollab.dev//job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/target/Geyser-Spigot.jar'
 SLIME_FUN_URL = 'https://thebusybiscuit.github.io/builds/TheBusyBiscuit/Slimefun4/master/Slimefun4-923.jar'
+PYCRAFT_SERVER_URL = 'https://github.com/mcfletch/pycraft-server/releases/download/v-1.0.0-1/PycraftServer-1.0.0.jar'
 PLUGINS = 'plugins'
 PLUGIN_SOURCE = os.path.join(HERE, PLUGINS)
-JARFILE = URL.split('/')[-1]
-GEYSER_JARFILE = GEYSER_URL.split('/')[-1]
-SLIME_FUN_JARFILE = SLIME_FUN_URL.split('/')[-1]
+# JARFILE = URL.split('/')[-1]
 log = logging.getLogger('pycraft-setup')
 docker_name = 'minecraft'
 MEGA = 1024 * 1024
@@ -90,7 +88,7 @@ def install_raspberry_juice(data, bedrock=True, slime_fun=False):
     for url in [
         x
         for x in [
-            URL,
+            PYCRAFT_SERVER_URL,
             GEYSER_URL if bedrock else None,
             SLIME_FUN_URL if slime_fun else None,
         ]
@@ -178,7 +176,6 @@ def main():
         'docker',
         'run',
         '-d',
-        '-p4711:4711',
         '-p4712:4712',
         '-p25565:25565',
         "-p19132:19132/udp",

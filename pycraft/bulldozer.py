@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 @expose.expose()
 async def bulldoze(
-    depth=10, width=6, height=2, material='minecraft:air', *, player=None, mc=None
+    depth=10, width=6, height=2, material='minecraft:air', *, player=None
 ):
     """Set blocks ahead of the player to the given material
 
@@ -54,7 +54,7 @@ async def bulldoze(
 
 
 @expose.expose()
-async def strip_mine(depth=50, offset=7, *, player=None, mc=None):
+async def strip_mine(depth=50, offset=7, *, player=None):
     """Set explosive charges every step steps forward"""
     position = player.position
     direction = player.direction

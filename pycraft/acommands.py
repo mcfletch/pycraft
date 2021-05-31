@@ -73,7 +73,7 @@ async def spawn(
 
 
 @expose()
-async def spawn_drop(type_id, *, mc=None, player=None, world=None):
+async def spawn_drop(type_id, *, player=None, world=None):
     """Spawn an entity 50m overhead dropping onto your location
 
     Use this to e.g. drop a creeper to their death and generate gunpowder
@@ -83,9 +83,7 @@ async def spawn_drop(type_id, *, mc=None, player=None, world=None):
 
 
 @expose()
-async def spawn_shower(
-    type_id, count=30, height=50, *, mc=None, player=None, world=None
-):
+async def spawn_shower(type_id, count=30, height=50, *, player=None, world=None):
     """Spawn an entity 50m overhead dropping onto your location
 
     Use this to e.g. drop a creeper to their death and generate gunpowder
@@ -98,7 +96,7 @@ async def spawn_shower(
 
 
 @expose()
-async def block(type_name, position=None, offset=(0, 0, 0), *, mc=None, player=None):
+async def block(type_name, position=None, offset=(0, 0, 0), *, player=None):
     """Create a block with the given type_id at position"""
     if position is None:
         position = player.location + player.location.direction
@@ -111,7 +109,7 @@ async def block(type_name, position=None, offset=(0, 0, 0), *, mc=None, player=N
 
 
 # @expose()
-# def click_create(type_id, *, clicks=None, mc=None, player=None):
+# def click_create(type_id, *, clicks=None, player=None):
 #     """When you right-click with a sword, create block-type there"""
 #     typ = blocks.Block.as_instance(type_id)
 
@@ -123,7 +121,7 @@ async def block(type_name, position=None, offset=(0, 0, 0), *, mc=None, player=N
 
 
 # @expose()
-# def click_delete(*, clicks=None, mc=None, player=None):
+# def click_delete(*, clicks=None, player=None):
 #     typ = blocks.Block.as_instance('AIR')
 
 #     def on_click(event):
@@ -134,7 +132,7 @@ async def block(type_name, position=None, offset=(0, 0, 0), *, mc=None, player=N
 
 
 # # @expose()
-# # def click_describe(*,clicks=None,mc=None,player=None):
+# # def click_describe(*,clicks=None,player=None):
 # #     def on_click(event):
 # #         try:
 # #             target = event.pos
@@ -183,7 +181,7 @@ def users(*, world=None):
 
 
 # @expose()
-# def last_hit(index=-1, *, mc=None, player=None, clicks=None):
+# def last_hit(index=-1, *, player=None, clicks=None):
 #     """Return the index-th last click by the sending player
 
 #     If we don't have that click, will return None
@@ -317,7 +315,7 @@ async def killall(name, *, player=None, world=None):
 
 
 # @expose()
-# async def help(command=None, *args, player=None, mc=None):
+# async def help(command=None, *args, player=None):
 #     """Help, a command list if no command specified, otherwise per-command details
 
 #     help() => Show list of available commands

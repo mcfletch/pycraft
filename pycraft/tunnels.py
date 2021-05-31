@@ -25,7 +25,6 @@ async def tunnel(
     *,
     player=None,
     player_storage=None,
-    mc=None,
 ):
     """Create a pyramid centered at position in material
 

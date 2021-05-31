@@ -56,7 +56,6 @@ async def hall(
     carpet_material='minecraft:red_carpet',
     roof_material='minecraft:red_glazed_terracotta',
     *,
-    mc=None,
     player=None,
 ):
     if position is None:
@@ -251,10 +250,6 @@ async def hall(
         'minecraft:cyan_bed[facing=south,occupied=false,part=foot]',
     )
 
-    # commands.bed(
-    #     (left + 1, bottom, back - 3),
-    #     mc=mc,
-    # )
     crafting = left + (width // 2)
     await world.setBlock(
         crafting,

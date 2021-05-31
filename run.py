@@ -110,6 +110,7 @@ def install_raspberry_juice(data, bedrock=True, slime_fun=False):
             shutil.copy(cache, jarfile)
         else:
             log.info('  %s already there', jarfile)
+            shutil.copy(cache, jarfile)
 
 
 def configure_geyser(data, auth=False):

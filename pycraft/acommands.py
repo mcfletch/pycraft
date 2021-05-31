@@ -79,7 +79,7 @@ async def spawn_drop(type_id, *, mc=None, player=None, world=None):
     Use this to e.g. drop a creeper to their death and generate gunpowder
     """
     position = player.position + Vector(0, 50, 0)
-    return await spawn(type_id, position=position, mc=mc, player=player, world=world)
+    return await spawn(type_id, position=position, player=player, world=world)
 
 
 @expose()
@@ -92,7 +92,7 @@ async def spawn_shower(
     """
     position = player.position + player.direction + Vector(0, height, 0)
     for i in range(count):
-        await spawn(type_id, position=position, mc=mc, player=player, world=world)
+        await spawn(type_id, position=position, player=player, world=world)
         await asyncio.sleep(0.1)
     return count
 

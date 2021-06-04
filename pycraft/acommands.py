@@ -291,7 +291,7 @@ async def enchanted(stack):
 
 
 @expose()
-async def bed(position=None, direction=None, *, player=None, world=None):
+async def bed(position=None, direction=None, color='cyan', *, player=None, world=None):
 
     if direction is None:
         direction = player.direction
@@ -299,10 +299,10 @@ async def bed(position=None, direction=None, *, player=None, world=None):
         position = player.position + direction
 
     await Block(location=position + Vector(0, 0, 1)).setBlockData(
-        'minecraft:cyan_bed[facing=south,occupied=false,part=head]'
+        f'minecraft:{color}_bed[facing=south,occupied=false,part=head]'
     )
     await Block(location=position).setBlockData(
-        'minecraft:cyan_bed[facing=south,occupied=false,part=foot]'
+        f'minecraft:{color}_bed[facing=south,occupied=false,part=foot]'
     )
 
 

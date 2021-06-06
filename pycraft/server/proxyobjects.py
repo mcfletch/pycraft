@@ -142,6 +142,32 @@ class ProxyMethod(object):
             self.__doc__
         )
 
+    @property
+    def return_type(self):
+        return_type_name = self.description.get('returntype')
+        if return_type_name:
+            if return_type_name.endswith('[]'):
+                base_type = type_name_to_type(return_type_name[:-2])
+                return typing.List[base_type]
+            return_type = type_name_to_type(return_type_name)
+            if 'returntype_subtypes' in self.description:
+                sub_types = tuple(
+                    type_name_to_type(t)
+                    for t in self.description['returntype_subtypes']
+                )
+                if None not in sub_types:
+                    return_type = return_type[sub_types]
+            return return_type
+        return None
+
+    @property
+    def is_classmethod(self):
+        return self.description.get('static')
+
+    @property
+    def argument_types(self):
+        return self.description.get()
+
     def __get__(self, obj, objType=None):
         if self.description.get('static'):
             return self

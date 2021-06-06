@@ -28,6 +28,7 @@ setuptools.setup(
         'console_scripts': [
             'pycraft-chat-server = pycraft.achatserver:main',
             'pycraft-channel-test = pycraft.server.operations:main',
+            'pycraft-doc-generator = pycraft.server.docgenerator:main',
         ]
     },
     python_requires='>=3.6',

@@ -208,8 +208,8 @@ which are set in a single request.
 
 ## Bukkit API Access
 
-PycraftServer (the plugin we are using) exposes a significant fraction
-of the Bukkit/Spigot/Paper API. It does this using Java introspection
+[PycraftServer](https://github.com/mcfletch/pycraft-server) (the plugin we are using) exposes a significant fraction
+of the Bukkit/Spigot/Paper API. It does this using Java reflection
 at run-time against the running Spigot server. As a result, there is 
 little code in Pycraft or PycraftServer, it just proxies the API through
 a JSON RPC mechanism.
@@ -218,22 +218,22 @@ Each type that will be supported by PycraftServer has to have a Converter
 registered that defines how the type will be converted to and from JSON
 structures.  Common types and their conversions are below:
 
-| Class               | Key Specifications                                                              |
-| ------------------- | ------------------------------------------------------------------------------- |
-| Server              | any: ignored (is always the server you've connected to)                         |
-| World               | str: "name"                                                                     |
-| Player              | str: "name", str: "uuid"                                                        |
-| Location            | ["world",0,1,2], ["world",0,1,2,3,4]                                            |
-| Vector              | [0,1,2]                                                                         |
-| Entity              | str: "uuid", str: "name"                                                        |
-| Keyed (Enum)        | str: "namespace:key"                                                            |
-| Enum                | str: "name"                                                                     |
-| Material, BlockData | (see: Keyed)                                                                    |
-| Entity              | (see: Keyed)                                                                    |
-| Enchantment         | (see: Keyed)                                                                    |
-| Block               | Location                                                                        |
-| Inventory           | Entity \| Block reference                                                       |
-| ItemStack           | [Material,count] (new ItemStack), [index,Inventory] (ItemStack in an Inventory) |
+| Class               | Key Specifications                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Server              | any: ignored (is always the server you've connected to but is required, a string such as "server" works fine) |
+| World               | str: "name"                                                                                                   |
+| Player              | str: "name", str: "uuid"                                                                                      |
+| Location            | ["world",0,1,2], ["world",0,1,2,3,4]                                                                          |
+| Vector              | [0,1,2]                                                                                                       |
+| Entity              | str: "uuid", str: "name"                                                                                      |
+| Keyed (Enum)        | str: "namespace:key"                                                                                          |
+| Enum                | str: "name"                                                                                                   |
+| Material, BlockData | (see: Keyed)                                                                                                  |
+| Entity              | (see: Keyed)                                                                                                  |
+| Enchantment         | (see: Keyed)                                                                                                  |
+| Block               | Location                                                                                                      |
+| Inventory           | Entity \| Block reference                                                                                     |
+| ItemStack           | [Material,count] (new ItemStack), [index,Inventory] (ItemStack in an Inventory)                               |
 
 You can use `pycraft-chat-server` to directly call Bukkit API from
 within the Minecraft server like so (T to chat):
@@ -255,6 +255,4 @@ BlockData(string_value='minecraft:red_carpet',interfaces=['BlockData'],__namespa
 Note: if you've read this far, you may be asking "How did that work, where
 were the `await` keywords? The interpreter, being asynchronous itself, awaits
 partial values and then passes the results to the calling context.
-
-
 

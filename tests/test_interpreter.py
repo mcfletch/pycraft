@@ -67,6 +67,7 @@ async def test_expressions(channel_setup):
         ('[sin(2)+1,3]', [np.sin(2) + 1, 3]),
         ('range(3)', np.arange(3)),
         ('[x*2 for x in range(3)]', [0, 2, 4]),
+        ('[x*2 for x in range(3) if str(x) == "1"]', [2]),
         ('[(z,y,x) for (x,y,z) in [(2,3,4)]]', [(4, 3, 2)]),
         (
             '[(z,y,x,r) for (x,y,z) in [(2,3,4)] for r in [1,2]]',

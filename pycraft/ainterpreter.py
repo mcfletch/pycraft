@@ -160,6 +160,8 @@ class AInterpreter(object):
         return result
 
     BINOP_TO_OPERATOR = {
+        ast.Eq: operator.eq,
+        ast.NotEq: operator.ne,
         ast.Add: operator.add,
         ast.Sub: operator.sub,
         ast.Mult: operator.mul,
@@ -224,6 +226,16 @@ class AInterpreter(object):
             )
             impl = self.BINOP_TO_OPERATOR[op.__class__]
             return impl(first, second)
+        elif isinstance(arg, ast.Compare):
+            left = await self.interpret_expr(arg.left, namespace)
+            for op, value in zip(arg.ops, arg.comparators):
+                impl = self.BINOP_TO_OPERATOR[op.__class__]
+                right = await self.interpret_expr(value, namespace)
+                if not impl(left, right):
+                    return False
+                left = right
+            # TODO: should this actually be left? if a < b < c
+            return True
         elif isinstance(arg, ast.Tuple):
             value = tuple([(await self.interpret_expr(a, namespace)) for a in arg.elts])
             return value

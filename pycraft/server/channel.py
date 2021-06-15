@@ -219,6 +219,10 @@ class Channel(object):
 
         automatic = await self.call_remote("__methods__")
 
+        if 'plugins' in automatic:
+            for name, plugin in sorted(automatic['plugins'].items()):
+                log.info("Server plugin: %s %s", plugin['name'], plugin['version'])
+
         unfinished = [
             x
             for x in automatic.get('commands', [])

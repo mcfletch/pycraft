@@ -223,19 +223,19 @@ async def nice_item(item, count=1, *, player=None):
 
 
 @expose()
-async def nice_gear(*, player=None):
+async def nice_gear(material='netherite', *, player=None):
     for item in [
-        'minecraft:netherite_helmet',
-        'minecraft:netherite_chestplate',
-        'minecraft:netherite_leggings',
-        'minecraft:netherite_boots',
+        'minecraft:%(material)s_helmet',
+        'minecraft:%(material)s_chestplate',
+        'minecraft:%(material)s_leggings',
+        'minecraft:%(material)s_boots',
         'minecraft:shield',
-        'minecraft:netherite_sword',
-        'minecraft:netherite_pickaxe',
-        'minecraft:netherite_shovel',
+        'minecraft:%(material)s_sword',
+        'minecraft:%(material)s_pickaxe',
+        'minecraft:%(material)s_shovel',
         'minecraft:bow',
     ]:
-        await nice_item(item, player=player)
+        await nice_item(item % locals(), player=player)
     await give('arrow', 64, player=player)
 
 

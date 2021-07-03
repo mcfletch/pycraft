@@ -1,6 +1,7 @@
 """Communications channel for interacting with Pycraft Server"""
 import asyncio
 import json
+import os
 from json import encoder
 import uuid
 import logging
@@ -12,6 +13,10 @@ from json.encoder import JSONEncoder
 from . import proxyobjects, world
 
 log = logging.getLogger(__name__)
+
+CACHE_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), '.introspection.json'
+)
 
 
 class ProxyEncoder(JSONEncoder):
@@ -218,6 +223,10 @@ class Channel(object):
         seen_classes = {}
 
         automatic = await self.call_remote("__methods__")
+
+        with open(CACHE_FILE + '~', 'w') as fh:
+            fh.write(json.dumps(automatic, indent=2, sort_keys=True))
+        os.rename(CACHE_FILE + '~', CACHE_FILE)
 
         if 'plugins' in automatic:
             for name, plugin in sorted(automatic['plugins'].items()):

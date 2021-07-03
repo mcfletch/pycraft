@@ -186,7 +186,7 @@ def main():
         '-eEULA=TRUE',
         '--name',
         docker_name,
-        'itzg/minecraft-server:java15',
+        'itzg/minecraft-server:latest',
     ]
     subprocess.check_output(command)
     log.info("Java Edition server on port: %s", 25565)

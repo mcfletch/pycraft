@@ -3,7 +3,7 @@ from pycraft.directions import as_cube
 import numpy as np
 import random, os
 import logging
-from . import expose, uniqueblocks, directions, randomchoice
+from . import expose, directions, randomchoice
 from .server.world import World, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -287,3 +287,115 @@ async def hall(
         back - 2,
         'anvil',
     )
+
+
+@expose.expose()
+async def temple(
+    position=None,
+    width=17,
+    depth=23,
+    height=4,  # column/room height
+    wall_material='minecraft:quartz_block',
+    floor_material='minecraft:smooth_quartz',
+    column_material='minecraft:quartz_pillar',
+    roof_material='minecraft:white_glazed_terracotta',
+    beam_material='minecraft:dark_oak',
+    *,
+    player=None,
+    world=None,
+):
+    if position is None:
+        position = player.position
+    if position is None:
+        position = player.position + player.direction
+    forward, cross = directions.forward_and_cross(Vector(player.direction))
+
+    blocks, positions = [], []
+
+    # plinth
+
+    def block(start, width, depth, height, material):
+        """Create a block of width,depth,height starting at start"""
+        current = start
+        for y in range(height):
+            slice = start + (0, y, 0)
+            for z in range(depth):
+                tranche = slice + (forward * z)
+                for x in range(width):
+                    block = tranche + (cross * x)
+                    blocks.append(material)
+                    positions.append(block)
+
+    current = (position + forward + (cross * -(width // 2))).block_location()
+    block(current, width, depth, 1, floor_material)
+    block(
+        current + forward + cross + (0, 1, 0), width - 2, depth - 2, 1, floor_material
+    )
+
+    # columns, offset 1m from edge of plinth and 4m high
+    def column(start, height=height):
+        for i in range(height):
+            blocks.append(column_material)
+            positions.append(start + (0, i, 0))
+
+    # front row of columns...
+    front_left = current + (forward * 2) + (cross * 2) + (0, 2, 0)
+    for x in range(0, (width - 5) // 2, 2):
+        column(front_left + (cross * x))
+
+    for z in range(0, (depth - 4), 2):
+        column(front_left + (forward * z))
+
+    # left wall, behind the columns...
+    block(
+        front_left + (cross * 2) + (forward * 2),
+        width=1,
+        depth=(depth - 8),
+        height=height,
+        material=wall_material,
+    )
+    half_width = (width - 4) // 2
+
+    front_right = current + (forward * 2) + (cross * (width - 3)) + (0, 2, 0)
+    for x in range(0, half_width, 2):
+        column(front_right + (cross * -x))
+
+    for z in range(0, (depth - 4), 2):
+        column(front_right + (forward * z))
+
+    # right wall, behind the columns...
+    block(
+        front_right + (cross * -2) + (forward * 2),
+        width=1,
+        depth=(depth - 8),
+        height=height,
+        material=wall_material,
+    )
+
+    # front wall, leaving a 1-wide opening for the door
+    block(
+        front_left + (forward * 2) + (cross * 2),
+        width=half_width - 3,
+        depth=1,
+        height=height,
+        material=wall_material,
+    )
+    block(
+        front_right + (forward * 2) + (cross * -2) - (cross * (half_width - 4)),
+        width=half_width - 3,
+        depth=1,
+        height=height,
+        material=wall_material,
+    )
+
+    # back wall
+    block(
+        front_left + (cross * 2) + (forward * (depth - 7)),
+        width=width - 8,
+        depth=1,
+        height=height,
+        material=wall_material,
+    )
+
+    # create it
+    await world.setBlockList(positions, blocks)

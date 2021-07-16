@@ -38,6 +38,13 @@ class AInterpreter(object):
         namespace = DEFAULT_NAMESPACE.copy()
         namespace.update(proxyobjects.PROXY_TYPES)
         namespace.update(DEFAULT_COMMANDS)
+        namespace.update(
+            {
+                'list': list,
+                'set': set,
+                'dict': dict,
+            }
+        )
         namespace['mc'] = self.channel
         namespace['event'] = message
         namespace['user'] = sender

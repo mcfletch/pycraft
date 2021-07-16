@@ -3,6 +3,7 @@ from .expose import expose, command_details, command_list
 from .directions import roughly_forward
 from .server import proxyobjects
 from .server.world import (
+    Entity,
     EntityType,
     Vector,
     World,
@@ -311,7 +312,10 @@ async def killall(name, *, player=None, world=None):
     """Kill all entities with exactly "name" as their name"""
     for entity in await world.getEntities():
         if entity.name == name:
-            await entity.remove()
+            try:
+                await Entity(uuid=entity.uuid).remove()
+            except Exception as err:
+                pass
 
 
 # @expose()

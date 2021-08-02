@@ -298,8 +298,10 @@ async def temple(
     wall_material='minecraft:quartz_block',
     floor_material='minecraft:smooth_quartz',
     column_material='minecraft:quartz_pillar',
-    roof_material='minecraft:white_glazed_terracotta',
-    beam_material='minecraft:dark_oak',
+    roof_material='minecraft:blue_stained_glass',
+    beam_material='minecraft:smooth_quartz',
+    beam_support_material='minecraft:smooth_quartz_stairs',
+    pediment_top_material='minecraft:green_stained_glass',
     *,
     player=None,
     world=None,
@@ -338,13 +340,19 @@ async def temple(
             blocks.append(column_material)
             positions.append(start + (0, i, 0))
 
+    left_columns, right_columns, front_columns = [], [], []
+
     # front row of columns...
     front_left = current + (forward * 2) + (cross * 2) + (0, 2, 0)
     for x in range(0, (width - 5) // 2, 2):
-        column(front_left + (cross * x))
+        pos = front_left + (cross * x)
+        column(pos)
+        front_columns.append(pos)
 
     for z in range(0, (depth - 4), 2):
-        column(front_left + (forward * z))
+        pos = front_left + (forward * z)
+        column(pos)
+        left_columns.append(pos)
 
     # left wall, behind the columns...
     block(
@@ -358,10 +366,14 @@ async def temple(
 
     front_right = current + (forward * 2) + (cross * (width - 3)) + (0, 2, 0)
     for x in range(0, half_width, 2):
-        column(front_right + (cross * -x))
+        pos = front_right + (cross * -x)
+        column(pos)
+        front_columns.append(pos)
 
     for z in range(0, (depth - 4), 2):
-        column(front_right + (forward * z))
+        pos = front_right + (forward * z)
+        column(pos)
+        right_columns.append(pos)
 
     # right wall, behind the columns...
     block(
@@ -396,6 +408,144 @@ async def temple(
         height=height,
         material=wall_material,
     )
+
+    # Cross beams...
+    def linprops(base, props):
+        if props:
+            return '%s[%s]' % (
+                base,
+                ','.join(['%s=%s' % (k, v) for k, v in props.items()]),
+            )
+        else:
+            return base
+
+    STAIR_DIR = {
+        (0, 0, 1): dict(facing='south', half='top'),
+        (0, 0, -1): dict(facing='north', half='top'),
+        (1, 0, 0): dict(facing='east', half='top'),
+        (-1, 0, 0): dict(facing='west', half='top'),
+    }
+    LEFT = {
+        (0, 0, -1): (1, 0, 0),
+        (1, 0, 0): (0, 0, 1),
+        (0, 0, 1): (-1, 0, 0),
+        (-1, 0, 0): (0, 0, -1),
+    }
+    RIGHT = dict([(v, k) for k, v in LEFT.items()])
+
+    for left, right in zip(left_columns, right_columns):
+        start = left + (0, height - 1, 0)
+        stop = right + cross + (0, height - 1, 0)
+        block(start, width=width - 4, depth=1, height=1, material=beam_material)
+        # l_props = STAIR_DIR[LEFT[tuple(forward)]]
+        # blocks.append(linprops(beam_support_material, l_props))
+        # blocks.append(start)
+        # r_props = STAIR_DIR[RIGHT[tuple(forward)]]
+        # blocks.append(linprops(beam_support_material, r_props))
+        # blocks.append(stop)
+
+    # bottom of the pediment
+
+    facing = STAIR_DIR[tuple(forward)].copy()
+    pediment_bottom_material = linprops(beam_support_material, facing)
+    left_corner = facing.copy()
+    left_corner.update({'shape': 'outer_right'})
+    right_corner = facing.copy()
+    right_corner.update({'shape': 'outer_left'})
+    pediment_left_corner_material = linprops(beam_support_material, left_corner)
+    pediment_right_corner_material = linprops(beam_support_material, right_corner)
+
+    front_left_pediment = front_left - cross - (forward * 1) + (0, height - 1, 0)
+    block(
+        front_left_pediment,
+        width=width - 2,
+        depth=1,
+        height=1,
+        material=pediment_bottom_material,
+    )
+    blocks.append(pediment_left_corner_material)
+    positions.append(front_left_pediment)
+    blocks.append(pediment_right_corner_material)
+    positions.append(front_left_pediment + (cross * (width - 3)))
+    # left roof supports
+
+    pediment_left_material = linprops(beam_support_material, STAIR_DIR[LEFT[tuple(forward)]].copy())
+    pediment_right_material = linprops(beam_support_material, STAIR_DIR[RIGHT[tuple(forward)]].copy())
+
+
+    block(
+        front_left_pediment+forward,
+        depth=depth-8,
+        width=1,
+        height=1,
+        material=pediment_left_material,
+    )
+    block(
+        front_left_pediment+forward+(cross * (width-3)),
+        depth=depth-8,
+        width=1,
+        height=1,
+        material=pediment_right_material,
+    )
+
+    # for col in front_columns:
+    #     blocks.append(beam_material)
+    #     positions.append(col - forward + (0, height - 1, 0))
+
+    # Now the roof
+    current = front_left_pediment + (0, 1, 0)
+    slice_width = width - 2
+    while slice_width > 0:
+        tile_width = 2 if slice_width > 1 else 1
+        # stone, tile, stone
+        block(
+            current,
+            width=tile_width,
+            depth=1,
+            height=1,
+            material=pediment_top_material,
+        )
+        block(
+            current+forward,
+            width=tile_width,
+            depth=depth-2,
+            height=1,
+            material=roof_material,
+        )
+        block(
+            current+(forward*(depth-2)),
+            width=tile_width,
+            depth=1,
+            height=1,
+            material=pediment_top_material,
+        )
+        # same, stone, tile, stone
+
+        block(
+            current + (cross * (slice_width - tile_width)),
+            width=tile_width,
+            depth=1,
+            height=1,
+            material=pediment_top_material,
+        )
+
+        block(
+            current + (cross * (slice_width - tile_width)),
+            width=tile_width,
+            depth=depth-2,
+            height=1,
+            material=roof_material,
+        )
+        block(
+            current + (cross * (slice_width - tile_width)),
+            width=tile_width,
+            depth=1,
+            height=1,
+            material=pediment_top_material,
+        )
+
+        slice_width -= 4
+        current = current + (cross * 2) + (0, 1, 0)
 
     # create it
     await world.setBlockList(positions, blocks)

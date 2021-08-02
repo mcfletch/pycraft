@@ -4,7 +4,7 @@ import os, requests, subprocess, argparse, logging, shutil, yaml
 HERE = os.path.abspath(os.path.dirname(__file__))
 DATA = os.path.join(HERE, 'data')
 GEYSER_URL = 'https://ci.opencollab.dev//job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/target/Geyser-Spigot.jar'
-SLIME_FUN_URL = 'https://thebusybiscuit.github.io/builds/TheBusyBiscuit/Slimefun4/master/Slimefun4-923.jar'
+SLIME_FUN_URL = 'https://thebusybiscuit.github.io/builds/TheBusyBiscuit/Slimefun4/master/Slimefun4-944.jar'
 PYCRAFT_SERVER_URL = 'https://github.com/mcfletch/pycraft-server/releases/download/v-1.0.0-1/PycraftServer-1.0.0.jar'
 PLUGINS = 'plugins'
 PLUGIN_SOURCE = os.path.join(HERE, PLUGINS)

@@ -50,6 +50,10 @@ async def copy(
     save_template(player, name, layers)
     return f'Saved template to {name} with {layers}'
 
+@expose.expose()
+async def show_pastes():
+    """Show the name of pastes that are available"""
+    return list_templates()
 
 @expose.expose()
 async def paste(
@@ -61,6 +65,8 @@ async def paste(
     player=None,
 ):
     """Paste previously copied blocks into the current location (see copy)
+
+    See: show_pastes for a list of available templates...
 
     position, direction -- template will be directly in front of this position in direction
     """
@@ -153,3 +159,6 @@ def load_template(player, name):
         return content['blocks']
     log.info("No such file: %s", filename)
     return None
+
+def list_templates():
+    return sorted(os.listdir(TEMPLATES))

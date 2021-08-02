@@ -106,6 +106,10 @@ class Vector(ServerObjectProxy):
     def __len__(self):
         return len(self.vector)
 
+    def __iter__(self):
+        for item in self.vector:
+            yield item
+
     def __getitem__(self, slice):
         return self.vector.__getitem__(slice)
 

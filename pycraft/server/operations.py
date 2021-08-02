@@ -15,6 +15,7 @@ from .world import (
     Enchantment,
 )
 
+
 log = logging.getLogger(__name__)
 
 DESIRABLE_ENCHANTMENTS = [
@@ -135,23 +136,29 @@ async def test_api():
     await server.open()
     await server.introspect()
 
-    worlds = await Server(name="server").getWorlds()
+    # worlds = await Server(name="server").getWorlds()
 
-    log.info("getWorlds => %s", worlds)
+    # log.info("getWorlds => %s", worlds)
 
-    from .. import acommands
+    from .. import acommands, bulldozer
     from . import proxyobjects
 
-    loc = Location(['world', [0, 0, 0]])
-    await acommands.bed(position=loc, direction=(0, 0, 1))
+    for player in await World(name='world').getPlayers():
+        if player.name == 'VRPlumber':
+            # await acommands.give('iron_ingot', count=64, player=player)
+            # await acommands.give('emerald', count=64, player=player)
+            await bulldozer.bulldoze(depth=50, width=1, height=3, player=player)
 
-    # bed = proxyobjects.PROXY_TYPES['Bed'](location=loc)
-    bed = await Block(location=loc).getBlockData()
-    # from Bed
-    assert hasattr(bed, 'isOccupied'), bed
-    # from BlockData
-    assert hasattr(bed, 'getMaterial'), bed
-    print('Bed Material', await bed.getMaterial())
+    # loc = Location(['world', [0, 0, 0]])
+    # await acommands.bed(position=loc, direction=(0, 0, 1))
+
+    # # bed = proxyobjects.PROXY_TYPES['Bed'](location=loc)
+    # bed = await Block(location=loc).getBlockData()
+    # # from Bed
+    # assert hasattr(bed, 'isOccupied'), bed
+    # # from BlockData
+    # assert hasattr(bed, 'getMaterial'), bed
+    # print('Bed Material', await bed.getMaterial())
     # queue = await server.subscribe("AsyncPlayerChatEvent")
     # while True:
     #     event = await queue.get()

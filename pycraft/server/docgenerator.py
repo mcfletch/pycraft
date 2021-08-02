@@ -52,6 +52,22 @@ def cls_link(name, sub_type=None):
     return f'[{name}](./{name}.md)'
 
 
+def describe_python_method(method, indent=0):
+    signature = inspect.signature(method)
+    docs = [f'{" "*indent}* `{method.__name__}{str(signature)}`']
+    if method.__doc__:
+        docs.append('')
+        doc_lines = inspect.cleandoc(method.__doc__).splitlines()
+        for line in doc_lines:
+            if line.strip():
+                docs.append(
+                    f'{" "*indent}  ```{line}```',
+                )
+            else:
+                docs.append('')
+    return docs
+
+
 def describe_java_method(description, indent=0):
     """Describe a proxied java method"""
     if description.get('static'):
@@ -102,24 +118,31 @@ async def generate_docs(output=DEFAULT_TARGET):
         else:
             interfaces = []
 
+        proxy_methods = [
+            '## Proxy Methods',
+            '',
+        ]
+        methods = [
+            '## Methods',
+            '',
+        ]
+        for key, value in sorted(cls.__dict__.items()):
+            if isinstance(value, proxyobjects.ProxyMethod):
+                # print(f'    def {key}():')
+                proxy_methods.extend(describe_proxy_method(key, value, cls))
+            elif inspect.isfunction(value):
+                methods.extend(describe_python_method(value, 0))
+            # else:
+            #     print('Not a method: %s %s' % (key, type(value)))
         page = (
             [
                 f'# [PycraftServer](./README.md) Proxy {cls.__name__}',
                 '',
             ]
+            + methods
             + interfaces
-            + [
-                '',
-                '## Proxy Methods',
-                '',
-            ]
+            + proxy_methods
         )
-        for key, value in sorted(cls.__dict__.items()):
-            if isinstance(value, proxyobjects.ProxyMethod):
-                # print(f'    def {key}():')
-                page.extend(describe_proxy_method(key, value, cls))
-            elif inspect.ismethod(value):
-                page.append(f'* {key} = {value.__doc__}')
         page.extend(['', f'Generated {time.strftime("%Y-%m-%d")}'])
         twrite(os.path.join(output, f'{cls.__name__}.md'), "\n".join(page))
 

@@ -39,6 +39,8 @@ class AListener(object):
         """Arrang to run our chat processing operations in the background"""
         self.request_queue = await self.channel.subscribe("AsyncPlayerChatEvent")
         asyncio.ensure_future(self.process_chat_queue(self.request_queue))
+        self.hit_queue = await self.channel.subscribe('PlayerInteractEvent')
+        asyncio.ensure_future(self.process_interact_queue(self.hit_queue))
 
     async def process_chat_queue(self, queue):
         """Process chat events from the queue"""
@@ -66,3 +68,10 @@ class AListener(object):
         response = await self.interpreter.interpret(message)
         if response is not None:
             await self.channel.server.broadcastMessage(str(response))
+
+    async def process_interact_queue(self, queue):
+        """Process queue of events from interactions"""
+        while self.wanted:
+            log.info("Getting interactions...")
+            message = await queue.get()
+            log.debug("Message: %s", message)

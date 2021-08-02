@@ -33,7 +33,7 @@ PROXY_RELATIONS = {
     # Name: {ParentName...}
 }
 
-RETURN_TYPES = {}
+# RETURN_TYPES = {}
 
 
 def type_name_to_type(name):
@@ -107,7 +107,7 @@ def _type_coerce(value, typ):
             try:
                 return type_coerce(value, possible)
             except (ValueError, TypeError) as err:
-                pass
+                log.exception("Failed to convert")
         raise ValueError(
             "Union type %s we don't know how to convert %r"
             % (
@@ -136,11 +136,11 @@ class ProxyMethod(object):
     def __init__(self, description, namespace):
         self.namespace = namespace
         self.description = description
-        self.__doc__ = description.get('__doc__')
+        # self.__doc__ = description.get('__doc__')
         self.__name__ = description.get('name')
-        RETURN_TYPES.setdefault(self.description.get('returntype'), []).append(
-            self.__doc__
-        )
+        # RETURN_TYPES.setdefault(self.description.get('returntype'), []).append(
+        #     self.__doc__
+        # )
 
     @property
     def return_type(self):
@@ -283,8 +283,13 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
         # log.info("%s from server: %s", cls.__name__, struct)
         if not struct:
             return None
-        instance = cls(**struct)
-        return instance
+        try:
+            instance = cls(**struct)
+        except TypeError as err:
+            import pdb;pdb.set_trace()
+            raise
+        else:
+            return instance
 
     __interfaces__ = ()
     __cached_methods__ = None
@@ -305,6 +310,8 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
             setattr(cls, method.__name__, method)
         if 'cls' in method_descriptions:
             cls.interfaces = method_descriptions['cls'].get('interfaces', [])
+            if cls.__namespace__ != cls.__name__:
+                cls.interfaces.append(cls.__namespace__)
             for interface in cls.interfaces:
                 PROXY_RELATIONS.setdefault(interface, set()).add(cls.__namespace__)
                 # log.info(

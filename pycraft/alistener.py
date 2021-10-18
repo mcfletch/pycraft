@@ -21,6 +21,170 @@ ASSIGNMENT_FINDER = re.compile(
     re.I | re.U,
 )
 
+KNOWN_EVENTS = '''AsyncPlayerPreLoginEvent
+PlayerAdvancementDoneEvent
+PlayerAnimationEvent
+PlayerArmorStandManipulateEvent
+PlayerBedEnterEvent
+PlayerBedLeaveEvent
+PlayerBucketEmptyEvent
+PlayerBucketFillEvent
+PlayerChangedMainHandEvent
+PlayerChangedWorldEvent
+PlayerChannelEvent
+PlayerCommandPreprocessEvent
+PlayerDropItemEvent
+PlayerEditBookEvent
+PlayerEggThrowEvent
+PlayerExpChangeEvent
+PlayerFishEvent
+PlayerGameModeChangeEvent
+PlayerInteractAtEntityEvent
+PlayerInteractEntityEvent
+PlayerInteractEvent
+PlayerItemBreakEvent
+PlayerItemConsumeEvent
+PlayerItemDamageEvent
+PlayerItemHeldEvent
+PlayerJoinEvent
+PlayerKickEvent
+PlayerLevelChangeEvent
+PlayerLocaleChangeEvent
+PlayerLoginEvent
+PlayerMoveEvent
+PlayerPickupArrowEvent
+PlayerPortalEvent
+PlayerQuitEvent
+PlayerRegisterChannelEvent
+PlayerResourcePackStatusEvent
+PlayerRespawnEvent
+PlayerShearEntityEvent
+PlayerStatisticIncrementEvent
+PlayerSwapHandItemsEvent
+PlayerTeleportEvent
+PlayerToggleFlightEvent
+PlayerToggleSneakEvent
+PlayerToggleSprintEvent
+PlayerUnleashEntityEvent
+PlayerUnregisterChannelEvent
+PlayerVelocityEvent
+BlockBreakEvent
+BlockBurnEvent
+BlockCanBuildEvent
+BlockDamageEvent
+BlockDispenseEvent
+BlockExpEvent
+BlockExplodeEvent
+BlockFadeEvent
+BlockFormEvent
+BlockFromToEvent
+BlockGrowEvent
+BlockIgniteEvent
+BlockMultiPlaceEvent
+BlockPhysicsEvent
+BlockPistonExtendEvent
+BlockPistonRetractEvent
+BlockPlaceEvent
+BlockRedstoneEvent
+BlockSpreadEvent
+CauldronLevelChangeEvent
+EntityBlockFormEvent
+LeavesDecayEvent
+NotePlayEvent
+SignChangeEvent
+AreaEffectCloudApplyEvent
+CreatureSpawnEvent
+CreeperPowerEvent
+EnderDragonChangePhaseEvent
+EntityAirChangeEvent
+EntityBreakDoorEvent
+EntityBreedEvent
+EntityChangeBlockEvent
+EntityCombustByBlockEvent
+EntityCombustByEntityEvent
+EntityCombustEvent
+EntityDamageByBlockEvent
+EntityDamageByEntityEvent
+EntityDamageEvent
+EntityDeathEvent
+EntityExplodeEvent
+EntityInteractEvent
+EntityPickupItemEvent
+EntityPortalEnterEvent
+EntityPortalEvent
+EntityPortalExitEvent
+EntityRegainHealthEvent
+EntityResurrectEvent
+EntityShootBowEvent
+EntitySpawnEvent
+EntityTameEvent
+EntityTargetEvent
+EntityTargetLivingEntityEvent
+EntityTeleportEvent
+EntityToggleGlideEvent
+EntityUnleashEvent
+ExpBottleEvent
+ExplosionPrimeEvent
+FireworkExplodeEvent
+FoodLevelChangeEvent
+HorseJumpEvent
+ItemDespawnEvent
+ItemMergeEvent
+ItemSpawnEvent
+LingeringPotionSplashEvent
+PigZapEvent
+PlayerDeathEvent
+PlayerLeashEntityEvent
+PotionSplashEvent
+ProjectileHitEvent
+ProjectileLaunchEvent
+SheepDyeWoolEvent
+SheepRegrowWoolEvent
+SlimeSplitEvent
+SpawnerSpawnEvent
+VillagerAcquireTradeEvent
+VillagerReplenishTradeEvent
+HangingBreakByEntityEvent
+HangingBreakEvent
+HangingPlaceEvent
+BrewEvent
+BrewingStandFuelEvent
+CraftItemEvent
+FurnaceBurnEvent
+FurnaceExtractEvent
+FurnaceSmeltEvent
+InventoryClickEvent
+InventoryCloseEvent
+InventoryCreativeEvent
+InventoryDragEvent
+InventoryInteractEvent
+InventoryMoveItemEvent
+InventoryOpenEvent
+PrepareAnvilEvent
+PrepareItemCraftEvent
+VehicleBlockCollisionEvent
+VehicleCreateEvent
+VehicleDamageEvent
+VehicleDestroyEvent
+VehicleEnterEvent
+VehicleEntityCollisionEvent
+VehicleExitEvent
+VehicleMoveEvent
+VehicleUpdateEvent
+LightningStrikeEvent
+ThunderChangeEvent
+WeatherChangeEvent
+ChunkLoadEvent
+ChunkPopulateEvent
+ChunkUnloadEvent
+PortalCreateEvent
+SpawnChangeEvent
+StructureGrowEvent
+WorldInitEvent
+WorldLoadEvent
+WorldSaveEvent
+WorldUnloadEvent'''.split()
+
 
 class AListener(object):
     """Asyncio compatible listening service"""
@@ -39,8 +203,15 @@ class AListener(object):
         """Arrang to run our chat processing operations in the background"""
         self.request_queue = await self.channel.subscribe("AsyncPlayerChatEvent")
         asyncio.ensure_future(self.process_chat_queue(self.request_queue))
-        self.hit_queue = await self.channel.subscribe('PlayerInteractEvent')
-        asyncio.ensure_future(self.process_interact_queue(self.hit_queue))
+        for interaction in [
+            'BlockPlaceEvent',
+            'BlockBreakEvent',
+            'PlayerInteractEvent',
+            'PlayerInteractEntityEvent',
+        ]:
+
+            queue = await self.channel.subscribe(interaction)
+            asyncio.ensure_future(self.process_interact_queue(queue, interaction))
 
     async def process_chat_queue(self, queue):
         """Process chat events from the queue"""
@@ -69,9 +240,9 @@ class AListener(object):
         if response is not None:
             await self.channel.server.broadcastMessage(str(response))
 
-    async def process_interact_queue(self, queue):
+    async def process_interact_queue(self, queue, interaction):
         """Process queue of events from interactions"""
         while self.wanted:
-            log.info("Getting interactions...")
+            log.info("Getting %s...", interaction)
             message = await queue.get()
             log.debug("Message: %s", message)

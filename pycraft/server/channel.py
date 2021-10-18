@@ -137,7 +137,7 @@ class Channel(object):
                     from . import world, proxyobjects
 
                     await sub_queue[0].put(
-                        proxyobjects.type_coerce(payload, world.AsyncPlayerChatEvent)
+                        proxyobjects.type_coerce(payload, world.Event)
                     )
                 else:
                     log.info("Stale or unexpected response to %s", record)

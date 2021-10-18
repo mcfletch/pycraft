@@ -681,8 +681,14 @@ def _known_enums():
 
 
 @ProxyType
-class AsyncPlayerChatEvent(ServerObjectProxy):
+class Event(ServerObjectProxy):
     __namespace__ = 'Event'
     type: str
     message: str
+    block: Block
     player: Player
+    item_in_hand: ItemStack
+    exp_to_drop: int
+    will_drop: bool
+    can_build: bool
+    block_against: Block

@@ -270,7 +270,6 @@ DESIRABLE_ENCHANTMENTS = [
         minecraft:thorns
         minecraft:bane_of_arthropods
         minecraft:respiration
-        minecraft:silk_touch
         minecraft:quick_charge
         minecraft:projectile_protection
         minecraft:impaling
@@ -280,9 +279,10 @@ DESIRABLE_ENCHANTMENTS = [
 ]
 
 
-async def enchanted(stack):
+@expose()
+async def enchanted(stack, enchantments=DESIRABLE_ENCHANTMENTS):
     """Enchant the item stack with all available enchantments"""
-    for enchantment in DESIRABLE_ENCHANTMENTS:
+    for enchantment in enchantments:
         ench = Enchantment(enchantment)
         if await ench.canEnchantItem(stack):
             await stack.addEnchantment(

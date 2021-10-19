@@ -411,3 +411,10 @@ async def get_blocks(
     )
 
     return await world.getBlockArray(start[:3], end[:3])
+
+
+@expose()
+async def get_click(*, listener=None, player=None):
+    """Await the next (right) click by the player on a block"""
+    event = await listener.wait_for_event(player=player.name)
+    return str(event)

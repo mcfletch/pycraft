@@ -30,9 +30,10 @@ log = logging.getLogger(__name__)
 class AInterpreter(object):
     """Provide basic python expression interpretation"""
 
-    def __init__(self, channel):
+    def __init__(self, channel, listener=None):
         self.user_namespaces = {}
         self.channel = channel
+        self.listener = listener
 
     def base_namespace(self, message=None, sender=None, **kwargs):
         namespace = DEFAULT_NAMESPACE.copy()
@@ -51,6 +52,7 @@ class AInterpreter(object):
         namespace['player'] = sender
         namespace['server'] = self.channel.server
         namespace['world'] = sender.location.get_world()
+        namespace['listener'] = self.listener
         return namespace
 
     def user_namespace(self, sender):

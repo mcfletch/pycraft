@@ -215,6 +215,9 @@ class Location(ServerObjectProxy):
     def __len__(self):
         return len(self.vector)
 
+    def __hash__(self):
+        return hash((self.world, tuple(self.vector)))
+
     def __getitem__(self, slice):
         return self.vector.copy().__getitem__(slice)
 
@@ -692,3 +695,4 @@ class Event(ServerObjectProxy):
     will_drop: bool
     can_build: bool
     block_against: Block
+    block_clicked: Block

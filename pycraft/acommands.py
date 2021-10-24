@@ -16,10 +16,13 @@ from .server.world import (
 import time, re, os, json
 import numpy as np
 import asyncio
+import logging
 
 from pycraft import directions
 
 Vec3 = Vector
+
+log = logging.getLogger(__name__)
 
 
 @expose()
@@ -418,3 +421,47 @@ async def get_click(*, listener=None, player=None):
     """Await the next (right) click by the player on a block"""
     event = await listener.wait_for_event(player=player.name)
     return str(event)
+
+
+@expose()
+async def midas_touch(
+    material='minecraft:gold_block', count=25, *, listener=None, player=None
+):
+    converted = set()
+    async for event in await listener.wait_for_events(player=player.name):
+        if event.action == 'RIGHT_CLICK_BLOCK':
+            block: Block = event.block_clicked
+            location: Location = block.location
+            key = location.world, int(location.x), int(location.y), int(location.z)
+            if key in converted:
+                continue
+            converted.add(key)
+            await Block(location=location).setType(material)
+            log.info("Converted: %s", location)
+            if len(converted) > count:
+                break
+
+
+def matching_players(players, player_name):
+    for other in players:
+        if player_name == '*':
+            yield other
+        elif other.name.startswith(player_name):
+            yield other
+
+
+@expose()
+async def bring(player_name='*', *, player=None, world=None):
+    """Gather other users (or one other user by name) to your location"""
+    players = await world.getPlayers()
+    for other in matching_players(players, player_name):
+        if other.name != player.name:
+            await other.set_position(player.location)
+
+
+@expose()
+async def join(player_name, *, player=None, world=None):
+    """Join (teleport to) another user by name"""
+    players = await world.getPlayers()
+    for other in matching_players(players, player_name):
+        player.set_position(other.location)

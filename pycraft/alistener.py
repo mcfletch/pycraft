@@ -2,7 +2,7 @@
 import asyncio
 from asyncio.events import get_event_loop
 import logging
-import re, time
+import re, time, weakref
 from .expose import (
     DEFAULT_COMMANDS,
     DEFAULT_NAMESPACE,
@@ -264,25 +264,21 @@ class AListener(object):
                     matched = True
                 else:
                     log.debug('Result of %s: %s', watcher, matched)
-                if matched and watcher.one_shot:
-                    remove(watcher)
         if not watchers:
             del self.event_watchers[interaction]
         log.info("Unsubscribing from %s", interaction)
         await self.channel.unsubscribe(interaction)
 
-    async def wait_for_event(
+    async def wait_for_events(
         self,
         event_type: str = 'PlayerInteractEvent',
         player: world.Player = None,
         action: str = None,
         timeout: int = 30,
-        one_shot: bool = True,
+        max_count: int = 0,
     ):
-        """Wait for the given user to generate an event of the given type"""
         watchers = self.event_watchers.get(event_type, None)
-        event_loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
-        df = event_loop.create_future()
+        result_queue = asyncio.Queue()
 
         filters = []
         if player:
@@ -291,18 +287,17 @@ class AListener(object):
             filters.append(action_test(action))
 
         def watcher(message):
-            if df.done():
-                log.info("Callback already done...")
-                return True
+            nonlocal watcher
             for filter in filters:
                 if not filter(message):
                     log.info("Ingoring due to failing filter %s", filter)
                     return False
             log.info("Matched watcher: %s", watcher)
-            df.set_result(message)
-            return True
-
-        watcher.one_shot = one_shot
+            try:
+                result_queue.put_nowait(message)
+            except asyncio.QueueFull:
+                log.warning("Dropping message %s due to full queue", message)
+                return
 
         if watchers is None:
             watchers = self.event_watchers[event_type] = [watcher]
@@ -313,17 +308,71 @@ class AListener(object):
         else:
             watchers.append(watcher)
 
-        def timedout():
-            if not df.done():
-                df.set_exception(
-                    TimeoutError(
-                        'Timed out waiting for %s from %s' % (event_type, player)
-                    )
-                )
+        def cleanup(ref):
+            log.info("Removing watcher from %s (%s)", event_type, ref)
+            try:
                 watchers.remove(watcher)
+            except (TypeError, ValueError, KeyError):
+                pass
 
-        event_loop.call_later(timeout, timedout)
-        return await df
+        return QIter(result_queue, max_count=max_count, cleanup=cleanup)
+
+    async def wait_for_event(
+        self,
+        event_type: str = 'PlayerInteractEvent',
+        player: world.Player = None,
+        action: str = None,
+        timeout: int = 30,
+    ):
+        """Wait for the given user to generate an event of the given type"""
+        return await self.wait_for_events(
+            event_type=event_type,
+            player=player,
+            action=action,
+            timeout=timeout,
+            max_count=1,
+        )
+
+
+class QIter(object):
+    def __init__(self, queue, max_count=0, timeout=0, cleanup=None):
+        self.queue = queue
+        self.max_count = max_count
+        self.count = 0
+        if timeout:
+            asyncio.get_event_loop().call_later(timeout, self.timedout)
+        # cleanup should be called when we exit the loop...
+        self._cleanup_ref = weakref.ref(self, cleanup)
+
+    async def timedout(self):
+        log.info("Doing timeout check: %s", self.count)
+        if not self.count:
+            await self.queue.put(
+                StopAsyncIteration('Timed out waiting for first message')
+            )
+            # if self.cleanup:
+            #     log.info("Cleaning up on timeout")
+            #     await self.cleanup()
+
+    async def __anext__(self):
+        self.count += 1
+        log.info("anext: %s", self.count)
+        if self.max_count and self.count > self.max_count:
+            # if self.cleanup:
+            #     await self.cleanup()
+            log.info("Max count %s reached, stopping iteration")
+            raise StopAsyncIteration('Reached max count')
+        item = await self.queue.get()
+        log.info("  item: %s", item)
+        if isinstance(item, Exception):
+            # if self.cleanup:
+            #     await self.cleanup()
+            raise item
+        else:
+            return item
+
+    def __aiter__(self):
+        return self
 
 
 def player_test(player):

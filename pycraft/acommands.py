@@ -458,6 +458,20 @@ UNJOIN_KEY = 'join.jump_back'
 
 
 @expose()
+async def find_player(player_name='*', *, server=None):
+    players = await server.getOnlinePlayers()
+    for other in matching_players(players, player_name):
+        return other
+    raise KeyError(
+        'No player with name %s found, found: %s'
+        % (
+            player_name,
+            sorted([p.name for p in players]),
+        )
+    )
+
+
+@expose()
 async def unjoin(*, player=None, interpreter=None):
     """Return the the last location before you were brought or joined another player"""
     join_stack = interpreter.user_namespace(player).setdefault(UNJOIN_KEY, [])

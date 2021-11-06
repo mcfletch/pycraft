@@ -341,7 +341,7 @@ class Entity(ServerObjectProxy):
     def position(self):
         return self.location
 
-    async def set_position(self, location):
+    async def set_location(self, location):
         """Set the user's position to the given location or vector"""
         if not isinstance(location, Location):
             location = Location(location)

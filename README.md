@@ -48,6 +48,9 @@ On your (Ubuntu) Linux machine:
 apt-get install docker python3 git
 git clone https://github.com/mcfletch/pycraft.git
 cd pycraft
+# Note the --no-install-recommends, this prevents installing
+# 300MB of unneeded compilation dependencies
+apt-get install python3-virtualenv --no-install-recommends
 virtualenv -p python3 env
 source env/bin/activate
 pip install -r requirements.txt
@@ -56,7 +59,8 @@ pip install -r requirements.txt
 ```
 
 At this point, you have a vanilla Bukkit server running 
-in docker with the Geyser bridge installed.
+in docker with the Geyser bridge and PycraftServer plugins 
+installed.
 
 You can connect to your server by choosing Multiuser
 in Minecraft Java Edition and typing in the 
@@ -74,12 +78,6 @@ to servers not on the Nintendo realms service, so you will
 likely *not* be able to use Switch devices on your local
 server.
 
-NOTE: We are running a Geyser Plugin here, it is not yet
-stable, and you should expect to have to *restart the server*,
-particularly if a user lets their tablet/device go to sleep
-while connected to the server. This seems to be particularly
-a problem with the iOS version.
-
 By default the Geyser plugin will be installed and run from
 within the Minecraft server. If you do not want it to run,
 you need to pass `--no-bedrock` to the `./run.py` script.
@@ -93,7 +91,6 @@ in Python3.
 
 To run a demo script:
 ```
-virtualenv -p python3 env
 source env/bin/activate
 # install pycraft itself...
 python3 setup.py develop 
@@ -159,12 +156,21 @@ commands.
 ### Users and Entities
 ```
   users() # get a python list of Player references
+  join('name') # Jump to the current world/position of user with name starting with name
+  bring('name') # Jump user with name starting with name to your current position
+  unjoin() # Jump back to where you were before you were brought or joined
+  back_to_bed() # Jump back to your bed spawn location (last place you slept, normally)
   spawn('blaze') # spawn an entity right in front of you
   spawn_drop('cow') # spawn an entity 50m above you (it will normally drop dead in front of you if it can't fly)
   spawn_shower('experience_bottle') # drop 30 of the entity in a shower in front of you
 ```
 
 ### Templates and Copying
+
+Copy and paste in minecraft makes it easier to build large and
+complex structures. You can create a repeating element, copy it
+and then paste it many times.
+
 ```  
   getBlocks(8,6,5) # get array of array of block-data for area specified
   copy(name='stamp',depth=5,width=5,height=5) # copy 5x5x5 block in front of you as a template named stamp

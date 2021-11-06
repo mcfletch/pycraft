@@ -454,37 +454,56 @@ def matching_players(players: List[Player], player_name: str):
             yield other
 
 
+UNJOIN_KEY = 'join.jump_back'
+
+
 @expose()
-async def bring(player_name='*', *, player=None, server=None):
+async def unjoin(*, player=None, interpreter=None):
+    """Return the the last location before you were brought or joined another player"""
+    join_stack = interpreter.user_namespace(player).setdefault(UNJOIN_KEY, [])
+    if join_stack:
+        location = join_stack.pop()
+        await player.set_location(location)
+        return location
+
+
+@expose()
+async def bring(player_name='*', *, player=None, server=None, interpreter=None):
     """Gather other users (or one other user by name) to your location"""
     players = await server.getOnlinePlayers()
     for other in matching_players(players, player_name):
         if other.name != player.name:
-            await other.set_position(player.location)
+            join_stack = interpreter.user_namespace(other).setdefault(UNJOIN_KEY, [])
+            join_stack.append(player.location)
+            del join_stack[:-20]
+            await other.set_location(player.location)
 
 
 @expose()
-async def join(player_name, *, player=None, server=None):
-    """Join (teleport to) another user by name"""
+async def join(player_name, *, player=None, server=None, interpreter=None):
+    """Join (teleport to) another user by name, use unjoin() to return to your location"""
     players = await server.getOnlinePlayers()
     for other in matching_players(players, player_name):
         if other.name != player.name:
-            await player.set_position(other.location)
+            join_stack = interpreter.user_namespace(player).setdefault(UNJOIN_KEY, [])
+            join_stack.append(other.location)
+            del join_stack[:-20]
+            await player.set_location(other.location)
             break
 
 
 @expose()
-async def keep_inventory(keep=True, *, player=None, world=None):
-    """Enable keep inventory on the server"""
-    if await world.isGameRule('KEEP_INVENTORY'):
-        await world.setGameRule('KEEP_INVENTORY', keep)
-        return keep
-    else:
-        return 'Unknown rule for this world'
+async def back_to_bed(*, player=None):
+    """Send the player back to their bed spawn location (last place they slept)"""
+    location = await player.getBedSpawnLocation()
+    await player.set_location(location)
 
 
 @expose()
-async def back_to_bed(*, player=None):
-    """Send the player back to their bed spawn location"""
-    location = await player.getBedSpawnLocation()
-    await player.set_position(location)
+async def keep_inventory(keep=True, *, player=None, world=None):
+    """Enable keep inventory for this world (e.g. the overworld, the nether, the end)"""
+    if await world.isGameRule('keepInventory'):
+        await world.setGameRule('keepInventory', keep)
+        return keep
+    else:
+        return 'Unknown rule for this world'

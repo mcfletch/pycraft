@@ -53,16 +53,18 @@ class AInterpreter(object):
         namespace['server'] = self.channel.server
         namespace['world'] = sender.location.get_world()
         namespace['listener'] = self.listener
+        namespace['interpreter'] = self
+
         return namespace
 
-    def user_namespace(self, sender):
+    def user_namespace(self, sender: world.Player):
         """Get the user's personal namespace"""
         current = self.user_namespaces.get(sender.uuid)
         if current is None:
             self.user_namespaces[sender.uuid] = current = {}
         return current
 
-    async def interpret(self, message):
+    async def interpret(self, message: world.Event):
         """Interpret a command from our queue"""
         sender = message.player
         # if isinstance(message, minecraft.BlockEvent):
@@ -91,7 +93,7 @@ class AInterpreter(object):
             try:
                 top = ast.parse(message.message, 'chat.py', 'eval')
             except SyntaxError as err:
-                if err.offset >= len(err.text):
+                if err.offset and err.text and err.offset >= len(err.text):
                     return Response(
                         error=True,
                         message=message,
@@ -99,7 +101,7 @@ class AInterpreter(object):
                         sender=sender,
                     )
                 else:
-                    spaced = (' ' * (err.offset - 1)) + '^'
+                    spaced = (' ' * ((err.offset or 1) - 1)) + '^'
                     return Response(
                         error=True,
                         message=message,

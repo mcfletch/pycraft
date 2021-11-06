@@ -2,6 +2,7 @@
 from .expose import expose, command_details, command_list
 from .directions import roughly_forward
 from .server import proxyobjects
+from typing import List
 from .server.world import (
     Entity,
     EntityType,
@@ -296,7 +297,7 @@ async def enchanted(stack, enchantments=DESIRABLE_ENCHANTMENTS):
 
 @expose()
 async def bed(position=None, direction=None, color='cyan', *, player=None, world=None):
-
+    """Create a bed in front of the player"""
     if direction is None:
         direction = player.direction
     if position is None:
@@ -440,28 +441,50 @@ async def midas_touch(
             log.info("Converted: %s", location)
             if len(converted) > count:
                 break
+        elif event.action == 'LEFT_CLICK_BLOCK':
+            break
 
 
-def matching_players(players, player_name):
+def matching_players(players: List[Player], player_name: str):
+    player_name = player_name.lower()
     for other in players:
         if player_name == '*':
             yield other
-        elif other.name.startswith(player_name):
+        elif other.name.lower().startswith(player_name):
             yield other
 
 
 @expose()
-async def bring(player_name='*', *, player=None, world=None):
+async def bring(player_name='*', *, player=None, server=None):
     """Gather other users (or one other user by name) to your location"""
-    players = await world.getPlayers()
+    players = await server.getOnlinePlayers()
     for other in matching_players(players, player_name):
         if other.name != player.name:
             await other.set_position(player.location)
 
 
 @expose()
-async def join(player_name, *, player=None, world=None):
+async def join(player_name, *, player=None, server=None):
     """Join (teleport to) another user by name"""
-    players = await world.getPlayers()
+    players = await server.getOnlinePlayers()
     for other in matching_players(players, player_name):
-        player.set_position(other.location)
+        if other.name != player.name:
+            await player.set_position(other.location)
+            break
+
+
+@expose()
+async def keep_inventory(keep=True, *, player=None, world=None):
+    """Enable keep inventory on the server"""
+    if await world.isGameRule('KEEP_INVENTORY'):
+        await world.setGameRule('KEEP_INVENTORY', keep)
+        return keep
+    else:
+        return 'Unknown rule for this world'
+
+
+@expose()
+async def back_to_bed(*, player=None):
+    """Send the player back to their bed spawn location"""
+    location = await player.getBedSpawnLocation()
+    await player.set_position(location)

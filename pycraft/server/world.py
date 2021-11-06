@@ -696,3 +696,25 @@ class Event(ServerObjectProxy):
     can_build: bool
     block_against: Block
     block_clicked: Block
+
+
+@ProxyType
+class GameRule(ServerObjectProxy):
+    __namespace__ = 'GameRule'
+
+    @classmethod
+    def from_server(cls, struct):
+        """Convert server-side structure to local object"""
+        if isinstance(struct, str):
+            return cls(name=struct)
+        else:
+            return cls(**struct)
+
+    def __init__(self, name):
+        super().__init__(name=name)
+
+    def get_key(self):
+        return self.name
+
+    def __json__(self):
+        return self.name

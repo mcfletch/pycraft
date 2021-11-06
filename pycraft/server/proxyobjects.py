@@ -53,6 +53,22 @@ def type_coerce(value, typ):
         raise
 
 
+def _dict_typ(value):
+    typ = None
+    if isinstance(value, dict) and '__type__' in value and '__namespace__' in value:
+        if value['__type__'] in PROXY_TYPES:
+            typ = PROXY_TYPES[value['__type__']]
+            # return type_coerce(value, typ)
+        elif '.' in value['__type__'] and value['__type__'].split('.') in PROXY_TYPES:
+            typ = PROXY_TYPES[value['__type__'].split('.')]
+        elif value['__namespace__'] in PROXY_TYPES:
+            typ = PROXY_TYPES[value['__namespace__']]
+            # return type_coerce(value, typ)
+        else:
+            log.warning("No type for dictionary: %s", value)
+    return typ
+
+
 def _type_coerce(value, typ):
     """Attempt to coerce value to the given typ"""
     from . import world
@@ -66,17 +82,7 @@ def _type_coerce(value, typ):
     elif typ in (np.ndarray,):
         # Not ideal to assume 'd' type
         return np.array(value, dtype='d')
-    if isinstance(value, dict) and '__type__' in value and '__namespace__' in value:
-        if value['__type__'] in PROXY_TYPES:
-            typ = PROXY_TYPES[value['__type__']]
-            # return type_coerce(value, typ)
-        elif '.' in value['__type__'] and value['__type__'].split('.') in PROXY_TYPES:
-            typ = PROXY_TYPES[value['__type__'].split('.')]
-        elif value['__namespace__'] in PROXY_TYPES:
-            typ = PROXY_TYPES[value['__namespace__']]
-            # return type_coerce(value, typ)
-        else:
-            log.warning("No type for dictionary: %s", value)
+    typ = _dict_typ(value) or typ
 
     if isinstance(typ, type):
         if issubclass(typ, typing.List):
@@ -84,8 +90,11 @@ def _type_coerce(value, typ):
                 sub_type = typ.__args__[0]  # YUCK!
                 return [type_coerce(item, sub_type) for item in value]
             else:
-                log.warning("No sub-type on %s", typ)
-                return value
+                log.warning("No sub-type on %s; dispatching on dict-types", typ)
+                return [
+                    (type_coerce(item, _dict_typ(item)) if _dict_typ(item) else item)
+                    for item in value
+                ]
         elif issubclass(typ, typing.Dict):
             key_typ, value_typ = typ.__args__
             result = {}
@@ -286,7 +295,9 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
         try:
             instance = cls(**struct)
         except TypeError as err:
-            import pdb;pdb.set_trace()
+            import pdb
+
+            pdb.set_trace()
             raise
         else:
             return instance

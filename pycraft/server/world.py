@@ -718,3 +718,11 @@ class GameRule(ServerObjectProxy):
 
     def __json__(self):
         return self.name
+
+
+@ProxyType
+class Axolotl(Entity):
+    __namespace__ = 'Axolotl'
+
+    def get_key(self):
+        return self.uuid

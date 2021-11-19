@@ -655,7 +655,7 @@ ENUM_CLASSES = [
     'Difficulty',
     'EntityType',
     'EntityCategory',
-    'Entity',
+    # 'Entity',
     'Advancement',
     'WeatherType',
     'WarningState',

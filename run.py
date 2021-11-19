@@ -165,7 +165,7 @@ def main():
     if not options.eula:
         parser.error('You have not accepted the EULA (read and add the -e) flag')
         return
-    data = os.path.abspath(options.data)
+    data = os.path.normpath(os.path.abspath(options.data))
     install_raspberry_juice(data, options.bedrock, options.slime_fun)
     if options.bedrock:
         configure_geyser(data, options.authentication)

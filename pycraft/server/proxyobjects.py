@@ -26,6 +26,9 @@ SIMPLE_TYPES = {
     "void": bool,
     'java.util.List<java.util.List<java.lang.String>>': typing.List[typing.List[str]],
 }
+PROXY_CLASSES = {
+    # Implementation Class name (CraftSkeleton) => final python class with all interfaces...
+}
 PROXY_TYPES = {
     # Namespace:str => ProxyObject class
 }
@@ -69,6 +72,37 @@ def _dict_typ(value):
     return typ
 
 
+def is_a_typing_list(typ):
+    if typ.__class__ == getattr(typing, '_GenericAlias', None):
+        if typ._name == 'List':
+            # YUCK!
+            # Python 3.8, using internal damn class name
+            return True
+    elif isinstance(typ, type) and issubclass(typ, typing.List):
+        # Python 3.6, but crashes on Python 3.8
+        return True
+    return False
+
+
+def is_a_typing_dict(typ):
+    if typ.__class__ == getattr(typing, '_GenericAlias', None):
+        if typ._name == 'Dict':
+            # YUCK!
+            # Python 3.8, using internal damn class name
+            return True
+    elif isinstance(typ, type) and issubclass(typ, typing.Dict):
+        # Python 3.6, but crashes on Python 3.8
+        return True
+    return False
+
+
+def is_a_typing_union(typ):
+    if typ.__class__ == getattr(typing, '_GenericAlias', None):
+        if typ._name == None and hasattr(typ, '__args__'):
+            return True
+    return False
+
+
 def _type_coerce(value, typ):
     """Attempt to coerce value to the given typ"""
     from . import world
@@ -84,30 +118,23 @@ def _type_coerce(value, typ):
         return np.array(value, dtype='d')
     typ = _dict_typ(value) or typ
 
-    if isinstance(typ, type):
-        if issubclass(typ, typing.List):
-            if typ.__args__:
-                sub_type = typ.__args__[0]  # YUCK!
-                return [type_coerce(item, sub_type) for item in value]
-            else:
-                log.warning("No sub-type on %s; dispatching on dict-types", typ)
-                return [
-                    (type_coerce(item, _dict_typ(item)) if _dict_typ(item) else item)
-                    for item in value
-                ]
-        elif issubclass(typ, typing.Dict):
-            key_typ, value_typ = typ.__args__
-            result = {}
-            for key, value in value.items():
-                result[type_coerce(key, key_typ)] = type_coerce(value, value_typ)
-            return result
-
+    if is_a_typing_list(typ):
+        if typ.__args__:
+            sub_type = typ.__args__[0]  # YUCK!
+            return [type_coerce(item, sub_type) for item in value]
         else:
-            if hasattr(typ, 'from_server'):
-                return typ.from_server(value)
-            else:
-                return typ(value)
-    if hasattr(typ, '__args__'):
+            log.warning("No sub-type on %s; dispatching on dict-types", typ)
+            return [
+                (type_coerce(item, _dict_typ(item)) if _dict_typ(item) else item)
+                for item in value
+            ]
+    elif is_a_typing_dict(typ):
+        key_typ, value_typ = typ.__args__
+        result = {}
+        for key, value in value.items():
+            result[type_coerce(key, key_typ)] = type_coerce(value, value_typ)
+        return result
+    elif is_a_typing_union(typ):
         # WTF? Why can't I test for "is this a union"
         for possible in typ.__args__:
             if isinstance(value, possible):
@@ -125,6 +152,11 @@ def _type_coerce(value, typ):
             )
         )
 
+    elif isinstance(typ, type):
+        if hasattr(typ, 'from_server'):
+            return typ.from_server(value)
+        else:
+            return typ(value)
     raise ValueError(
         "Do not know how to convert type %s with value %r"
         % (

@@ -13,6 +13,7 @@ from .server.world import (
     Block,
     Material,
     Enchantment,
+    Axolotl,
 )
 import time, re, os, json
 import numpy as np
@@ -322,6 +323,15 @@ async def killall(name, *, player=None, world=None):
                 pass
 
 
+@expose()
+async def findall(name, *, world=None):
+    result = []
+    for entity in await world.getEntities():
+        if entity.name == name:
+            result.append(entity)
+    return result
+
+
 # @expose()
 # async def help(command=None, *args, player=None):
 #     """Help, a command list if no command specified, otherwise per-command details
@@ -488,7 +498,7 @@ async def bring(player_name='*', *, player=None, server=None, interpreter=None):
     for other in matching_players(players, player_name):
         if other.name != player.name:
             join_stack = interpreter.user_namespace(other).setdefault(UNJOIN_KEY, [])
-            join_stack.append(player.location)
+            join_stack.append(other.location)
             del join_stack[:-20]
             await other.set_location(player.location)
 
@@ -500,7 +510,7 @@ async def join(player_name, *, player=None, server=None, interpreter=None):
     for other in matching_players(players, player_name):
         if other.name != player.name:
             join_stack = interpreter.user_namespace(player).setdefault(UNJOIN_KEY, [])
-            join_stack.append(other.location)
+            join_stack.append(player.location)
             del join_stack[:-20]
             await player.set_location(other.location)
             break

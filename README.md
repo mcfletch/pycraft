@@ -160,6 +160,7 @@ commands.
   bring('name') # Jump user with name starting with name to your current position
   unjoin() # Jump back to where you were before you were brought or joined
   back_to_bed() # Jump back to your bed spawn location (last place you slept, normally)
+  find_player('name') # search for first player with name-prefix e.g. `find_player('vr').set_location(player.location)` is `bring('vr')`
   spawn('blaze') # spawn an entity right in front of you
   spawn_drop('cow') # spawn an entity 50m above you (it will normally drop dead in front of you if it can't fly)
   spawn_shower('experience_bottle') # drop 30 of the entity in a shower in front of you

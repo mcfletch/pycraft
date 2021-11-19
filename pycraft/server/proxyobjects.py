@@ -250,9 +250,9 @@ class ServerObjectMeta(type):
     def __getattr__(cls, key):
         interfaces = cls.__interfaces__
         for interface_name in interfaces:
-            cls = PROXY_TYPES.get(interface_name)
-            if cls is not None:
-                result = getattr(cls, key, None)
+            src_cls = PROXY_TYPES.get(interface_name)
+            if src_cls is not None and src_cls is not cls:
+                result = getattr(src_cls, key, None)
                 if result is not None:
                     log.info('Found in method on %s: %s', interface_name, key)
                     return result

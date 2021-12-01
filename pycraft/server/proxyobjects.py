@@ -56,8 +56,53 @@ def type_coerce(value, typ):
         raise
 
 
+def _get_interfaces(base, seen=None):
+    """Given an interface, iteratively find all super-interfaces"""
+    seen = seen or set()
+    yield base
+    for iface_name in getattr(base, 'interfaces'):
+        if iface_name in seen:
+            continue
+        seen.add(iface_name)
+        cls = PROXY_TYPES.get(iface_name)
+        if cls:
+            for s_cls in _get_interfaces(cls, seen=seen):
+                yield s_cls
+
+
+def _dict_cls(value):
+    if isinstance(value, dict) and '__type__' in value and '__namespace__' in value:
+        cls_key = value['__type__']
+        if cls_key not in PROXY_CLASSES:
+            # Construct a new class with the interfaces as parents...
+            base = _dict_typ(value)
+            if base:
+                PROXY_CLASSES[cls_key] = type(
+                    cls_key,
+                    tuple(
+                        _get_interfaces(base),
+                    ),
+                    {
+                        '__doc__': '''Server Side Proxy object representing a %s instance with %s interface'''
+                        % (
+                            cls_key,
+                            base.__name__,
+                        )
+                    },
+                )
+            else:
+                log.warning(
+                    "Unable to create a wrapper class for %s from %s", cls_key, value
+                )
+                return None
+        return PROXY_CLASSES[cls_key]
+    else:
+        return None
+
+
 def _dict_typ(value):
     typ = None
+
     if isinstance(value, dict) and '__type__' in value and '__namespace__' in value:
         if value['__type__'] in PROXY_TYPES:
             typ = PROXY_TYPES[value['__type__']]
@@ -116,7 +161,8 @@ def _type_coerce(value, typ):
     elif typ in (np.ndarray,):
         # Not ideal to assume 'd' type
         return np.array(value, dtype='d')
-    typ = _dict_typ(value) or typ
+    # typ = _dict_typ(value) or typ
+    typ = _dict_cls(value) or typ
 
     if is_a_typing_list(typ):
         if typ.__args__:
@@ -279,16 +325,16 @@ class BoundProxyMethod(object):
 
 
 class ServerObjectMeta(type):
-    def __getattr__(cls, key):
-        interfaces = cls.__interfaces__
-        for interface_name in interfaces:
-            src_cls = PROXY_TYPES.get(interface_name)
-            if src_cls is not None and src_cls is not cls:
-                result = getattr(src_cls, key, None)
-                if result is not None:
-                    log.info('Found in method on %s: %s', interface_name, key)
-                    return result
-        raise AttributeError(key)
+    # def __getattr__(cls, key):
+    #     interfaces = cls.__interfaces__
+    #     for interface_name in interfaces:
+    #         src_cls = PROXY_TYPES.get(interface_name)
+    #         if src_cls is not None and src_cls is not cls:
+    #             result = getattr(src_cls, key, None)
+    #             if result is not None:
+    #                 log.info('Found in method on %s: %s', interface_name, key)
+    #                 return result
+    #     raise AttributeError(key)
 
     def implements(cls, interface):
         """Does the given cls implement interface name?"""

@@ -209,7 +209,29 @@ class Channel(object):
         finally:
             self.method_cache_lock.release()
 
-    async def introspect(self):
+    DEFAULT_CACHE_TIME = 3600 * 24
+
+    async def load_methods(self, cached=False):
+        """Load method metadata, use cache if cached == True"""
+        if (
+            cached
+            and os.path.exists(CACHE_FILE)
+            and os.stat(CACHE_FILE).st_mtime > time.time() - self.DEFAULT_CACHE_TIME
+        ):
+            try:
+                return json.loads(open(CACHE_FILE).read())
+            except Exception as err:
+                log.info(
+                    "Unable to load the cached methods, will have to run introspection"
+                )
+                pass
+        automatic = await self.call_remote("__methods__")
+        with open(CACHE_FILE + '~', 'w') as fh:
+            fh.write(json.dumps(automatic, indent=2, sort_keys=True))
+        os.rename(CACHE_FILE + '~', CACHE_FILE)
+        return automatic
+
+    async def introspect(self, cached=False):
         """Get methods for all registered namespaces
 
         Needs to do all of:
@@ -222,11 +244,7 @@ class Channel(object):
         seen = {}
         seen_classes = {}
 
-        automatic = await self.call_remote("__methods__")
-
-        with open(CACHE_FILE + '~', 'w') as fh:
-            fh.write(json.dumps(automatic, indent=2, sort_keys=True))
-        os.rename(CACHE_FILE + '~', CACHE_FILE)
+        automatic = await self.load_methods(cached=cached)
 
         if 'plugins' in automatic:
             for name, plugin in sorted(automatic['plugins'].items()):

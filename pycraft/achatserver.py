@@ -55,11 +55,17 @@ async def run(options):
         logging.basicConfig(level=logging.INFO)
     server = channel.Channel(host=options.host, port=options.port, debug=True)
     await server.open()
-    await server.introspect()
+    await server.introspect(cached=True)
 
     worlds = await server.server.getWorlds()
 
     log.info("getWorlds => %s", worlds)
+    world = worlds[0]
+    world_cls = world.__class__
+
+    # import pdb
+
+    # pdb.set_trace()
 
     # players = [1,2,3]
     listen = alistener.AListener(server)

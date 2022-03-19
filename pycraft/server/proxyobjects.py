@@ -29,6 +29,9 @@ SIMPLE_TYPES = {
 PROXY_CLASSES = {
     # Implementation Class name (CraftSkeleton) => final python class with all interfaces...
 }
+OVERRIDE_TYPES = {
+    # Namespace:str => ProxyObject override class...
+}
 PROXY_TYPES = {
     # Namespace:str => ProxyObject class
 }
@@ -87,7 +90,8 @@ def _dict_cls(value):
                         % (
                             cls_key,
                             base.__name__,
-                        )
+                        ),
+                        '__module__': 'pycraft.server.final',
                     },
                 )
             else:
@@ -223,7 +227,7 @@ class ProxyMethod(object):
     def __init__(self, description, namespace):
         self.namespace = namespace
         self.description = description
-        # self.__doc__ = description.get('__doc__')
+        self.__doc__ = description.get('__doc__')
         self.__name__ = description.get('name')
         # RETURN_TYPES.setdefault(self.description.get('returntype'), []).append(
         #     self.__doc__
@@ -316,6 +320,7 @@ class BoundProxyMethod(object):
 
         self.method = method
         self.__doc__ = method.__doc__
+        self.__name__ = method.__name__
 
     async def __call__(self, *args):
         return await self.method(
@@ -372,13 +377,13 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
             return None
         try:
             instance = cls(**struct)
-        except TypeError as err:
-            import pdb
-
-            pdb.set_trace()
+        except Exception as e:
+            e.args += (
+                cls,
+                struct,
+            )
             raise
-        else:
-            return instance
+        return instance
 
     __interfaces__ = ()
     __cached_methods__ = None
@@ -436,6 +441,14 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
     __repr__ = __str__
     # def __repr__(self):
     #     return repr(self.get_key())
+    def as_type(self, typ):
+        """Return this object coerced to given type"""
+        if isinstance(typ, str):
+            if typ in PROXY_TYPES:
+                typ = PROXY_TYPES[typ]
+            elif typ in PROXY_CLASSES:
+                typ = PROXY_CLASSES[typ]
+        return type_coerce(self.__dict__.copy(), typ)
 
 
 class ServerObjectEnum(ServerObjectProxy):
@@ -495,9 +508,71 @@ class KeyedServerObjectEnum(ServerObjectEnum):
         return self.key
 
 
-def ProxyType(cls):
+def OverrideType(cls):
     """Register a particular class as an ObjectProxy sub-type"""
-    PROXY_TYPES[cls.__namespace__] = cls
+    OVERRIDE_TYPES[cls.__namespace__] = cls
     for clsName in getattr(cls, '__known_classes__', ()):
-        PROXY_TYPES[clsName] = cls
+        OVERRIDE_TYPES[clsName] = cls
     return cls
+
+
+async def construct_from_introspection(automatic: dict, channel):
+    """Create introspected api from automatic query on server"""
+    from . import final
+
+    seen_classes = {}
+    unfinished = [
+        x
+        for x in automatic.get('commands', [])
+        if (isinstance(x, dict) and x.get('type') == 'namespace')
+    ]
+    for declaration in unfinished:
+        try:
+            name = declaration['name']
+        except KeyError:
+            raise KeyError('name', declaration)
+        if declaration.get('cls') and declaration.get('cls').get('interfaces'):
+            bases = declaration.get('cls').get('interfaces')
+        else:
+            bases = []
+        base = ServerObjectProxy
+        clsDeclaration = declaration.get('cls')
+        if clsDeclaration:
+            if clsDeclaration.get('isKeyed'):
+                base = KeyedServerObjectEnum
+            elif clsDeclaration.get('isEnum'):
+                base = ServerObjectEnum
+
+        overrides = OVERRIDE_TYPES.get(name)
+        cls = type(
+            name,
+            (base,),
+            {
+                '__namespace__': name,
+                '__module__': 'pycraft.server.introspection',
+                '__declaration__': declaration,
+                '__interfaces__': clsDeclaration.get('interfaces', [])
+                if clsDeclaration
+                else [],
+            },
+        )
+        if overrides:
+            cls = PROXY_TYPES[name] = type(
+                name,
+                (overrides, cls),
+                {
+                    '__module__': 'pycraft.server.overridden',
+                },
+            )
+        else:
+            PROXY_TYPES[name] = cls
+
+        seen_classes[name] = cls
+
+    for name, proxy in seen_classes.items():
+        import pdb
+
+        pdb.set_trace()
+        proxy.inject_methods(channel, proxy.__declaration__)
+        PROXY_TYPES[name] = proxy
+        setattr(final, name, proxy)

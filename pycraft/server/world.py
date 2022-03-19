@@ -6,7 +6,7 @@ from .proxyobjects import (
     PROXY_TYPES,
     ProxyMethod,
     ServerObjectProxy,
-    ProxyType,
+    OverrideType,
     ServerObjectEnum,
     KeyedServerObjectEnum,
 )
@@ -16,32 +16,32 @@ from pycraft.server import proxyobjects
 log = logging.getLogger(__name__)
 
 
-@ProxyType
+@OverrideType
 class Art(KeyedServerObjectEnum):
     __namespace__ = 'Art'
 
 
-@ProxyType
+@OverrideType
 class Fluid(KeyedServerObjectEnum):
     __namespace__ = 'Fluid'
 
 
-@ProxyType
+@OverrideType
 class Sound(KeyedServerObjectEnum):
     __namespace__ = 'Sound'
 
 
-@ProxyType
+@OverrideType
 class Statistic(KeyedServerObjectEnum):
     __namespace__ = 'Statistic'
 
 
-@ProxyType
+@OverrideType
 class TreeType(ServerObjectEnum):
     __namespace__ = 'TreeType'
 
 
-@ProxyType
+@OverrideType
 class Enchantment(KeyedServerObjectEnum):
     __namespace__ = 'Enchantment'
     __cached_methods__ = set(
@@ -58,32 +58,32 @@ class Enchantment(KeyedServerObjectEnum):
     )
 
 
-@ProxyType
+@OverrideType
 class Material(KeyedServerObjectEnum):
     __namespace__ = 'Material'
 
 
-@ProxyType
+@OverrideType
 class EntityType(KeyedServerObjectEnum):
     __namespace__ = 'EntityType'
 
 
-@ProxyType
+@OverrideType
 class Biome(KeyedServerObjectEnum):
     __namespace__ = 'Biome'
 
 
-@ProxyType
+@OverrideType
 class BlockFace(KeyedServerObjectEnum):
     __namespace__ = 'BlockFace'
 
 
-@ProxyType
+@OverrideType
 class PistonMoveReaction(KeyedServerObjectEnum):
     __namespace__ = 'PistonMoveReaction'
 
 
-@ProxyType
+@OverrideType
 class Vector(ServerObjectProxy):
     __namespace__ = 'Vector'
     vector: np.ndarray
@@ -168,7 +168,7 @@ class Vector(ServerObjectProxy):
         self.vector[2] = value
 
 
-@ProxyType
+@OverrideType
 class Location(ServerObjectProxy):
     __namespace__ = 'Location'
     world: str
@@ -198,8 +198,8 @@ class Location(ServerObjectProxy):
             vector = record[1:]
         else:
             raise TypeError(
-                "Expected a Location, a [world,x,y,z,yaw,pitch], a [world,x,y,z], [world,[x,y,z]] or [world,[x,y,z,pitch,yaw]] value, got: %s"
-                % (record)
+                "Expected a Location, a [world,x,y,z,yaw,pitch], a [world,x,y,z], [world,[x,y,z]] or [world,[x,y,z,pitch,yaw]] value, got: %s (length %s)"
+                % (record, len(record))
             )
             world, x, y, z = record
             yaw = pitch = 0.0
@@ -311,7 +311,7 @@ class Location(ServerObjectProxy):
         return np.tan(pitch)
 
 
-@ProxyType
+@OverrideType
 class Entity(ServerObjectProxy):
     """A particular entity, such as a mob, or item stack on the server"""
 
@@ -364,7 +364,7 @@ class Entity(ServerObjectProxy):
 proxyobjects.SIMPLE_TYPES["EntityType[]"] = typing.List[Entity]
 
 
-@ProxyType
+@OverrideType
 class Player(Entity):
     """A particular player (potentially not currently logged in) on the server"""
 
@@ -397,12 +397,12 @@ class Player(Entity):
         return self.location.direction
 
 
-@ProxyType
+@OverrideType
 class OfflinePlayer(Player):
     __namespace__ = 'OfflinePlayer'
 
 
-@ProxyType
+@OverrideType
 class World(ServerObjectProxy):
     """A particular world on the server"""
 
@@ -440,7 +440,7 @@ class World(ServerObjectProxy):
         return await self.getBlocks(start, size)
 
 
-@ProxyType
+@OverrideType
 class Server(ServerObjectProxy):
     """Proxy for the server API"""
 
@@ -458,7 +458,7 @@ class Server(ServerObjectProxy):
     channel: object
 
 
-@ProxyType
+@OverrideType
 class ItemStack(ServerObjectProxy):
     __namespace__ = 'ItemStack'
     material: Material
@@ -473,8 +473,24 @@ class ItemStack(ServerObjectProxy):
     def get_key(self):
         return self.key
 
+    async def getMeta(self):
+        """Retrieve the ItemMeta and set it's key to our key..."""
+        result = await self.getItemMeta()
+        if result:
+            result.key = self.key
+        return result
 
-@ProxyType
+
+@OverrideType
+class ItemMeta(ServerObjectProxy):
+    __namespace__ = 'ItemMeta'
+    key: object = None
+
+    def get_key(self):
+        return self.key
+
+
+@OverrideType
 class BlockData(ServerObjectProxy):
     """Data describing a particular block (or a potential block)"""
 
@@ -561,7 +577,7 @@ for _name in [
     "Wall",
     "WallSign",
 ]:
-    globals()[_name] = ProxyType(
+    globals()[_name] = OverrideType(
         type(
             _name,
             (BlockData,),
@@ -572,7 +588,7 @@ for _name in [
     )
 
 
-@ProxyType
+@OverrideType
 class Block(ServerObjectProxy):
     __namespace__ = 'Block'
 
@@ -583,7 +599,7 @@ class Block(ServerObjectProxy):
     location: Location
 
 
-@ProxyType
+@OverrideType
 class Inventory(ServerObjectProxy):
     __namespace__ = 'Inventory'
     __known_classes__ = ['PlayerInventory', 'CraftInventoryPlayer']
@@ -628,10 +644,10 @@ class Inventory(ServerObjectProxy):
         return stack
 
 
-# @ProxyType
+# @OverrideType
 # class PlayerInventory(Inventory):
 #     __namespace__ = 'PlayerInventory'
-# @ProxyType
+# @OverrideType
 # class ChestInventory(Inventory):
 #     __namespace__ = 'PlayerInventory'
 
@@ -668,7 +684,7 @@ KEYED_CLASSES = []
 
 def _known_enums():
     for name in ENUM_CLASSES:
-        enum_class = ProxyType(
+        enum_class = OverrideType(
             type(
                 name,
                 (Enum,),
@@ -683,7 +699,7 @@ def _known_enums():
 # _known_enums()
 
 
-@ProxyType
+@OverrideType
 class Event(ServerObjectProxy):
     __namespace__ = 'Event'
     type: str
@@ -698,7 +714,7 @@ class Event(ServerObjectProxy):
     block_clicked: Block
 
 
-@ProxyType
+@OverrideType
 class GameRule(ServerObjectProxy):
     __namespace__ = 'GameRule'
 
@@ -720,7 +736,7 @@ class GameRule(ServerObjectProxy):
         return self.name
 
 
-@ProxyType
+@OverrideType
 class Axolotl(Entity):
     __namespace__ = 'Axolotl'
 

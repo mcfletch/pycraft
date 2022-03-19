@@ -1,11 +1,11 @@
 #! /usr/bin/env python3
-import os, requests, subprocess, argparse, logging, shutil, yaml
+import os, requests, subprocess, argparse, logging, shutil, yaml, glob
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 DATA = os.path.join(HERE, 'data')
 GEYSER_URL = 'https://ci.opencollab.dev//job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/target/Geyser-Spigot.jar'
 SLIME_FUN_URL = 'https://thebusybiscuit.github.io/builds/TheBusyBiscuit/Slimefun4/master/Slimefun4-944.jar'
-PYCRAFT_SERVER_URL = 'https://github.com/mcfletch/pycraft-server/releases/download/v-1.0.2/PycraftServer-1.0.2.jar'
+PYCRAFT_SERVER_URL = 'https://github.com/mcfletch/pycraft-server/releases/download/v-1.0.3/PycraftServer-1.0.3.jar'
 PLUGINS = 'plugins'
 PLUGIN_SOURCE = os.path.join(HERE, PLUGINS)
 # JARFILE = URL.split('/')[-1]
@@ -84,6 +84,8 @@ def install_raspberry_juice(data, bedrock=True, slime_fun=False):
     if not os.path.exists(plugins):
         os.makedirs(plugins)
     log.info("World plugin dir: %s", plugins)
+    for filename in glob.glob(os.path.join(plugins, 'PycraftServer-*.jar')):
+        os.remove(filename)
 
     for url in [
         x
@@ -107,10 +109,9 @@ def install_raspberry_juice(data, bedrock=True, slime_fun=False):
         log.info("Copying %s to plugins", base)
         if not os.path.exists(jarfile):
             log.info(" %s => %s", base, jarfile)
-            shutil.copy(cache, jarfile)
         else:
             log.info('  %s already there', jarfile)
-            shutil.copy(cache, jarfile)
+        shutil.copy(cache, jarfile)
 
 
 def configure_geyser(data, auth=False):
@@ -191,7 +192,7 @@ def main():
     subprocess.check_output(command)
     log.info("Java Edition server on port: %s", 25565)
     if options.bedrock:
-        log.info("Java Edition server on port: %s", 19132)
+        log.info("Bedrock Edition server on port: %s", 19132)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,6 @@ import unittest
 from pycraft import bulldozer, uniqueblocks
 import ast
 import numpy as np
-from pycraft.server import world
 
 
 class TestUniqueBlocks(unittest.TestCase):

@@ -79,6 +79,7 @@ async def test_expressions(channel_setup):
         ('{ x:y for (x,y) in [(1,2),(3,4)]}', {1: 2, 3: 4}),
         ('{ x for (x,y) in [(1,2),(3,4)]}', {1, 3}),
         ('[sin(x) for x in [1,2,3]]', [np.sin(x) for x in [1, 2, 3]]),
+        ('2 in (1,2,3)', True),
     ]:
         parsed = ast.parse(
             statement,

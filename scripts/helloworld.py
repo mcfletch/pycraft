@@ -22,7 +22,7 @@ async def hello_world():
     # with the server
     await chan.introspect()
 
-    from pycraft.server import world
+    from pycraft.server import final
     from pycraft import acommands
 
     # name= here can be any string, the server actually does have

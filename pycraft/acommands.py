@@ -3,17 +3,19 @@ from .expose import expose, command_details, command_list
 from .directions import roughly_forward
 from .server import proxyobjects
 from typing import List
+from .server import final
 from .server.world import (
-    Entity,
-    EntityType,
+    #     Entity,
+    #     EntityType,
     Vector,
+    Player,
     World,
     Location,
-    Player,
-    Block,
-    Material,
-    Enchantment,
-    Axolotl,
+    #     Player,
+    #     Block,
+    #     Material,
+    #     Enchantment,
+    #     Axolotl,
 )
 import time, re, os, json
 import numpy as np
@@ -169,7 +171,7 @@ async def find_blocks(name):
 
     find_blocks('granite') => ['GRANITE','POLISHED_GRANITE']
     """
-    return [x.key for x in await Material.loosely_match(name)]
+    return [x.key for x in await final.Material.loosely_match(name)]
 
 
 @expose()
@@ -178,7 +180,7 @@ async def find_entities(name):
 
     find_entities( 'creep' ) => ['CREEPER']
     """
-    return [e.key for e in await EntityType.loosely_match(name)]
+    return [e.key for e in await final.EntityType.loosely_match(name)]
 
 
 @expose()
@@ -288,7 +290,7 @@ DESIRABLE_ENCHANTMENTS = [
 async def enchanted(stack, enchantments=DESIRABLE_ENCHANTMENTS):
     """Enchant the item stack with all available enchantments"""
     for enchantment in enchantments:
-        ench = Enchantment(enchantment)
+        ench = final.Enchantment(enchantment)
         if await ench.canEnchantItem(stack):
             await stack.addEnchantment(
                 ench,
@@ -304,10 +306,10 @@ async def bed(position=None, direction=None, color='cyan', *, player=None, world
     if position is None:
         position = player.position + direction
 
-    await Block(location=position + Vector(0, 0, 1)).setBlockData(
+    await final.Block(location=position + Vector(0, 0, 1)).setBlockData(
         f'minecraft:{color}_bed[facing=south,occupied=false,part=head]'
     )
-    await Block(location=position).setBlockData(
+    await final.Block(location=position).setBlockData(
         f'minecraft:{color}_bed[facing=south,occupied=false,part=foot]'
     )
 
@@ -318,7 +320,7 @@ async def killall(name, *, player=None, world=None):
     for entity in await world.getEntities():
         if entity.name == name:
             try:
-                await Entity(uuid=entity.uuid).remove()
+                await final.Entity(uuid=entity.uuid).remove()
             except Exception as err:
                 pass
 
@@ -397,7 +399,7 @@ async def stairs(
             locations.append(current + (0, clear, 0))
             materials.append('air')
         current = current + step
-    await World(name=position.world).setBlockList(locations, materials)
+    await final.World(name=position.world).setBlockList(locations, materials)
 
 
 @expose()
@@ -441,13 +443,13 @@ async def midas_touch(
     converted = set()
     async for event in await listener.wait_for_events(player=player.name):
         if event.action == 'RIGHT_CLICK_BLOCK':
-            block: Block = event.block_clicked
+            block: final.Block = event.block_clicked
             location: Location = block.location
             key = location.world, int(location.x), int(location.y), int(location.z)
             if key in converted:
                 continue
             converted.add(key)
-            await Block(location=location).setType(material)
+            await final.Block(location=location).setType(material)
             log.info("Converted: %s", location)
             if len(converted) > count:
                 break
@@ -534,3 +536,20 @@ async def keep_inventory(keep=True, *, player=None, world=None):
         return keep
     else:
         return 'Unknown rule for this world'
+
+
+@expose()
+async def potion_of(
+    base='water_breathing',
+    *extra,
+    player=None,
+    world=None,
+    server=None,
+    PotionMeta=None,
+):
+    """Give a potion of base with extras as specified"""
+    stack = await give('potion', player=player)
+    metadata = await stack.getMeta()
+    if not metadata:
+        raise ValueError("No metadata on the stack %s", stack)
+    await metadata.setBasePotionData({'type': base})

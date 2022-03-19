@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 @expose.expose()
 async def bulldoze(
-    depth=10, width=6, height=2, material='minecraft:air', *, player=None
+    depth=10, width=6, height=2, material='minecraft:air', location=None, *, player=None
 ):
     """Set blocks ahead of the player to the given material
 
@@ -19,9 +19,12 @@ async def bulldoze(
     is in front of you.
     """
     # x, y, z = position = player.position[:3]
-    position = player.position.block_location()
     direction = player.direction
-    log.info("Raw position: %s and direction %s", position, direction)
+    if location is not None:
+        position = location
+    else:
+        position = player.position.block_location()
+        log.info("Raw position: %s and direction %s", position, direction)
 
     forward, cross = forward_and_cross(direction)
 

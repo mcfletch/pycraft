@@ -186,6 +186,7 @@ class AInterpreter(object):
         ast.BitXor: operator.__xor__,
         ast.BitAnd: operator.__and__,
         ast.FloorDiv: operator.floordiv,
+        ast.In: lambda x, y: x in y,  # note: oposite of operator.contains
     }
 
     async def interpret_expr(self, arg, namespace):
@@ -515,3 +516,4 @@ class Handler(object):
     def __call__(self, event):
         event.current_handler = self  # TODO: yuck
         return self.callback(event)
+

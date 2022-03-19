@@ -63,11 +63,6 @@ async def run(options):
     world = worlds[0]
     world_cls = world.__class__
 
-    # import pdb
-
-    # pdb.set_trace()
-
-    # players = [1,2,3]
     listen = alistener.AListener(server)
 
     def shutdown():

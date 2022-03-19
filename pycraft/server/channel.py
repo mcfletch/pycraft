@@ -10,7 +10,7 @@ import numpy as np
 from functools import lru_cache
 
 from json.encoder import JSONEncoder
-from . import proxyobjects, world
+from . import proxyobjects, world, final
 
 log = logging.getLogger(__name__)
 
@@ -219,6 +219,7 @@ class Channel(object):
             and os.stat(CACHE_FILE).st_mtime > time.time() - self.DEFAULT_CACHE_TIME
         ):
             try:
+                log.info("Using cache file: %s", CACHE_FILE)
                 return json.loads(open(CACHE_FILE).read())
             except Exception as err:
                 log.info(
@@ -241,7 +242,6 @@ class Channel(object):
             * Generate the final classes
 
         """
-        seen = {}
         seen_classes = {}
 
         automatic = await self.load_methods(cached=cached)
@@ -250,60 +250,11 @@ class Channel(object):
             for name, plugin in sorted(automatic['plugins'].items()):
                 log.info("Server plugin: %s %s", plugin['name'], plugin['version'])
 
-        unfinished = [
-            x
-            for x in automatic.get('commands', [])
-            if (isinstance(x, dict) and x.get('type') == 'namespace')
-        ]
-        for declaration in unfinished:
-            try:
-                name = declaration['name']
-            except KeyError:
-                raise KeyError('name', declaration)
-            if not (
-                declaration.get('cls') and declaration.get('cls').get('interfaces')
-            ):
-                bases = declaration.get('cls').get('interfaces')
-            else:
-                bases = []
-            base = proxyobjects.ServerObjectProxy
-            clsDeclaration = declaration.get('cls')
-            if clsDeclaration:
-                if clsDeclaration.get('isKeyed'):
-                    base = proxyobjects.KeyedServerObjectEnum
-                elif clsDeclaration.get('isEnum'):
-                    base = proxyobjects.ServerObjectEnum
-
-            cls = proxyobjects.PROXY_TYPES.get(name)
-            if cls is None:
-                cls = proxyobjects.PROXY_TYPES[name] = type(
-                    name,
-                    (base,),
-                    {
-                        '__namespace__': name,
-                        '__declaration__': declaration,
-                        '__interfaces__': clsDeclaration.get('interfaces', [])
-                        if clsDeclaration
-                        else [],
-                    },
-                )
-            else:
-                cls.__namespace__ = name
-                cls.__declaration__ = declaration
-                cls.__interfaces__ = (
-                    clsDeclaration.get('interfaces', []) if clsDeclaration else []
-                )
-
-            seen_classes[name] = cls
-
-        for name, proxy in seen_classes.items():
-            proxy.inject_methods(self, proxy.__declaration__)
-            proxyobjects.PROXY_TYPES[name] = proxy
-            setattr(world, name, proxy)
+        await proxyobjects.construct_from_introspection(automatic, self)
 
     @property
     def server(self):
         """Get configured server instance for this connection"""
-        from .world import Server
+        from .final import Server
 
         return Server()

@@ -74,7 +74,7 @@ def get_options():
     return parser
 
 
-def install_raspberry_juice(data, bedrock=True, slime_fun=False):
+def install_pycraftserver_plugin(data, bedrock=True, slime_fun=False):
     """Install extension to allow for mcpi coding
 
     If bedrock is True, then *also* install the geyser
@@ -167,7 +167,7 @@ def main():
         parser.error('You have not accepted the EULA (read and add the -e) flag')
         return
     data = os.path.normpath(os.path.abspath(options.data))
-    install_raspberry_juice(data, options.bedrock, options.slime_fun)
+    install_pycraftserver_plugin(data, options.bedrock, options.slime_fun)
     if options.bedrock:
         configure_geyser(data, options.authentication)
     update_config(data, overwrite=options.wipe_config)

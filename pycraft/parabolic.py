@@ -2,7 +2,8 @@
 import numpy as np
 import logging
 from . import expose, uniqueblocks, randomchoice, directions
-from .server.world import World, Location, Vector, Block
+from .server import final
+from .server.world import Vector
 
 log = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ async def draw_circle(
     steps=None,
     *,
     player=None,
+    world=None,
 ):
     """Draw a horizontal circle around center with radius"""
     if center is None:
@@ -29,7 +31,7 @@ async def draw_circle(
         stop_angle=stop_angle,
         steps=steps,
     )
-    await World(name=center.world).setBlockList(locations, materials)
+    await world.setBlockList(locations, materials)
 
 
 def generate_circle(
@@ -70,6 +72,7 @@ async def parabolic_dome(
     steps=None,
     *,
     player=None,
+    world=None,
 ):
     """Draw a parabolic dome at given bottom-center and height
 
@@ -95,7 +98,7 @@ async def parabolic_dome(
         )
         locations.extend(slice_loc)
         materials.extend(slice_mat)
-    await World(name=center.world).setBlockList(locations, materials)
+    await world.setBlockList(locations, materials)
 
 
 @expose.expose()
@@ -117,20 +120,6 @@ async def dome(
     zes = np.cos(angles * radius)
     for h, rad in zip(yes, zes):
         await draw_circle(center + (0, height - h, 0), rad, material=material)
-
-
-@expose.expose()
-async def solid_circle(
-    center=None, radius=10, material=randomchoice.RANDOM_STAINED_GLASS, *, player=None
-):
-    """Draw a solid circle around center"""
-    # make block solid *iff* it's center is inside the circle
-    # a point is inside the circle if sin(x)
-    if center is None:
-        forward = directions.roughly_forward(player.direction)
-        center = player.position + (forward * radius)
-    for coord in circle_coords(center, radius):
-        await Block(location=[center.world, coord]).setBlockData(material)
 
 
 def circle_coords(center, radius=10):

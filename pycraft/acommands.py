@@ -3,19 +3,10 @@ from .expose import expose, command_details, command_list
 from .directions import roughly_forward
 from .server import proxyobjects
 from typing import List
+from .server import world
 from .server import final
 from .server.world import (
-    #     Entity,
-    #     EntityType,
     Vector,
-    Player,
-    World,
-    Location,
-    #     Player,
-    #     Block,
-    #     Material,
-    #     Enchantment,
-    #     Axolotl,
 )
 import time, re, os, json
 import numpy as np
@@ -24,9 +15,9 @@ import logging
 
 from pycraft import directions
 
-Vec3 = Vector
-
 log = logging.getLogger(__name__)
+
+Vec3 = Vector
 
 
 @expose()
@@ -67,7 +58,7 @@ def dir_(*args, namespace=None):
 
 @expose()
 async def spawn(
-    type_name, position=None, *, player: Player = None, world: World = None
+    type_name, position=None, *, player: world.Player = None, world: world.World = None
 ):
     """Spawn a new entity of type_id at position (default in front of player)
 
@@ -81,12 +72,12 @@ async def spawn(
 
 
 @expose()
-async def spawn_drop(type_id, *, player=None, world=None):
+async def spawn_drop(type_id, height=50, *, player=None, world=None):
     """Spawn an entity 50m overhead dropping onto your location
 
     Use this to e.g. drop a creeper to their death and generate gunpowder
     """
-    position = player.position + Vector(0, 50, 0)
+    position = player.position + Vector(0, height, 0)
     return await spawn(type_id, position=position, player=player, world=world)
 
 
@@ -96,11 +87,15 @@ async def spawn_shower(type_id, count=30, height=50, *, player=None, world=None)
 
     Use this to e.g. drop a creeper to their death and generate gunpowder
     """
-    position = player.position + player.direction + Vector(0, height, 0)
-    for i in range(count):
-        await spawn(type_id, position=position, player=player, world=world)
-        await asyncio.sleep(0.1)
-    return count
+
+    async def do_shower():
+        position = player.position + player.direction + Vector(0, height, 0)
+        for i in range(count):
+            await spawn(type_id, position=position, player=player, world=world)
+            await asyncio.sleep(0.1)
+        return count
+
+    asyncio.ensure_future(do_shower())
 
 
 @expose()
@@ -374,6 +369,7 @@ async def stairs(
     material='minecraft:obsidian',
     *,
     player=None,
+    world=None,
 ):
     """Create an ascending or descending staircase (based on ystep)"""
 
@@ -399,7 +395,7 @@ async def stairs(
             locations.append(current + (0, clear, 0))
             materials.append('air')
         current = current + step
-    await final.World(name=position.world).setBlockList(locations, materials)
+    await world.setBlockList(locations, materials)
 
 
 @expose()
@@ -457,7 +453,7 @@ async def midas_touch(
             break
 
 
-def matching_players(players: List[Player], player_name: str):
+def matching_players(players: List[world.Player], player_name: str):
     player_name = player_name.lower()
     for other in players:
         if player_name == '*':

@@ -10,6 +10,7 @@ from .proxyobjects import (
     ServerObjectEnum,
     KeyedServerObjectEnum,
 )
+from . import final
 from pycraft.server import proxyobjects
 
 
@@ -182,7 +183,7 @@ class Location(ServerObjectProxy):
         return self.__json__()
 
     def get_world(self):
-        return World(name=self.world)
+        return final.World(name=self.world)
 
     def __init__(self, record):
         if isinstance(record, Location):
@@ -420,7 +421,7 @@ class World(ServerObjectProxy):
     # Provide old-style apis to ease code reuse
     async def setBlock(self, x, y, z, material_or_blockdata):
         """Set a specific block in this world to given material (blockdata)"""
-        return await Block(
+        return await final.Block(
             location=Location([self.name, x, y, z]).block_location()
         ).setBlockData(material_or_blockdata)
 
@@ -640,7 +641,7 @@ class Inventory(ServerObjectProxy):
     def get_stack(self, index):
         stack = self.contents[index]
         if stack is None:
-            stack = ItemStack(key=[index, self.holder.get_key()])
+            stack = final.ItemStack(key=[index, self.holder.get_key()])
         return stack
 
 

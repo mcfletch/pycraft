@@ -4,7 +4,8 @@ import numpy as np
 import random, os
 import logging
 from . import expose, directions, randomchoice
-from .server.world import World, Vector
+from .server.world import Vector
+from .server import final
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 log = logging.getLogger(__name__)
@@ -20,6 +21,7 @@ async def pyramid(
     hollow=False,
     *,
     player=None,
+    world=None,
 ):
     """Create a pyramid in front of the player
 
@@ -35,9 +37,9 @@ async def pyramid(
     current = position - (cross * width // 2)
     for i in range(0, min(width, depth), 2):
         start, size = as_cube(current, current + forward * depth + cross * width)
-        await World(name=position.world).setBlocks(start, size, material)
+        await world.setBlocks(start, size, material)
         if hollow:
-            await World(name=position.world).setBlocks(
+            await world.setBlocks(
                 start + Vector(1, 0, 1), size - Vector(2, 0, 2), 'air'
             )
         current = current + forward + cross + Vector(0, ystep, 0)
@@ -57,6 +59,7 @@ async def hall(
     roof_material='minecraft:red_glazed_terracotta',
     *,
     player=None,
+    world=None,
 ):
     if position is None:
         position = player.position
@@ -67,7 +70,6 @@ async def hall(
     back = front + depth
     bottom = y - 1
     top = y + height
-    world = World(name=position.world)
 
     # clear
     await world.oldSetBlocks(
@@ -469,20 +471,23 @@ async def temple(
     positions.append(front_left_pediment + (cross * (width - 3)))
     # left roof supports
 
-    pediment_left_material = linprops(beam_support_material, STAIR_DIR[LEFT[tuple(forward)]].copy())
-    pediment_right_material = linprops(beam_support_material, STAIR_DIR[RIGHT[tuple(forward)]].copy())
-
+    pediment_left_material = linprops(
+        beam_support_material, STAIR_DIR[LEFT[tuple(forward)]].copy()
+    )
+    pediment_right_material = linprops(
+        beam_support_material, STAIR_DIR[RIGHT[tuple(forward)]].copy()
+    )
 
     block(
-        front_left_pediment+forward,
-        depth=depth-8,
+        front_left_pediment + forward,
+        depth=depth - 8,
         width=1,
         height=1,
         material=pediment_left_material,
     )
     block(
-        front_left_pediment+forward+(cross * (width-3)),
-        depth=depth-8,
+        front_left_pediment + forward + (cross * (width - 3)),
+        depth=depth - 8,
         width=1,
         height=1,
         material=pediment_right_material,
@@ -506,14 +511,14 @@ async def temple(
             material=pediment_top_material,
         )
         block(
-            current+forward,
+            current + forward,
             width=tile_width,
-            depth=depth-2,
+            depth=depth - 2,
             height=1,
             material=roof_material,
         )
         block(
-            current+(forward*(depth-2)),
+            current + (forward * (depth - 2)),
             width=tile_width,
             depth=1,
             height=1,
@@ -532,7 +537,7 @@ async def temple(
         block(
             current + (cross * (slice_width - tile_width)),
             width=tile_width,
-            depth=depth-2,
+            depth=depth - 2,
             height=1,
             material=roof_material,
         )

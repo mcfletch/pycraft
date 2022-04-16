@@ -1,6 +1,7 @@
 """Create transportation"""
 from pycraft import directions
-from .server.world import Vector, World, Block, Location
+from .server.world import Vector
+from .server import final
 from . import randomchoice
 import numpy as np
 import random, os
@@ -25,6 +26,7 @@ async def tunnel(
     *,
     player=None,
     player_storage=None,
+    world=None,
 ):
     """Create a pyramid centered at position in material
 
@@ -57,8 +59,6 @@ async def tunnel(
     right_front_bottom = left_front_bottom + (cross * (width + 2))
     left_back_top = left_front_bottom + (up * (height + 2)) + (direction * depth)
     right_back_top = right_front_bottom + (up * (height + 2)) + (direction * depth)
-
-    world = World(name=player.location.world)
 
     await world.oldSetBlocks(
         *left_front_bottom[:3],
@@ -102,7 +102,7 @@ async def tunnel(
     # setup some torches every once in a while...
     torch_pos = inner_lbt - (up)  # one below ceiling...
     for step in range(0, depth, 5):
-        await Block(location=torch_pos - (direction * step)).setBlockData(
+        await final.Block(location=torch_pos - (direction * step)).setBlockData(
             TORCH_DIR.get(tuple(direction[:3]))
         )
 
@@ -135,14 +135,16 @@ TUNNEL_CONTINUE_KEY = '__current_tunnel__'
 
 
 @expose.expose()
-async def tunnel_continue(depth=25, *, player=None, player_storage=None):
+async def tunnel_continue(depth=25, *, player=None, player_storage=None, world=None):
     """Continue the previously started tunnel"""
     log.info("Starring")
     storage = player_storage()
     params = storage.get(TUNNEL_CONTINUE_KEY)
     if not params:
         return 'Sorry, I have forgotten where the tunnel was'
-    return await tunnel(depth, *params, player=player, player_storage=player_storage)
+    return await tunnel(
+        depth, *params, player=player, player_storage=player_storage, world=world
+    )
 
 
 @expose.expose(name='fr')

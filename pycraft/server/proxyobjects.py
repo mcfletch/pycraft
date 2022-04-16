@@ -399,8 +399,6 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
                 method = MultiMethod(description, cls.__namespace__)
             else:
                 method = ProxyMethod(description, cls.__namespace__)
-            # if description.get('name') in to_cache:
-            #     method = lru_cache(maxsize=1024)(method)
             setattr(cls, method.__name__, method)
         if 'cls' in method_descriptions:
             cls.interfaces = method_descriptions['cls'].get('interfaces', [])
@@ -569,10 +567,8 @@ async def construct_from_introspection(automatic: dict, channel):
 
         seen_classes[name] = cls
 
+    ProxyMethod.set_channel(channel)
     for name, proxy in seen_classes.items():
-        import pdb
-
-        pdb.set_trace()
         proxy.inject_methods(channel, proxy.__declaration__)
         PROXY_TYPES[name] = proxy
         setattr(final, name, proxy)

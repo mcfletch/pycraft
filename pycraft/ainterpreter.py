@@ -516,4 +516,3 @@ class Handler(object):
     def __call__(self, event):
         event.current_handler = self  # TODO: yuck
         return self.callback(event)
-

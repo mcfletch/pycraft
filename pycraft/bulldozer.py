@@ -1,7 +1,8 @@
 """Clear (create) a set of blocks in front of the player"""
 import numpy as np
 import logging
-from .server.world import Vector, Block, Location, World
+from .server.world import Vector, Location
+from .server import final
 from . import expose
 from .directions import roughly_forward, as_cube, forward_and_cross
 
@@ -10,7 +11,14 @@ log = logging.getLogger(__name__)
 
 @expose.expose()
 async def bulldoze(
-    depth=10, width=6, height=2, material='minecraft:air', location=None, *, player=None
+    depth=10,
+    width=6,
+    height=2,
+    material='minecraft:air',
+    location=None,
+    *,
+    player=None,
+    world=None,
 ):
     """Set blocks ahead of the player to the given material
 
@@ -44,20 +52,20 @@ async def bulldoze(
     log.info("Start: %s Size: %s", start, size)
 
     if material:
-        await World(name=player.location.world).setBlocks(
+        await world.setBlocks(
             start,
             size,
             material,
         )
     else:
-        await World(name=player.location.world).breakBlocks(
+        await world.breakBlocks(
             start,
             size,
         )
 
 
 @expose.expose()
-async def strip_mine(depth=50, offset=7, *, player=None):
+async def strip_mine(depth=50, offset=7, *, player=None, world=None):
     """Set explosive charges every step steps forward"""
     position = player.position
     direction = player.direction
@@ -67,7 +75,7 @@ async def strip_mine(depth=50, offset=7, *, player=None):
     for i in range(offset):
         current = current + forward
     start, size = as_cube(current, current + forward * depth)
-    await World(name=player.location.world).setBlocks(start, size, 'tnt')
+    await world.setBlocks(start, size, 'tnt')
     in_front = current - one_step
-    await Block(location=in_front).setBlockData('redstone_torch')
+    await final.Block(location=in_front).setBlockData('redstone_torch')
     return "Fire in the hold!"

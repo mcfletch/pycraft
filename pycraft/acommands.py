@@ -520,7 +520,10 @@ async def join(player_name, *, player=None, server=None, interpreter=None):
 async def back_to_bed(*, player=None):
     """Send the player back to their bed spawn location (last place they slept)"""
     location = await player.getBedSpawnLocation()
-    await player.set_location(location)
+    if location:
+        await player.set_location(location)
+    else:
+        return 'No bed spawn location found (bed destroyed?)'
 
 
 @expose()

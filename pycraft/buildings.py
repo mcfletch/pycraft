@@ -309,8 +309,6 @@ async def temple(
     world=None,
 ):
     if position is None:
-        position = player.position
-    if position is None:
         position = player.position + player.direction
     forward, cross = directions.forward_and_cross(Vector(player.direction))
 
@@ -554,3 +552,42 @@ async def temple(
 
     # create it
     await world.setBlockList(positions, blocks)
+
+
+@expose.expose()
+async def column_up(material='chain', position=None, *, player=None, world=None):
+    """Create a chain in the block in front of you going up to a solid block"""
+    if position is None:
+        position = player.position + player.direction
+    x, y, z = [int(v) for v in position.block_location()[:3]]
+    maxHeight = int(await world.getMaxHeight())
+    print('max Height', maxHeight)
+    y_height = maxHeight - y - 1
+    if y_height < 1:
+        return 'At the top of the world'
+    step = 20
+    above = await world.getBlocks(
+        [x, y, z],
+        [1, y_height, 1],
+    )
+    first = above[0][0][0]
+
+    height = 0
+    positions, blocks = [position], [material]
+    for index, layer in enumerate(above[1:]):
+        # note that index is -1 from real index
+        content = layer[0][0]
+        if content == first:
+            positions.append(
+                position + (0, index + 1, 0)
+            )  # one for get offset, one for index offset
+            blocks.append(material)
+        else:
+            height = index
+            break
+    if not height:
+        return 'Did not find a ceiling'
+    print('positions', positions)
+    print('blocks', blocks)
+    await world.setBlockList(positions, blocks)
+    return height

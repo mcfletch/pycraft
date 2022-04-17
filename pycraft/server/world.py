@@ -227,7 +227,7 @@ class Location(ServerObjectProxy):
         return self.vector.copy().__getitem__(slice)
 
     def __floor__(self):
-        return Location([self.world, np.floor(self.vector)])
+        return self.__class__([self.world, np.floor(self.vector)])
 
     @property
     def x(self):
@@ -282,18 +282,18 @@ class Location(ServerObjectProxy):
             other = other.vector[:3]
         new_vector = self.vector.copy()
         new_vector[:3] += other[:3]
-        return Location([self.world, new_vector])
+        return self.__class__([self.world, new_vector])
 
     def __sub__(self, other):
         if isinstance(other, (Vector, Location)):
             other = other.vector[:3]
         new_vector = self.vector.copy()
         new_vector[:3] -= other
-        return Location([self.world, new_vector])
+        return self.__class__([self.world, new_vector])
 
     def block_location(self):
         """Get the block location (block address) for this location"""
-        return Location([self.world, np.floor(self.vector[:3])])
+        return self.__class__([self.world, np.floor(self.vector[:3])])
 
     @property
     def direction(self):
@@ -747,3 +747,14 @@ class Axolotl(Entity):
 
     def get_key(self):
         return self.uuid
+
+
+@OverrideType
+class PotionData(ServerObjectProxy):
+    __namespace__ = 'PotionData'
+    type: str
+    upgraded: bool
+    extended: bool
+
+    def __json__(self):
+        return {'type': self.type, 'upgraded': self.upgraded, 'extended': self.extended}

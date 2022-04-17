@@ -159,7 +159,7 @@ async def test_api():
     # # from BlockData
     # assert hasattr(bed, 'getMaterial'), bed
     # print('Bed Material', await bed.getMaterial())
-    # queue = await server.subscribe("AsyncPlayerChatEvent")
+    # queue,queue_id = await server.subscribe("AsyncPlayerChatEvent")
     # while True:
     #     event = await queue.get()
     #     print('Event: %s', event)

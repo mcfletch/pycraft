@@ -120,6 +120,7 @@ class Channel(object):
                 break
 
     async def process_incoming_queue(self, queue):
+        """Process and dispatch messages coming in on the main input queue"""
         while self.wanted:
             record = await queue.get()
             if record is None:
@@ -172,25 +173,29 @@ class Channel(object):
             if self.debug:
                 log.debug("%0.2fs for %s call", time.time() - ts, method)
 
-    async def subscribe(self, EventClass):
+    async def subscribe(self, EventClass, *args):
         """Subscribe to an Event Type from the server
 
-        Returns an awaitable queue producing event records,
+        Returns (queue,queue_id) queue is an awaitable queue producing event records,
         a None in the queue indicates deletion
         """
         queue = asyncio.Queue()
-        result = await self.call_remote("subscribe", EventClass, True)
+        result = await self.call_remote("subscribe", EventClass, True, *args)
         log.info("Subscribe result: %s", result)
-        self.subscriptions[self.count] = (queue, EventClass)
-        return queue
+        self.subscriptions[result] = (queue, EventClass)
+        return queue, result
 
-    async def unsubscribe(self, EventClass):
-        """Unsubscribe to an Event Type from the server"""
-        for id, (q, ec) in list(self.subscriptions.items()):
-            if ec == EventClass:
-                del self.subscriptions[id]
-                await q.put(None)
-        return await self.call_remote("subscribe", EventClass, False)
+    async def unsubscribe(
+        self,
+        EventClass,
+        queue_id,
+    ):
+        """Unsubscribe to an Event Type from the server for given queue_id"""
+        try:
+            del self.subscriptions[queue_id]
+        except KeyError:
+            pass
+        return await self.call_remote("subscribe", EventClass, False, queue_id)
 
     async def get_methods(self, namespace=None):
         """Get the methods/names in the given namespace

@@ -64,6 +64,10 @@ class AInterpreter(object):
             self.user_namespaces[sender.uuid] = current = {}
         return current
 
+    async def broadcast_chat(self, text: str):
+        """Send a broadcast message directly to chat"""
+        await self.channel.server.broadcastMessage(text)
+
     async def interpret(self, message: world.Event):
         """Interpret a command from our queue"""
         sender = message.player

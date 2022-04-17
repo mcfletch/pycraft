@@ -434,23 +434,36 @@ async def get_click(*, listener=None, player=None):
 
 @expose()
 async def midas_touch(
-    material='minecraft:gold_block', count=25, *, listener=None, player=None
+    material='minecraft:gold_block',
+    count=25,
+    *,
+    listener=None,
+    player=None,
+    interpreter=None,
 ):
-    converted = set()
-    async for event in await listener.wait_for_events(player=player.name):
-        if event.action == 'RIGHT_CLICK_BLOCK':
-            block: final.Block = event.block_clicked
-            location: Location = block.location
-            key = location.world, int(location.x), int(location.y), int(location.z)
-            if key in converted:
-                continue
-            converted.add(key)
-            await final.Block(location=location).setType(material)
-            log.info("Converted: %s", location)
-            if len(converted) > count:
+    async def run_midas():
+        converted = set()
+        if not interpreter:
+            return
+        async for event in listener.wait_for_events(
+            event_type='PlayerInteractEvent',
+            player=player,
+            count=count,
+        ):
+            if event.action == 'RIGHT_CLICK_BLOCK':
+                block: final.Block = event.block_clicked
+                location: final.Location = block.location
+                key = location.world, int(location.x), int(location.y), int(location.z)
+                if key in converted:
+                    continue
+                converted.add(key)
+                await final.Block(location=location).setType(material)
+            elif event.action == 'LEFT_CLICK_BLOCK':
                 break
-        elif event.action == 'LEFT_CLICK_BLOCK':
-            break
+        await interpreter.broadcast_chat('Finished midas_touch')
+
+    asyncio.ensure_future(run_midas())
+    return 'Right click blocks with your empty hand to convert them'
 
 
 def matching_players(players: List[world.Player], player_name: str):
@@ -536,7 +549,7 @@ async def keep_inventory(keep=True, *, player=None, world=None):
 
 @expose()
 async def potion_of(
-    base='water_breathing',
+    type='water_breathing',
     *extra,
     player=None,
     world=None,
@@ -548,4 +561,10 @@ async def potion_of(
     metadata = await stack.getMeta()
     if not metadata:
         raise ValueError("No metadata on the stack %s", stack)
-    await metadata.setBasePotionData({'type': base})
+    base = await metadata.getBasePotionData()
+    base.type = type
+    base.upgraded = True
+    base.extended = True
+    await metadata.setBasePotionData(base)
+    base = await metadata.getBasePotionData()
+    print(base)

@@ -1,14 +1,13 @@
 """Expose commands via chat on a minecraft instance"""
 import asyncio
 from asyncio.events import get_event_loop
-import logging
+import logging, typing
 import re, time, weakref
 from .expose import (
     DEFAULT_COMMANDS,
     DEFAULT_NAMESPACE,
     expose,
 )
-import queue
 
 # from .lockedmc import locked
 import numpy as np
@@ -190,10 +189,13 @@ WorldUnloadEvent'''.split()
 class AListener(object):
     """Asyncio compatible listening service"""
 
+    channel: 'pycraft.channel.Channel'
     wanted = True
 
     def __init__(self, channel, interpreter=None):
         self.channel = channel
+        self.request_queue = None
+        self.request_queue_id = None
         if interpreter is None:
             from . import ainterpreter as default_interpreter
 
@@ -203,7 +205,9 @@ class AListener(object):
 
     async def listen(self):
         """Arrang to run our chat processing operations in the background"""
-        self.request_queue = await self.channel.subscribe("AsyncPlayerChatEvent")
+        self.request_queue, self.request_queue_id = await self.channel.subscribe(
+            "AsyncPlayerChatEvent"
+        )
         asyncio.ensure_future(self.process_chat_queue(self.request_queue))
         # for interaction in [
         #     'BlockPlaceEvent',
@@ -212,7 +216,7 @@ class AListener(object):
         #     'PlayerInteractEntityEvent',
         # ]:
 
-        #     queue = await self.channel.subscribe(interaction)
+        #     queue, id = await self.channel.subscribe(interaction)
         #     asyncio.ensure_future(self.process_interact_queue(queue, interaction))
 
     async def process_chat_queue(self, queue):
@@ -243,7 +247,7 @@ class AListener(object):
             await self.channel.server.broadcastMessage(str(response))
 
     async def process_interact_queue(
-        self, queue: asyncio.Queue, interaction: str, watchers: list
+        self, queue: asyncio.Queue, event_type: str, watchers: list, queue_id: int
     ):
         """Process queue of events from interactions"""
 
@@ -251,7 +255,7 @@ class AListener(object):
             watchers.remove(watcher)
 
         while self.wanted and watchers:
-            log.info("Getting %s...", interaction)
+            log.info("Getting %s...", event_type)
             message = await queue.get()
             log.info("Message: %s", message)
             for watcher in watchers:
@@ -265,73 +269,110 @@ class AListener(object):
                 else:
                     log.debug('Result of %s: %s', watcher, matched)
         if not watchers:
-            del self.event_watchers[interaction]
-        log.info("Unsubscribing from %s", interaction)
-        await self.channel.unsubscribe(interaction)
+            del self.event_watchers[event_type]
+        log.info("Unsubscribing from %s", event_type)
+        await self.channel.unsubscribe(event_type, queue_id)
+
+    def _filters_from_named(self, named):
+        for key in ['player', 'entity']:
+            if key in named:
+                value = named[key]
+                if isinstance(value, str):
+                    return [1, value]
+                elif hasattr(value, 'uuid'):
+                    return [1, value.uuid]
+                elif hasattr(value, 'name'):
+                    return [1, value.name]
+        if 'location' in named:
+            value = named['location']
+            if isinstance(value, (list, tuple)):
+                return [2, value, value]
+            elif hasattr(value, '__floor__'):
+                return [2, value.__floor__()[:3], value.__floor__()[:3]]
+            raise ValueError("Unrecognised location type: %r" % (value,))
+        if 'block' in named:
+            value = named['block']
+            return self._filters_from_named(
+                {'location': value.location if hasattr(value, 'location') else value}
+            )
+        if 'area' in named:
+            value = named['area']
+            first, last = value
+            fx, fy, fz = first[:3]
+            lx, ly, lz = last[:3]
+            fx, lx = min((fx, lx)), max((fx, lx))
+            fy, ly = min((fy, ly)), max((fy, ly))
+            fx, lz = min((fz, lz)), max((fz, lz))
+            return [2, (fx, fy, fz), (lx, ly, lz)]
+        return None
 
     async def wait_for_events(
         self,
         event_type: str = 'PlayerInteractEvent',
-        player: world.Player = None,
-        action: str = None,
+        filters: typing.Optional[list] = None,
         timeout: int = 30,
         max_count: int = 0,
+        **named
     ):
-        watchers = self.event_watchers.get(event_type, None)
-        result_queue = asyncio.Queue()
+        """Wait for events, yielding each as it occurs
 
-        filters = []
-        if player:
-            filters.append(player_test(player))
-        if action:
-            filters.append(action_test(action))
+        event_type -- Java Bukkit API name for the event
+        filters -- definition of a filter to be applied to the events
+                   [1, name] -- filter to entity name
+                   [1, uuid] -- filter to entity uuid
+                   [2, [0,0,0],[1,1,1]] -- filter to blocks in the (inclusive) area
+        timeout -- timeout in seconds after which we stop
+        max_count -- number of events after which we exit
+        named -- parameters to construct a filter:
+            user/entity -- str or Entity to match
+            location/block -- location or block to match
+            area -- 2 locations for inclusive area match
 
-        def watcher(message):
-            nonlocal watcher
-            for filter in filters:
-                if not filter(message):
-                    log.info("Ingoring due to failing filter %s", filter)
-                    return False
-            log.info("Matched watcher: %s", watcher)
-            try:
-                result_queue.put_nowait(message)
-            except asyncio.QueueFull:
-                log.warning("Dropping message %s due to full queue", message)
-                return
-
-        if watchers is None:
-            watchers = self.event_watchers[event_type] = [watcher]
-            queue = await self.channel.subscribe(event_type)
-            asyncio.ensure_future(
-                self.process_interact_queue(queue, event_type, watchers)
-            )
-        else:
-            watchers.append(watcher)
-
-        def cleanup(ref):
-            log.info("Removing watcher from %s (%s)", event_type, ref)
-            try:
-                watchers.remove(watcher)
-            except (TypeError, ValueError, KeyError):
-                pass
-
-        return QIter(result_queue, max_count=max_count, cleanup=cleanup)
+        returns async generator producing events matching the filters
+        """
+        if not filters:
+            filters = self._filters_from_named(named)
+        queue, queue_id = await self.channel.subscribe(event_type, *(filters or []))
+        log.info("Subscribed %s for %s", event_type, queue_id)
+        final_ts = time.time() + timeout
+        try:
+            count = 0
+            while True:
+                try:
+                    event = await asyncio.wait_for(
+                        queue.get(), timeout=final_ts - time.time()
+                    )
+                except asyncio.TimeoutError as err:
+                    log.info("Timeout waiting for %s for %s", event_type, queue_id)
+                    break
+                count += 1
+                yield event
+                if max_count and count >= max_count:
+                    break
+        finally:
+            log.info("Unsubscribing %s for %s", event_type, queue_id)
+            await self.channel.unsubscribe(event_type, queue_id)
 
     async def wait_for_event(
         self,
         event_type: str = 'PlayerInteractEvent',
-        player: world.Player = None,
-        action: str = None,
+        filters: typing.Optional[list] = None,
         timeout: int = 30,
+        **named
     ):
-        """Wait for the given user to generate an event of the given type"""
-        return await self.wait_for_events(
+        """Wait for a single event, exiting when it is received...
+
+        See wait_for_events for the parameters, this call merely
+        does an async_for over the events returning the first result
+        """
+        async for event in self.wait_for_events(
             event_type=event_type,
-            player=player,
-            action=action,
+            filters=filters,
             timeout=timeout,
             max_count=1,
-        )
+            **named
+        ):
+            return event
 
 
 class QIter(object):
@@ -376,14 +417,7 @@ class QIter(object):
 
 
 def player_test(player):
-    def test(message):
-        incoming = getattr(message, 'player', None)
-        if incoming and (incoming.name == player or incoming.uuid == player):
-            return True
-        return False
-
-    test.__name__ = 'player_eq_%s' % (player,)
-    return test
+    return 1, player.uuid
 
 
 def action_test(interaction_type):

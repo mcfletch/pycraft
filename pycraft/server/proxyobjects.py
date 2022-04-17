@@ -173,6 +173,9 @@ def _type_coerce(value, typ):
     elif typ in (np.ndarray,):
         # Not ideal to assume 'd' type
         return np.array(value, dtype='d')
+    if hasattr(typing, 'ForwardRef') and isinstance(typ, typing.ForwardRef):
+        # Yuck, why can't typing make an api that's actually usable???
+        typ = typ._evaluate(PROXY_TYPES, PROXY_CLASSES)
     # typ = _dict_typ(value) or typ
     typ = _dict_cls(value) or typ
 
@@ -544,7 +547,12 @@ async def construct_from_introspection(automatic: dict, channel):
         base = ServerObjectProxy
         clsDeclaration = declaration.get('cls')
         if clsDeclaration:
+            if name == 'World':
+                # TODO: broken introspection here, doesn't show up under test, but on real instance
+                # World shows up as an isKeyed...
+                clsDeclaration['isKeyed'] = False
             if clsDeclaration.get('isKeyed'):
+                log.info("Keyed type: %s", name)
                 base = KeyedServerObjectEnum
             elif clsDeclaration.get('isEnum'):
                 base = ServerObjectEnum

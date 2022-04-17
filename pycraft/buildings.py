@@ -561,7 +561,6 @@ async def column_up(material='chain', position=None, *, player=None, world=None)
         position = player.position + player.direction
     x, y, z = [int(v) for v in position.block_location()[:3]]
     maxHeight = int(await world.getMaxHeight())
-    print('max Height', maxHeight)
     y_height = maxHeight - y - 1
     if y_height < 1:
         return 'At the top of the world'
@@ -587,7 +586,5 @@ async def column_up(material='chain', position=None, *, player=None, world=None)
             break
     if not height:
         return 'Did not find a ceiling'
-    print('positions', positions)
-    print('blocks', blocks)
     await world.setBlockList(positions, blocks)
     return height

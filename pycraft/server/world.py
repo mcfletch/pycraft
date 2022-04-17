@@ -183,7 +183,11 @@ class Location(ServerObjectProxy):
         return self.__json__()
 
     def get_world(self):
-        return final.World(name=self.world)
+        return (
+            final.World(name=self.world)
+            if hasattr(final, 'World')
+            else World(name=self.world)
+        )
 
     def __init__(self, record):
         if isinstance(record, Location):
@@ -330,7 +334,7 @@ class Entity(ServerObjectProxy):
 
     __namespace__ = 'Entity'
     world: str
-    location: Location
+    location: 'final.Location'
     uuid: uuid.UUID
     type: str
     name: str
@@ -375,7 +379,7 @@ class Player(Entity):
     __namespace__ = 'Player'
 
     world: str
-    location: Location
+    location: 'final.Location'
     uuid: uuid.UUID
     type: str
     name: str
@@ -412,7 +416,7 @@ class World(ServerObjectProxy):
 
     __namespace__ = 'World'
     name: str
-    players: typing.List[Player]
+    players: typing.List['Player']
     type: str
 
     def get_key(self):
@@ -454,7 +458,7 @@ class Server(ServerObjectProxy):
     __namespace__ = 'Server'
     version: str
     pycraft_version: str
-    worlds: typing.List[World]
+    worlds: typing.List['World']
 
     channel: object
 
@@ -462,9 +466,9 @@ class Server(ServerObjectProxy):
 @OverrideType
 class ItemStack(ServerObjectProxy):
     __namespace__ = 'ItemStack'
-    material: Material
+    material: 'Material'
     amount: int
-    enchantments: typing.Dict[Enchantment, int]
+    enchantments: typing.Dict['Enchantment', int]
 
     def __json__(self):
         return self.key
@@ -608,8 +612,8 @@ class Inventory(ServerObjectProxy):
     type: str
     inventoryType: str
     size: int
-    contents: typing.List[ItemStack]
-    holder: typing.Union[Entity, Player, Block, BlockData, Location, None]
+    contents: typing.List['ItemStack']
+    holder: typing.Union['Entity', 'Player', 'Block', 'BlockData', 'Location', None]
     firstEmpty: int
 
     def empty_slots(self):
@@ -705,14 +709,14 @@ class Event(ServerObjectProxy):
     __namespace__ = 'Event'
     type: str
     message: str
-    block: Block
-    player: Player
-    item_in_hand: ItemStack
+    block: 'Block'
+    player: 'Player'
+    item_in_hand: 'ItemStack'
     exp_to_drop: int
     will_drop: bool
     can_build: bool
-    block_against: Block
-    block_clicked: Block
+    block_against: 'Block'
+    block_clicked: 'Block'
 
 
 @OverrideType

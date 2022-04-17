@@ -23,7 +23,7 @@ async def test_introspect_cached():
     assert hasattr(cls, 'get_key'), dir(cls)
 
     inst = proxyobjects.type_coerce(struct, 'Entity')
-    assert inst.__class__ == cls, inst.__class__
+    assert inst.__class__.__name__ == 'CraftHorse', inst.__class__
     assert isinstance(inst, world.Entity), cls.__mro__
 
 
@@ -67,7 +67,6 @@ async def test_World():
         from pycraft.server import final
 
         worlds = await final.Server.getWorlds('server')
-        print('Worlds: %s' % (worlds,))
         for world in worlds:
             for expected in [
                 'spawnEntity',

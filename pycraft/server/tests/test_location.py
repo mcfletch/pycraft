@@ -20,6 +20,7 @@ def test_location_operations():
         display_name='VRPlumber',
         uuid='a57d84d6-02eb-354d-90ec-25e6779b2400',
     )
+    assert isinstance(player.location, world.Location), player.location
     assert np.allclose(
         player.location[:3], [-136.7073, 63, 95.5307], rtol=0.1, atol=0.01
     )

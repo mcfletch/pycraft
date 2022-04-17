@@ -52,6 +52,15 @@ def type_name_to_type(name):
 
 
 def type_coerce(value, typ):
+    if isinstance(typ, str):
+        if typ.startswith('final.'):
+            typ = typ[6:]
+        typ = PROXY_TYPES.get(typ[6:], typ)
+        if isinstance(typ, str):
+            # test cases where we have not introspected...
+            from . import world
+
+            typ = getattr(world, typ)
     try:
         return _type_coerce(value, typ)
     except Exception as err:
@@ -154,7 +163,6 @@ def is_a_typing_union(typ):
 
 def _type_coerce(value, typ):
     """Attempt to coerce value to the given typ"""
-    from . import world
 
     if value is None:
         return None
@@ -572,3 +580,11 @@ async def construct_from_introspection(automatic: dict, channel):
         proxy.inject_methods(channel, proxy.__declaration__)
         PROXY_TYPES[name] = proxy
         setattr(final, name, proxy)
+
+    for name, proxy in seen_classes.items():
+        mapping = getattr(proxy, '__annotations__', {})
+        for key, typ in list(mapping.items()):
+            if isinstance(typ, str):
+                if typ.startswith('final.'):
+                    value = PROXY_TYPES[typ[6:]]
+                    mapping[key] = value

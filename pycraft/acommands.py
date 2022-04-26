@@ -568,3 +568,26 @@ async def potion_of(
     await metadata.setBasePotionData(base)
     base = await metadata.getBasePotionData()
     print(base)
+
+
+@expose()
+async def vengence(*, player=None, listener=None, server=None):
+    """Every hit for the next 50 hits does 100 damage"""
+
+    async def v_watcher():
+        async for event in listener.wait_for_events(
+            'EntityDamageByEntityEvent',
+            count=500,
+            timeout=3600 * 2,
+        ):
+            if event.damager.get('name') == player.name:
+                try:
+                    target = final.Entity(**event.entity)
+                    if target.type != 'Player':
+                        await target.remove()
+                        await server.broadcastMessage('Death to the %s' % (target.name))
+                except Exception as err:
+                    print(err)
+
+    asyncio.ensure_future(v_watcher())
+    return "Vengence shall be harsh"

@@ -555,7 +555,9 @@ async def temple(
 
 
 @expose.expose()
-async def column_up(material='chain', position=None, *, player=None, world=None):
+async def column_up(
+    material='chain', position=None, to_air=False, *, player=None, world=None
+):
     """Create a chain in the block in front of you going up to a solid block"""
     if position is None:
         position = player.position + player.direction
@@ -576,7 +578,12 @@ async def column_up(material='chain', position=None, *, player=None, world=None)
     for index, layer in enumerate(above[1:]):
         # note that index is -1 from real index
         content = layer[0][0]
-        if content == first:
+        if to_air and content != 'minecraft:air':
+            positions.append(
+                position + (0, index + 1, 0)
+            )  # one for get offset, one for index offset
+            blocks.append(material)
+        elif (not to_air) and content == first:
             positions.append(
                 position + (0, index + 1, 0)
             )  # one for get offset, one for index offset
@@ -588,3 +595,19 @@ async def column_up(material='chain', position=None, *, player=None, world=None)
         return 'Did not find a ceiling'
     await world.setBlockList(positions, blocks)
     return height
+
+
+@expose.expose()
+async def elevator_up(position=None, *, player=None, world=None):
+    """Construct a water-elevator going up"""
+    if position is None:
+        position = player.position + player.direction
+    x, y, z = [int(v) for v in position.block_location()[:3]]
+    await world.setBlockList([[position.world, x, y - 1, z]], ['soul_sand'])
+    await column_up(
+        material='bubble_column[drag=false]',
+        position=position,
+        to_air=True,
+        player=player,
+        world=world,
+    )

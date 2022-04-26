@@ -209,15 +209,6 @@ class AListener(object):
             "AsyncPlayerChatEvent"
         )
         asyncio.ensure_future(self.process_chat_queue(self.request_queue))
-        # for interaction in [
-        #     'BlockPlaceEvent',
-        #     'BlockBreakEvent',
-        #     'PlayerInteractEvent',
-        #     'PlayerInteractEntityEvent',
-        # ]:
-
-        #     queue, id = await self.channel.subscribe(interaction)
-        #     asyncio.ensure_future(self.process_interact_queue(queue, interaction))
 
     async def process_chat_queue(self, queue):
         """Process chat events from the queue"""

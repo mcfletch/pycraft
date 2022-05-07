@@ -1,7 +1,8 @@
 """Create building-like structures for players"""
 from pycraft.directions import as_cube
 import numpy as np
-import random, os
+import random, os, typing
+import itertools
 import logging
 from . import expose, directions, randomchoice
 from .server.world import Vector
@@ -554,9 +555,48 @@ async def temple(
     await world.setBlockList(positions, blocks)
 
 
+def strip_top_air(materials):
+    for item in materials[::-1]:
+        item = item[0][0]
+        if item == 'minecraft:air':
+            del materials[-1]
+        else:
+            break
+    return materials
+
+
+def until_air(materials):
+    for item in materials:
+        item = item[0][0]
+        if item != 'minecraft:air':
+            yield item
+        else:
+            break
+
+
+def until_change(materials):
+    first = None
+    for item in materials:
+        item = item[0][0]
+        if first is None:
+            first = item
+        else:
+            if item == first:
+                yield item
+            else:
+                break
+
+
 @expose.expose()
 async def column_up(
-    material='chain', position=None, to_air=False, *, player=None, world=None
+    material: typing.Union[list, str] = 'chain',
+    position=None,
+    height=None,
+    to_air=False,
+    to_surface=False,
+    *,
+    player=None,
+    world=None,
 ):
     """Create a chain in the block in front of you going up to a solid block"""
     if position is None:
@@ -566,39 +606,46 @@ async def column_up(
     y_height = maxHeight - y - 1
     if y_height < 1:
         return 'At the top of the world'
+
     step = 20
     above = await world.getBlocks(
         [x, y, z],
         [1, y_height, 1],
     )
-    first = above[0][0][0]
+    if height:
+        above = [layer[0][0] for layer in above[:height]]
+    elif to_air:
+        above = list(until_air(above))
+    elif to_surface:
+        above = strip_top_air(above)
+        if len(above) < 2:
+            return 'Did not find a ceiling'
+    else:
+        above = list(until_change(above))
+        if len(above) < 2:
+            return 'Did not find a ceiling'
+
+    if isinstance(material, list):
+        next_material = itertools.cycle(material).__next__
+    else:
+
+        def next_material():
+            return material
 
     height = 0
-    positions, blocks = [position], [material]
-    for index, layer in enumerate(above[1:]):
+    positions, blocks = [position], [next_material()]
+    for index, current in enumerate(above[1:]):
         # note that index is -1 from real index
-        content = layer[0][0]
-        if to_air and content != 'minecraft:air':
-            positions.append(
-                position + (0, index + 1, 0)
-            )  # one for get offset, one for index offset
-            blocks.append(material)
-        elif (not to_air) and content == first:
-            positions.append(
-                position + (0, index + 1, 0)
-            )  # one for get offset, one for index offset
-            blocks.append(material)
-        else:
-            height = index
-            break
-    if not height:
-        return 'Did not find a ceiling'
+        positions.append(
+            position + (0, index + 1, 0)
+        )  # one for get offset, one for index offset
+        blocks.append(next_material())
     await world.setBlockList(positions, blocks)
     return height
 
 
 @expose.expose()
-async def elevator_up(position=None, *, player=None, world=None):
+async def elevator_up(position=None, to_surface=False, *, player=None, world=None):
     """Construct a water-elevator going up"""
     if position is None:
         position = player.position + player.direction
@@ -607,7 +654,76 @@ async def elevator_up(position=None, *, player=None, world=None):
     await column_up(
         material='bubble_column[drag=false]',
         position=position,
-        to_air=True,
+        to_air=not to_surface,
+        to_surface=to_surface,
+        player=player,
+        world=world,
+    )
+
+
+@expose.expose()
+async def torch_tower(
+    position=None,
+    height=None,
+    to_air=False,
+    to_surface=False,
+    *,
+    player=None,
+    world=None,
+):
+    """Construct a redstone torch tower to transmit redstone signal upward"""
+    return await column_up(
+        [
+            'dirt',
+            'redstone_torch',
+        ],
+        position=position,
+        height=height,
+        to_air=to_air,
+        to_surface=to_surface,
+        player=player,
+        world=world,
+    )
+
+
+@expose.expose()
+async def torch_cascade(
+    position=None,
+    height=None,
+    to_air=False,
+    to_surface=False,
+    *,
+    player=None,
+    world=None,
+):
+    forward, cross = directions.forward_and_cross(player.direction)
+    position = player.position + forward
+    await column_up(
+        [
+            'dirt',
+            'redstone_wire[north=none,west=none,east=none,south=none]',
+            'redstone_wall_torch[facing=east]',
+            'air',
+        ],
+        position=position,
+        height=height,
+        to_air=to_air,
+        to_surface=to_surface,
+        player=player,
+        world=world,
+    )
+    position = position - (1, 0, 0) + (0, 2, 0)
+    await column_up(
+        [
+            'dirt',
+            'redstone_wire[north=none,west=none,east=none,south=none]',
+            'redstone_wall_torch[facing=west]',
+            'air',
+        ],
+        position=position,
+        height=height if height is None else height - 2,
+        to_air=to_air,
+        to_surface=to_surface,
         player=player,
         world=world,
     )

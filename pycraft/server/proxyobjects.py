@@ -540,10 +540,10 @@ async def construct_from_introspection(automatic: dict, channel):
             name = declaration['name']
         except KeyError:
             raise KeyError('name', declaration)
-        if declaration.get('cls') and declaration.get('cls').get('interfaces'):
-            bases = declaration.get('cls').get('interfaces')
-        else:
-            bases = []
+        # if declaration.get('cls') and declaration.get('cls').get('interfaces'):
+        #     bases = declaration.get('cls').get('interfaces')
+        # else:
+        #     bases = []
         base = ServerObjectProxy
         clsDeclaration = declaration.get('cls')
         if clsDeclaration:
@@ -556,6 +556,7 @@ async def construct_from_introspection(automatic: dict, channel):
                 base = KeyedServerObjectEnum
             elif clsDeclaration.get('isEnum'):
                 base = ServerObjectEnum
+        # bases.append(base)
 
         overrides = OVERRIDE_TYPES.get(name)
         cls = type(

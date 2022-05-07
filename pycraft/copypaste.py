@@ -43,7 +43,21 @@ async def copy(
         position = player.tile_position + direction
 
     start = position - (cross * (width // 2))
-    stop = start + (cross * width) + (direction * depth) + (Vector(0, 1, 0) * height)
+    stop = (
+        start
+        + (cross * (width - 1))
+        + (direction * (depth - 1))
+        + (Vector(0, 1, 0) * (height - 1))
+    )
+
+    print(
+        'Start=%s Stop=%s position=%s direction=%s cross=%s',
+        start,
+        stop,
+        position,
+        direction,
+        cross,
+    )
 
     layers = await world.getBlockArray(start, stop)
 
@@ -52,8 +66,15 @@ async def copy(
 
 
 @expose.expose()
-async def show_pastes():
-    """Show the name of pastes that are available"""
+async def show_pastes(substring=None):
+    """Show the name of pastes that are available
+
+    If `substring` is passed, we will restrict to names that have that
+    string (case insensitively) in their filename.
+    """
+    if substring:
+        test = substring.lower()
+        return sorted([x for x in list_templates() if test in x.lower()])
     return list_templates()
 
 
@@ -79,6 +100,10 @@ async def paste(
     if not template:
         return f'No template {name} found'
 
+    template_blocks = template.get('blocks')
+    if not template_blocks:
+        return f'Tempalte {name} has no blocks member'
+
     if direction is None:
         direction = player.direction
     direction, cross = directions.forward_and_cross(direction)
@@ -89,11 +114,14 @@ async def paste(
     if position is None:
         position = player.tile_position + direction
 
+    if template.get('offset'):
+        position += template['offset']
+
     up = Vector(0, 1, 0)
 
-    height = len(template)
-    depth = len(template[0])
-    width = len(template[0][0])
+    height = len(template_blocks)
+    depth = len(template_blocks[0])
+    width = len(template_blocks[0][0])
 
     log.info("Template size: %s,%s,%s", depth, width, height)
 
@@ -115,7 +143,7 @@ async def paste(
         return 'Unable to determine start position'
 
     locations, blocks = [], []
-    for y, layer in enumerate(template):
+    for y, layer in enumerate(template_blocks):
         for z, row in enumerate(layer):
             for x, cell in enumerate(row):
                 locations.append(start + (x, y, z))
@@ -137,18 +165,27 @@ def template_filename(player, template_name):
     """
     playername = sanitize(player.name)
     template_name = sanitize(template_name)
-    return os.path.join(TEMPLATES, template_name)
+    return os.path.join(TEMPLATES, template_name) + '.json'
 
 
 def save_template(player, name, template):
+    """Save a template to a file using the proxy encoder to allow saving e.g. locations/directions"""
+    from pycraft.server import channel
+
     filename = template_filename(player, name)
     log.info("Saving to file: %s", filename)
     struct = {
         'author': player.name,
         'name': name,
         'blocks': template,
+        'location': player.location,
+        'direction': player.direction,
     }
-    result = json.dumps(struct)
+
+    result = json.dumps(
+        struct,
+        cls=channel.ProxyEncoder,
+    )
     with open(filename, 'w') as fh:
         fh.write(result)
 
@@ -158,10 +195,14 @@ def load_template(player, name):
     log.info("Loading from file: %s", filename)
     if os.path.exists(filename):
         content = json.loads(open(filename).read())
-        return content['blocks']
+        return content
     log.info("No such file: %s", filename)
     return None
 
 
 def list_templates():
-    return sorted(os.listdir(TEMPLATES))
+    return [
+        x[0]
+        for x in [os.path.splitext(x) for x in sorted(os.listdir(TEMPLATES))]
+        if x[1] == '.json'
+    ]

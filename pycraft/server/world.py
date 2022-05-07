@@ -720,6 +720,18 @@ class Event(ServerObjectProxy):
 
 
 @OverrideType
+class EntityEvent(ServerObjectProxy):
+    __namespace__ = 'EntityEvent'
+    entity: 'Entity'
+
+
+@OverrideType
+class EntityDamageByEntityEvent(ServerObjectProxy):
+    __namespace__ = 'EntityDamageByEntityEvent'
+    damager: 'Entity'
+
+
+@OverrideType
 class GameRule(ServerObjectProxy):
     __namespace__ = 'GameRule'
 

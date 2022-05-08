@@ -2,6 +2,7 @@ import re, os, json, logging
 import numpy as np
 from . import expose, directions
 from .server.world import Vector
+from . import bulldozer, parsematerial
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES = os.path.join(HERE, 'templates')
@@ -78,6 +79,50 @@ async def show_pastes(substring=None):
     return list_templates()
 
 
+def rotated_template(template, player):
+    """Given a template, try to rotate to match the current orientation
+
+    player.direction determines the rotation IFF there is a `direction`
+    key in the original. We look at the major direction of the original
+    and compare to the current, producing a number-of-CW-rotations
+    to apply to the template. Each rotation transforms the X and Z such
+    the first makes an AxB into a BxA and the second into an AxB again
+    but with the order reversed (since it's a 180deg rotation then).
+    """
+    if not 'direction' in template:
+        return template
+    original_direction = bulldozer.roughly_forward(template['direction'])
+    direction = bulldozer.roughly_forward(player.direction)
+    if original_direction == direction:
+        return template
+    template = template.copy()
+    blocks = template['blocks'][:]
+    if original_direction == direction * -1:
+        steps = 2
+        log.info('Rotated twice')
+        for layer in blocks:
+            layer[:] = layer[::-1]
+    else:
+        # so the remaining cases are the 1 or 3 rotations...
+        steps = parsematerial.steps_between(tuple(original_direction), tuple(direction))
+        if steps == 3:
+            log.info('Rotated three times')
+            for layer in blocks:
+                layer[:] = [np.transpose(layer).tolist()]
+            steps = 1
+        else:
+            log.info('Rotated once')
+            for layer in blocks:
+                layer[:] = np.transpose(layer).tolist()[::-1]
+            steps = 3
+
+    for layer in blocks:
+        layer[:] = [[parsematerial.rotate(m, steps) for m in row] for row in layer]
+
+    template['blocks'] = blocks
+    return template
+
+
 @expose.expose()
 async def paste(
     name='stamp',
@@ -99,6 +144,8 @@ async def paste(
 
     if not template:
         return f'No template {name} found'
+
+    template = rotated_template(template, player)
 
     template_blocks = template.get('blocks')
     if not template_blocks:

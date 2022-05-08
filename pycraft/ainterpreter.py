@@ -54,6 +54,7 @@ class AInterpreter(object):
         namespace['world'] = sender.location.get_world()
         namespace['listener'] = self.listener
         namespace['interpreter'] = self
+        namespace['type'] = lambda x: type(x)
 
         return namespace
 

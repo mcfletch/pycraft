@@ -175,7 +175,10 @@ def _type_coerce(value, typ):
         return np.array(value, dtype='d')
     if hasattr(typing, 'ForwardRef') and isinstance(typ, typing.ForwardRef):
         # Yuck, why can't typing make an api that's actually usable???
-        typ = typ._evaluate(PROXY_TYPES, PROXY_CLASSES)
+        if sys.version_tuple >= (3,10):
+            typ = typ._evaluate(PROXY_TYPES, PROXY_CLASSES, set())
+        else:
+            typ = typ._evaluate(PROXY_TYPES, PROXY_CLASSES)
     # typ = _dict_typ(value) or typ
     typ = _dict_cls(value) or typ
 
@@ -426,11 +429,19 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
     def __init__(self, **named):
         """Set each named key/value as an attribute on object"""
         for key, value in named.items():
-            typ = getattr(self, '__annotations__', {}).get(key)
+            typ = self._prop_typ(key)
             if typ:
                 setattr(self, key, type_coerce(value, typ))
             else:
                 setattr(self, key, value)
+    
+    @classmethod
+    def _prop_typ(cls, key):
+        for src in cls.mro():
+            annot = getattr(src,'__annotations__', None)
+            if annot and key in annot:
+                return annot[key]
+        return None
 
     def __str__(self):
         return '%s(%s)' % (

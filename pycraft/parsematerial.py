@@ -42,14 +42,25 @@ NESW_DIRS = [
 ]
 
 
+def _news_steps():
+    i = 0
+    for i in range(12):
+        yield NESW_DIRS[i % len(NESW_DIRS)]
+
+
 @lru_cache(maxsize=16)
 def steps_between(direction, other):
     """Calculate the NESW rotations needed to map direction onto other"""
-    direction = tuple(direction)
-    for i, value in enumerate(NESW_DIRS):
+    if direction == other:
+        return 0
+    assert direction in NESW_DIRS, "Must be a cardinal direction"
+    assert other in NESW_DIRS, "Must be a cardinal direction"
+    start = -1
+    for i, value in enumerate(_news_steps()):
         if value == direction:
-            test = NESW_DIRS[i + 1 :] + NESW_DIRS[:i]
-            return test.index(tuple(other))
+            start = i
+        if start > -1 and value == other:
+            return i - start
     raise ValueError(f"Did not find direction {direction} in the NESW directions")
 
 

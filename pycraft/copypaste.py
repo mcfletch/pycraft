@@ -90,10 +90,12 @@ def rotated_template(template, player):
     but with the order reversed (since it's a 180deg rotation then).
     """
     if not 'direction' in template:
+        log.info("Template %s has no direction", template.get('name'))
         return template
     original_direction = bulldozer.roughly_forward(template['direction'])
     direction = bulldozer.roughly_forward(player.direction)
     if original_direction == direction:
+        log.info("Direction matches copy")
         return template
     template = template.copy()
     blocks = template['blocks'][:]
@@ -108,13 +110,11 @@ def rotated_template(template, player):
         if steps == 3:
             log.info('Rotated three times')
             for layer in blocks:
-                layer[:] = [np.transpose(layer).tolist()]
-            steps = 1
+                layer[:] = np.transpose(layer).tolist()
         else:
             log.info('Rotated once')
             for layer in blocks:
-                layer[:] = np.transpose(layer).tolist()[::-1]
-            steps = 3
+                layer[:] = np.transpose(layer)[:, ::-1].tolist()
 
     for layer in blocks:
         layer[:] = [[parsematerial.rotate(m, steps) for m in row] for row in layer]
@@ -170,12 +170,16 @@ async def paste(
     depth = len(template_blocks[0])
     width = len(template_blocks[0][0])
 
+    log.info("Player location: %s Direction: %s", player.tile_position, direction)
+    log.info("Position: %s", position)
     log.info("Template size: %s,%s,%s", depth, width, height)
 
-    # the template doesn't rotate, so we need to decide our position relative to it
-    # rather than its position
+    # The template's rotation is already applied, so we just need
+    # to find the point forward one and to our left
+
+    start = position - (cross * (width // 2))
     if direction[2] > 0:
-        # we are facing north, native format, so start is to our left
+        # facing east, so width is really width
         start = position - (cross * (width // 2))
     elif direction[2] < 0:
         # we are facing south, so we need to make start the full depth and then to our right...
@@ -185,7 +189,7 @@ async def paste(
         start = position - (cross * (depth // 2))
     elif direction[0] < 0:
         # we are facing west, so we should start from depth//2 to our left + width
-        start = position + (cross * (depth // 2)) + (direction * (depth - 1))
+        start = position + (cross * (depth // 2)) + (direction * (depth))
     else:
         return 'Unable to determine start position'
 

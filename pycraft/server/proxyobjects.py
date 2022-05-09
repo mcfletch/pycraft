@@ -2,6 +2,7 @@
 import typing
 import uuid
 import logging
+import sys
 import numpy as np
 from asyncstdlib.functools import lru_cache
 from functools import wraps
@@ -175,7 +176,7 @@ def _type_coerce(value, typ):
         return np.array(value, dtype='d')
     if hasattr(typing, 'ForwardRef') and isinstance(typ, typing.ForwardRef):
         # Yuck, why can't typing make an api that's actually usable???
-        if sys.version_tuple >= (3,10):
+        if sys.version_info >= (3, 10):
             typ = typ._evaluate(PROXY_TYPES, PROXY_CLASSES, set())
         else:
             typ = typ._evaluate(PROXY_TYPES, PROXY_CLASSES)
@@ -434,11 +435,11 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
                 setattr(self, key, type_coerce(value, typ))
             else:
                 setattr(self, key, value)
-    
+
     @classmethod
     def _prop_typ(cls, key):
         for src in cls.mro():
-            annot = getattr(src,'__annotations__', None)
+            annot = getattr(src, '__annotations__', None)
             if annot and key in annot:
                 return annot[key]
         return None

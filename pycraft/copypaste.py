@@ -99,22 +99,11 @@ def rotated_template(template, player):
         return template
     template = template.copy()
     blocks = template['blocks'][:]
-    if original_direction == direction * -1:
-        steps = 2
-        log.info('Rotated twice')
-        for layer in blocks:
-            layer[:] = layer[::-1]
-    else:
-        # so the remaining cases are the 1 or 3 rotations...
-        steps = parsematerial.steps_between(tuple(original_direction), tuple(direction))
-        if steps == 3:
-            log.info('Rotated three times')
-            for layer in blocks:
-                layer[:] = np.transpose(layer).tolist()
-        else:
-            log.info('Rotated once')
-            for layer in blocks:
-                layer[:] = np.transpose(layer)[:, ::-1].tolist()
+
+    steps = parsematerial.steps_between(tuple(original_direction), tuple(direction))
+
+    for layer in blocks:
+        layer[:] = np.rot90(layer, steps, axes=(1, 0))
 
     for layer in blocks:
         layer[:] = [[parsematerial.rotate(m, steps) for m in row] for row in layer]

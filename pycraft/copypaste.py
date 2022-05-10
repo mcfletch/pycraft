@@ -166,7 +166,7 @@ async def paste(
     # The template's rotation is already applied, so we just need
     # to find the point forward one and to our left
 
-    start = position - (cross * (width // 2))
+    # start = position - (cross * (width // 2))
     if direction[2] > 0:
         # facing east, so width is really width
         start = position - (cross * (width // 2))
@@ -174,11 +174,11 @@ async def paste(
         # we are facing south, so we need to make start the full depth and then to our right...
         start = position + (cross * (width // 2)) + (direction * (depth - 1))
     elif direction[0] > 0:
-        # we are facing east, so we should start from depth//2 to our right
+        # we are facing east (positive X), so we should start from depth//2 to our right
         start = position - (cross * (depth // 2))
     elif direction[0] < 0:
         # we are facing west, so we should start from depth//2 to our left + width
-        start = position + (cross * (depth // 2)) + (direction * (depth))
+        start = position + (cross * (depth // 2)) + (direction * (width - 1))
     else:
         return 'Unable to determine start position'
 

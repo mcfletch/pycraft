@@ -159,9 +159,9 @@ async def paste(
     depth = len(template_blocks[0])
     width = len(template_blocks[0][0])
 
-    log.info("Player location: %s Direction: %s", player.tile_position, direction)
-    log.info("Position: %s", position)
-    log.info("Template size: %s,%s,%s", depth, width, height)
+    # log.info("Player location: %s Direction: %s", player.tile_position, direction)
+    # log.info("Position: %s", position)
+    # log.info("Template size: %s,%s,%s", depth, width, height)
 
     # The template's rotation is already applied, so we just need
     # to find the point forward one and to our left

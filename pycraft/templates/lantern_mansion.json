@@ -6,7 +6,7 @@
         1,
         0
     ],
-    "description": "Large house with furnaces, chests, 2 floors, beds, etc",
+    "description": "Deepslate brick mansion, red roof, cheery lanterns, 2 stories with crafting setup and beds",
     "blocks": [
         [
             [
@@ -94,9 +94,9 @@
                 "minecraft:deepslate_tiles",
                 "minecraft:deepslate_tiles",
                 "minecraft:deepslate_bricks",
-                "minecraft:stripped_oak_wood[axis=y]",
-                "minecraft:stripped_oak_wood[axis=y]",
-                "minecraft:stripped_oak_wood[axis=y]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
+                "minecraft:stripped_dark_oak_log[axis=y]",
                 "minecraft:air"
             ],
             [
@@ -114,7 +114,7 @@
                 "minecraft:deepslate_bricks",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:stripped_oak_wood[axis=z]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
                 "minecraft:air"
             ],
             [
@@ -132,7 +132,7 @@
                 "minecraft:deepslate_bricks",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:stripped_oak_wood[axis=z]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
                 "minecraft:air"
             ],
             [
@@ -149,9 +149,9 @@
                 "minecraft:deepslate_tiles",
                 "minecraft:deepslate_bricks",
                 "minecraft:air",
-                "minecraft:air",
-                "minecraft:stripped_oak_wood[axis=y]",
-                "minecraft:stripped_oak_wood[axis=y]"
+                "minecraft:stripped_dark_oak_log[axis=y]",
+                "minecraft:stripped_dark_oak_log[axis=x]",
+                "minecraft:stripped_dark_oak_log[axis=y]"
             ],
             [
                 "minecraft:deepslate_bricks",
@@ -204,8 +204,8 @@
                 "minecraft:deepslate_bricks",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:stripped_oak_wood[axis=y]",
-                "minecraft:stripped_oak_wood[axis=y]"
+                "minecraft:stripped_dark_oak_log[axis=y]",
+                "minecraft:stripped_dark_oak_log[axis=y]"
             ],
             [
                 "minecraft:air",
@@ -222,7 +222,7 @@
                 "minecraft:deepslate_bricks",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:stripped_oak_wood[axis=z]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
                 "minecraft:air"
             ],
             [
@@ -240,7 +240,7 @@
                 "minecraft:deepslate_bricks",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:stripped_oak_wood[axis=z]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
                 "minecraft:air"
             ],
             [
@@ -256,9 +256,9 @@
                 "minecraft:deepslate_tiles",
                 "minecraft:deepslate_tiles",
                 "minecraft:deepslate_bricks",
-                "minecraft:stripped_oak_wood[axis=y]",
-                "minecraft:stripped_oak_wood[axis=y]",
-                "minecraft:stripped_oak_wood[axis=y]",
+                "minecraft:stripped_dark_oak_wood[axis=x]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
+                "minecraft:stripped_dark_oak_log[axis=y]",
                 "minecraft:air"
             ],
             [
@@ -420,9 +420,9 @@
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:deepslate_bricks",
-                "minecraft:stripped_oak_wood[axis=y]",
-                "minecraft:stripped_oak_wood[axis=y]",
-                "minecraft:stripped_oak_wood[axis=y]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
+                "minecraft:stripped_dark_oak_log[axis=y]",
                 "minecraft:air"
             ],
             [
@@ -440,7 +440,7 @@
                 "minecraft:deepslate_bricks",
                 "minecraft:stone_bricks",
                 "minecraft:stone_bricks",
-                "minecraft:stripped_oak_wood[axis=z]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
                 "minecraft:air"
             ],
             [
@@ -458,7 +458,7 @@
                 "minecraft:deepslate_bricks",
                 "minecraft:stone_bricks",
                 "minecraft:stone_bricks",
-                "minecraft:stripped_oak_wood[axis=z]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
                 "minecraft:air"
             ],
             [
@@ -476,8 +476,8 @@
                 "minecraft:deepslate_bricks",
                 "minecraft:stone_bricks",
                 "minecraft:stone_bricks",
-                "minecraft:stripped_oak_wood[axis=y]",
-                "minecraft:stripped_oak_wood[axis=y]"
+                "minecraft:stripped_dark_oak_log[axis=y]",
+                "minecraft:stripped_dark_oak_log[axis=y]"
             ],
             [
                 "minecraft:deepslate_bricks",
@@ -530,8 +530,8 @@
                 "minecraft:deepslate_bricks",
                 "minecraft:stone_bricks",
                 "minecraft:stone_bricks",
-                "minecraft:stripped_oak_wood[axis=y]",
-                "minecraft:stripped_oak_wood[axis=y]"
+                "minecraft:stripped_dark_oak_log[axis=y]",
+                "minecraft:stripped_dark_oak_log[axis=y]"
             ],
             [
                 "minecraft:air",
@@ -548,7 +548,7 @@
                 "minecraft:deepslate_bricks",
                 "minecraft:stone_bricks",
                 "minecraft:stone_bricks",
-                "minecraft:stripped_oak_wood[axis=z]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
                 "minecraft:air"
             ],
             [
@@ -566,7 +566,7 @@
                 "minecraft:deepslate_bricks",
                 "minecraft:stone_bricks",
                 "minecraft:stone_bricks",
-                "minecraft:stripped_oak_wood[axis=z]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
                 "minecraft:air"
             ],
             [
@@ -582,9 +582,9 @@
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:deepslate_bricks",
-                "minecraft:stripped_oak_wood[axis=y]",
-                "minecraft:stripped_oak_wood[axis=y]",
-                "minecraft:stripped_oak_wood[axis=y]",
+                "minecraft:stripped_dark_oak_wood[axis=x]",
+                "minecraft:stripped_dark_oak_wood[axis=y]",
+                "minecraft:stripped_dark_oak_log[axis=y]",
                 "minecraft:air"
             ],
             [
@@ -746,9 +746,9 @@
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:deepslate_bricks",
-                "minecraft:oak_fence[east=true,north=false,south=false,waterlogged=false,west=true]",
-                "minecraft:oak_fence[east=true,north=false,south=false,waterlogged=false,west=true]",
-                "minecraft:oak_fence[east=false,north=false,south=true,waterlogged=false,west=true]",
+                "minecraft:dark_oak_fence[east=true,north=false,south=false,waterlogged=false,west=true]",
+                "minecraft:dark_oak_fence[east=true,north=false,south=false,waterlogged=false,west=true]",
+                "minecraft:dark_oak_fence[east=false,north=false,south=true,waterlogged=false,west=true]",
                 "minecraft:air"
             ],
             [
@@ -766,7 +766,7 @@
                 "minecraft:blue_stained_glass",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:oak_fence[east=false,north=true,south=true,waterlogged=false,west=false]",
+                "minecraft:dark_oak_fence[east=false,north=true,south=true,waterlogged=false,west=false]",
                 "minecraft:air"
             ],
             [
@@ -784,7 +784,7 @@
                 "minecraft:blue_stained_glass",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:oak_fence[east=false,north=true,south=true,waterlogged=false,west=false]",
+                "minecraft:dark_oak_fence[east=false,north=true,south=true,waterlogged=false,west=false]",
                 "minecraft:air"
             ],
             [
@@ -802,8 +802,8 @@
                 "minecraft:deepslate_bricks",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:oak_fence[east=true,north=true,south=false,waterlogged=false,west=false]",
-                "minecraft:oak_fence[east=false,north=false,south=false,waterlogged=false,west=true]"
+                "minecraft:dark_oak_fence[east=true,north=true,south=false,waterlogged=false,west=false]",
+                "minecraft:dark_oak_fence[east=false,north=false,south=false,waterlogged=false,west=true]"
             ],
             [
                 "minecraft:deepslate_bricks",
@@ -856,8 +856,8 @@
                 "minecraft:deepslate_bricks",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:oak_fence[east=true,north=false,south=true,waterlogged=false,west=false]",
-                "minecraft:oak_fence[east=false,north=false,south=false,waterlogged=false,west=true]"
+                "minecraft:dark_oak_fence[east=true,north=false,south=true,waterlogged=false,west=false]",
+                "minecraft:dark_oak_fence[east=false,north=false,south=false,waterlogged=false,west=true]"
             ],
             [
                 "minecraft:air",
@@ -874,7 +874,7 @@
                 "minecraft:blue_stained_glass",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:oak_fence[east=false,north=true,south=true,waterlogged=false,west=false]",
+                "minecraft:dark_oak_fence[east=false,north=true,south=true,waterlogged=false,west=false]",
                 "minecraft:air"
             ],
             [
@@ -892,7 +892,7 @@
                 "minecraft:blue_stained_glass",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:oak_fence[east=false,north=true,south=true,waterlogged=false,west=false]",
+                "minecraft:dark_oak_fence[east=false,north=true,south=true,waterlogged=false,west=false]",
                 "minecraft:air"
             ],
             [
@@ -908,9 +908,9 @@
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:deepslate_bricks",
-                "minecraft:oak_fence[east=true,north=false,south=false,waterlogged=false,west=true]",
-                "minecraft:oak_fence[east=true,north=false,south=false,waterlogged=false,west=true]",
-                "minecraft:oak_fence[east=false,north=true,south=false,waterlogged=false,west=true]",
+                "minecraft:dark_oak_fence[east=true,north=false,south=false,waterlogged=false,west=true]",
+                "minecraft:dark_oak_fence[east=true,north=false,south=false,waterlogged=false,west=true]",
+                "minecraft:dark_oak_fence[east=false,north=true,south=false,waterlogged=false,west=true]",
                 "minecraft:air"
             ],
             [
@@ -1319,10 +1319,10 @@
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
+                "minecraft:lantern[hanging=true,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:air",
-                "minecraft:air",
+                "minecraft:lantern[hanging=true,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
@@ -1386,7 +1386,7 @@
                 "minecraft:air"
             ],
             [
-                "minecraft:air",
+                "minecraft:lantern[hanging=true,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:glass",
                 "minecraft:air",
@@ -1548,7 +1548,7 @@
                 "minecraft:air"
             ],
             [
-                "minecraft:air",
+                "minecraft:lantern[hanging=true,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:glass",
                 "minecraft:air",
@@ -1625,10 +1625,10 @@
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
+                "minecraft:lantern[hanging=true,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:air",
-                "minecraft:air",
+                "minecraft:lantern[hanging=true,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
@@ -1645,10 +1645,10 @@
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
+                "minecraft:chain[axis=y,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:air",
-                "minecraft:air",
+                "minecraft:chain[axis=y,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
@@ -1712,7 +1712,7 @@
                 "minecraft:air"
             ],
             [
-                "minecraft:air",
+                "minecraft:chain[axis=y,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:glass",
                 "minecraft:air",
@@ -1874,7 +1874,7 @@
                 "minecraft:air"
             ],
             [
-                "minecraft:air",
+                "minecraft:chain[axis=y,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:glass",
                 "minecraft:air",
@@ -1951,10 +1951,10 @@
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
+                "minecraft:chain[axis=y,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:air",
-                "minecraft:air",
+                "minecraft:chain[axis=y,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
@@ -2493,7 +2493,7 @@
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:iron_bars[east=false,north=true,south=true,waterlogged=false,west=false]",
-                "minecraft:air",
+                "minecraft:chest[facing=east,type=single,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
@@ -5553,15 +5553,15 @@
     ],
     "location": [
         "world",
-        2519.575643805371,
+        2519.7293112018383,
         87.0,
-        -1142.3237288875323,
-        95.35083,
-        40.949993
+        -1142.3587362269545,
+        88.80176,
+        -5.549777
     ],
     "direction": [
-        -0.9956423597134634,
+        -0.9997813263081147,
         0.0,
-        -0.09325390900228447
+        0.020911708815566348
     ]
 }

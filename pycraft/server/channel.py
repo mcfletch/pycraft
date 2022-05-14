@@ -75,10 +75,14 @@ class Channel(object):
         if proxyobjects.ProxyMethod.channel is self:
             proxyobjects.ProxyMethod.set_channel(None)
         self.wanted = False
-        self.writer.close()
+        writer, self.writer = self.writer, None
+        if writer:
+            writer.close()
         await self.outgoing_queue.put(None)
         await self.incoming_queue.put(None)
-        await self.writer.wait_closed()
+
+        if writer:
+            await writer.wait_closed()
 
     async def write_to_socket(self, queue, writer):
         while self.wanted:

@@ -78,9 +78,10 @@ def _get_interfaces(base, seen=None):
             continue
         seen.add(iface_name)
         cls = PROXY_TYPES.get(iface_name)
-        if cls:
-            for s_cls in _get_interfaces(cls, seen=seen):
-                yield s_cls
+        yield cls
+        # if cls:
+        #     for s_cls in _get_interfaces(cls, seen=seen):
+        #         yield s_cls
 
 
 def _dict_cls(value):
@@ -537,6 +538,72 @@ def OverrideType(cls):
     return cls
 
 
+async def construct_one_interface(declaration, definition_map, seen_classes):
+    """Construct a single class recursively defining any super-interfaces"""
+
+    try:
+        name = declaration['name']
+    except KeyError:
+        raise KeyError('name', declaration)
+
+    if name in seen_classes:
+        return seen_classes[name]
+    # if declaration.get('cls') and declaration.get('cls').get('interfaces'):
+    #     bases = declaration.get('cls').get('interfaces')
+    # else:
+    #     bases = []
+    base = ServerObjectProxy
+    clsDeclaration = declaration.get('cls')
+    if clsDeclaration:
+        if name == 'World':
+            # TODO: broken introspection here, doesn't show up under test, but on real instance
+            # World shows up as an isKeyed...
+            clsDeclaration['isKeyed'] = False
+        if clsDeclaration.get('isKeyed'):
+            log.info("Keyed type: %s", name)
+            base = KeyedServerObjectEnum
+        elif clsDeclaration.get('isEnum'):
+            base = ServerObjectEnum
+        super_interfaces = [
+            x
+            for x in [
+                await construct_one_interface(
+                    definition_map.get(interface),
+                    definition_map=definition_map,
+                    seen_classes=seen_classes,
+                )
+                for interface in clsDeclaration.get('interfaces', ())
+                if (interface in definition_map) and (interface != name)
+            ]
+        ]
+    else:
+        super_interfaces = []
+    super_interfaces.append(base)
+    overrides = OVERRIDE_TYPES.get(name)
+    if overrides:
+        super_interfaces.insert(0, overrides)
+
+    try:
+        cls = PROXY_TYPES[name] = type(
+            name,
+            tuple(super_interfaces),
+            {
+                '__namespace__': name,
+                '__module__': 'pycraft.server.introspection',
+                '__declaration__': declaration,
+                '__interfaces__': clsDeclaration.get('interfaces', [])
+                if clsDeclaration
+                else [],
+            },
+        )
+    except TypeError as err:
+        import pdb
+
+        pdb.set_trace()
+    seen_classes[name] = cls
+    return cls
+
+
 async def construct_from_introspection(automatic: dict, channel):
     """Create introspected api from automatic query on server"""
     from . import final
@@ -547,54 +614,20 @@ async def construct_from_introspection(automatic: dict, channel):
         for x in automatic.get('commands', [])
         if (isinstance(x, dict) and x.get('type') == 'namespace')
     ]
+
+    definition_map = {}
     for declaration in unfinished:
         try:
             name = declaration['name']
         except KeyError:
             raise KeyError('name', declaration)
-        # if declaration.get('cls') and declaration.get('cls').get('interfaces'):
-        #     bases = declaration.get('cls').get('interfaces')
-        # else:
-        #     bases = []
-        base = ServerObjectProxy
-        clsDeclaration = declaration.get('cls')
-        if clsDeclaration:
-            if name == 'World':
-                # TODO: broken introspection here, doesn't show up under test, but on real instance
-                # World shows up as an isKeyed...
-                clsDeclaration['isKeyed'] = False
-            if clsDeclaration.get('isKeyed'):
-                log.info("Keyed type: %s", name)
-                base = KeyedServerObjectEnum
-            elif clsDeclaration.get('isEnum'):
-                base = ServerObjectEnum
-        # bases.append(base)
-
-        overrides = OVERRIDE_TYPES.get(name)
-        cls = type(
-            name,
-            (base,),
-            {
-                '__namespace__': name,
-                '__module__': 'pycraft.server.introspection',
-                '__declaration__': declaration,
-                '__interfaces__': clsDeclaration.get('interfaces', [])
-                if clsDeclaration
-                else [],
-            },
-        )
-        if overrides:
-            cls = PROXY_TYPES[name] = type(
-                name,
-                (overrides, cls),
-                {
-                    '__module__': 'pycraft.server.overridden',
-                },
-            )
         else:
-            PROXY_TYPES[name] = cls
+            definition_map[name] = declaration
 
-        seen_classes[name] = cls
+    for declaration in unfinished:
+        await construct_one_interface(
+            declaration, definition_map=definition_map, seen_classes=seen_classes
+        )
 
     ProxyMethod.set_channel(channel)
     for name, proxy in seen_classes.items():

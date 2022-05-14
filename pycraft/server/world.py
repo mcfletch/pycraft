@@ -605,9 +605,9 @@ class Block(ServerObjectProxy):
 
 
 @OverrideType
-class Inventory(ServerObjectProxy):
+class Inventory:
     __namespace__ = 'Inventory'
-    __known_classes__ = ['PlayerInventory', 'CraftInventoryPlayer']
+    __known_classes__ = []
 
     type: str
     inventoryType: str

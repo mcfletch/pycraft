@@ -4,15 +4,23 @@ from pycraft import expose
 from pycraft import acommands as commands
 from pycraft.server import world, channel, proxyobjects
 import pytest
+import pytest_asyncio
 import ast
 import numpy as np
 import uuid
 
 
-@pytest.mark.asyncio
-async def test_introspect_cached():
+@pytest_asyncio.fixture()
+async def chan():
     chan = channel.Channel(debug=True)
+    await chan.open()
     await chan.introspect(cached=True)
+    yield chan
+    await chan.close()
+
+
+@pytest.mark.asyncio
+async def test_introspect_cached(chan):
     struct = {
         '__type__': 'CraftHorse',
         'uuid': str(uuid.uuid4()),
@@ -28,9 +36,7 @@ async def test_introspect_cached():
 
 
 @pytest.mark.asyncio
-async def test_ItemMeta():
-    chan = channel.Channel(debug=True)
-    await chan.introspect(cached=True)
+async def test_ItemMeta(chan):
     cls = proxyobjects._dict_cls(
         {
             '__type__': 'CraftPotionMeta',
@@ -42,9 +48,7 @@ async def test_ItemMeta():
 
 
 @pytest.mark.asyncio
-async def test_PlayerMeta():
-    chan = channel.Channel(debug=True)
-    await chan.introspect(cached=True)
+async def test_PlayerMeta(chan):
     cls = proxyobjects._dict_cls(
         {
             '__type__': 'CraftPlayer',
@@ -59,19 +63,25 @@ async def test_PlayerMeta():
 
 
 @pytest.mark.asyncio
-async def test_World():
-    chan = channel.Channel(debug=True)
-    await chan.open()
-    try:
-        await chan.introspect(cached=True)
-        from pycraft.server import final
+async def test_World(chan):
+    from pycraft.server import final
 
-        worlds = await final.Server.getWorlds('server')
-        for world in worlds:
-            for expected in [
-                'spawnEntity',
-                'setBlocks',
-            ]:
-                assert hasattr(world, expected), expected
-    finally:
-        await chan.close()
+    worlds = await final.Server.getWorlds('server')
+    for world in worlds:
+        for expected in [
+            'spawnEntity',
+            'setBlocks',
+        ]:
+            assert hasattr(world, expected), expected
+
+
+@pytest.mark.asyncio
+async def test_VillagerInventory(chan):
+    from pycraft.server import final
+
+    v = await final.World(name='world').spawnEntity([0, 1, 0], 'minecraft:villager')
+
+    assert isinstance(v, world.Entity)
+
+    inventory = await v.getInventory()
+    assert False, inventory

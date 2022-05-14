@@ -591,3 +591,12 @@ async def vengence(*, player=None, listener=None, server=None):
 
     asyncio.ensure_future(v_watcher())
     return "Vengence shall be harsh"
+
+
+@expose()
+async def fill_inventory(entity, item='wheat_seeds', count=64):
+    inventory = await entity.getInventory()
+    inventory.clear()
+    for i in range(inventory.size):
+        if inventory.contents[i]:
+            await inventory.setItem(i, [item, count])

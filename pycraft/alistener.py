@@ -315,7 +315,7 @@ class AListener(object):
         timeout -- timeout in seconds after which we stop
         max_count -- number of events after which we exit
         named -- parameters to construct a filter:
-            user/entity -- str or Entity to match
+            player/entity -- str or Entity to match
             location/block -- location or block to match
             area -- 2 locations for inclusive area match
 

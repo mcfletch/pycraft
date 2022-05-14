@@ -68,7 +68,7 @@ async def spawn(
         position = player.position + player.direction
     if not ':' in type_name:
         type_name = 'minecraft:%s' % (type_name,)
-    await world.spawnEntity(position, type_name)
+    return await world.spawnEntity(position, type_name)
 
 
 @expose()
@@ -596,7 +596,24 @@ async def vengence(*, player=None, listener=None, server=None):
 @expose()
 async def fill_inventory(entity, item='wheat_seeds', count=64):
     inventory = await entity.getInventory()
-    inventory.clear()
+    await inventory.clear()
     for i in range(inventory.size):
         if inventory.contents[i]:
             await inventory.setItem(i, [item, count])
+    return entity
+
+
+@expose()
+async def this_guy(*, player=None, listener=None, server=None):
+    """Listen for an entity with which the player interacts"""
+    try:
+        async for event in listener.wait_for_events(
+            'PlayerInteractEntityEvent',
+            count=1,
+            timeout=30,
+            player=player.uuid,
+        ):
+            return event.entity
+    except asyncio.TimeoutError as err:
+        return "Did not click on an entity in time"
+    return None

@@ -538,6 +538,23 @@ def OverrideType(cls):
     return cls
 
 
+def filter_star_mro(superinterfaces):
+    """If a super-interface is in the MRO of another superinterface, filter out that interface"""
+    result = []
+    reversed = superinterfaces[::-1]
+
+    def is_duplicate(iface, rest):
+        for other in rest:
+            if issubclass(other, iface):
+                return True
+        return False
+
+    for i, iface in enumerate(reversed):
+        if not is_duplicate(iface, reversed[i + 1 :]):
+            result.append(iface)
+    return result
+
+
 async def construct_one_interface(declaration, definition_map, seen_classes):
     """Construct a single class recursively defining any super-interfaces"""
 
@@ -564,6 +581,11 @@ async def construct_one_interface(declaration, definition_map, seen_classes):
             base = KeyedServerObjectEnum
         elif clsDeclaration.get('isEnum'):
             base = ServerObjectEnum
+        interface_names = [
+            x
+            for x in clsDeclaration.get('interfaces', ())
+            if (x != name) and (x in definition_map)
+        ]
         super_interfaces = [
             x
             for x in [
@@ -572,8 +594,7 @@ async def construct_one_interface(declaration, definition_map, seen_classes):
                     definition_map=definition_map,
                     seen_classes=seen_classes,
                 )
-                for interface in clsDeclaration.get('interfaces', ())
-                if (interface in definition_map) and (interface != name)
+                for interface in interface_names
             ]
         ]
     else:
@@ -597,9 +618,11 @@ async def construct_one_interface(declaration, definition_map, seen_classes):
             },
         )
     except TypeError as err:
-        import pdb
+        raise TypeError(
+            '%s Inheritence messed up: %s'
+            % (name, '\n'.join([str(s.mro()) for s in super_interfaces]))
+        )
 
-        pdb.set_trace()
     seen_classes[name] = cls
     return cls
 

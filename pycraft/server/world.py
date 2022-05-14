@@ -508,7 +508,7 @@ class BlockData(ServerObjectProxy):
                 cls = subclass
         return cls(**named)
 
-    def __init__(self, string_value, **named):
+    def __init__(self, string_value=None, **named):
         super().__init__(string_value=string_value, **named)
 
     def __json__(self):
@@ -683,6 +683,8 @@ ENUM_CLASSES = [
     'Pose',
     'PistonMoveReaction',
     'PotionEffect',
+    'EquipmentSlot',
+    'Action',
 ]
 KEYED_CLASSES = []
 
@@ -712,11 +714,21 @@ class Event(ServerObjectProxy):
     block: 'Block'
     player: 'Player'
     item_in_hand: 'ItemStack'
+    # hand: 'EquipmentSlot'
     exp_to_drop: int
     will_drop: bool
     can_build: bool
     block_against: 'Block'
     block_clicked: 'Block'
+    block_face: 'BlockFace'
+    block_placement: bool
+    # action: 'Action'
+    material: 'Material'
+    # bed: 'Bed'
+    # advancement: 'Advancement'
+
+    entity: 'Entity'
+    clicked_position: 'Location'
 
 
 @OverrideType

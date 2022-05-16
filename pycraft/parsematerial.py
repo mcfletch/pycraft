@@ -26,6 +26,13 @@ def parse_material(material):
     return base
 
 
+def copy_struct(material, **named):
+    material = material.copy()
+    material['properties'] = material['properties'].copy()
+    material['properties'].update(named)
+    return material
+
+
 NESW_ROTS = next = {
     'north': 'east',
     'south': 'west',
@@ -40,6 +47,7 @@ NESW_DIRS = [
     (0, 0, 1),  # south
     (-1, 0, 0),  # west
 ]
+NESW_NAMES = dict(zip(NESW_DIRS, ['north', 'east', 'south', 'west']))
 
 
 def _news_steps():

@@ -5,6 +5,7 @@ from .server import proxyobjects
 from typing import List
 from .server import world
 from .server import final
+from . import parsematerial
 from .server.world import (
     Vector,
 )
@@ -12,6 +13,7 @@ import time, re, os, json
 import numpy as np
 import asyncio
 import logging
+import random
 
 from pycraft import directions
 
@@ -312,12 +314,8 @@ async def bed(position=None, direction=None, color='cyan', *, player=None, world
 @expose()
 async def killall(name, *, player=None, world=None):
     """Kill all entities with exactly "name" as their name"""
-    for entity in await world.getEntities():
-        if entity.name == name:
-            try:
-                await final.Entity(uuid=entity.uuid).remove()
-            except Exception as err:
-                pass
+    for entity in await findall(name, world=world):
+        entity.remove()
 
 
 @expose()
@@ -617,3 +615,93 @@ async def this_guy(*, player=None, listener=None, server=None):
     except asyncio.TimeoutError as err:
         return "Did not click on an entity in time"
     return None
+
+
+@expose()
+async def full_farmer(*, player=None, listener=None, server=None, world=None):
+    """Spawn a master farmer whose inventory is full of seeds"""
+    name = random.choice(
+        [
+            'Drop Master Fred',
+            'Farmer Don',
+            "I'm Full of Seeds",
+            "Seedy McFarmer",
+            "Planter Fred",
+            "Don of the Land",
+            "Maester Wheat",
+            "Bread Bringer",
+            "Sooth Seeder",
+            "Thresher Sam",
+            "Sammy Planter",
+        ]
+    )
+    villager = await spawn('villager', player=player, world=world)
+    await villager.setCustomName(name)
+    await villager.setProfession('FARMER')
+    await villager.setVillagerLevel(5)
+    await fill_inventory(villager, count=1)
+
+
+@expose()
+async def hopper_cascade(
+    left=5,
+    right=5,
+    depth=5,
+    position=None,
+    direction=None,
+    *,
+    player=None,
+    listener=None,
+    server=None,
+    world=None,
+):
+    """Create a cascade of hoppers that feed into the space ahead of you"""
+    if direction is None:
+        direction = player.direction
+    if position is None:
+        position = player.position + player.direction
+    forward, cross = directions.forward_and_cross(direction)
+    forward, cross = directions.forward_and_cross(direction)
+    locations, blocks = [position + (0, -1, 0)], [
+        'chest[facing=%s]' % (parsematerial.NESW_NAMES[tuple([-x for x in forward])])
+    ]
+    start = position - (cross * left)
+    stop = position + (cross * right) + (forward * depth)
+    material = {
+        'namespace': 'minecraft',
+        'name': 'hopper',
+        'properties': {
+            'facing': 'east',
+        },
+    }
+    right_material = parsematerial.unparse_material(
+        parsematerial.copy_struct(
+            material, facing=parsematerial.NESW_NAMES[tuple(cross)]
+        )
+    )
+    left_material = parsematerial.unparse_material(
+        parsematerial.copy_struct(
+            material, facing=parsematerial.NESW_NAMES[tuple([-x for x in cross])]
+        )
+    )
+    back_material = parsematerial.unparse_material(
+        parsematerial.copy_struct(
+            material, facing=parsematerial.NESW_NAMES[tuple([-x for x in forward])]
+        )
+    )
+    down_material = parsematerial.unparse_material(
+        parsematerial.copy_struct(material, facing='down')
+    )
+    for row in range(depth):
+        for column in range(left + right + 1):
+            pos = start + (cross * column) + (forward * row)
+            locations.append(pos)
+            if row > 0:
+                blocks.append(back_material)
+            elif column < left:
+                blocks.append(right_material)
+            elif column == left:
+                blocks.append(down_material)
+            else:
+                blocks.append(left_material)
+    await world.setBlockList(locations, blocks)

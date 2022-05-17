@@ -633,6 +633,8 @@ async def full_farmer(*, player=None, listener=None, server=None, world=None):
             "Sooth Seeder",
             "Thresher Sam",
             "Sammy Planter",
+            "Seed Maester Sue",
+            "Flour Flowerer",
         ]
     )
     villager = await spawn('villager', player=player, world=world)

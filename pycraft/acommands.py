@@ -316,7 +316,7 @@ async def bed(position=None, direction=None, color='cyan', *, player=None, world
 async def killall(name, *, player=None, world=None):
     """Kill all entities with exactly "name" as their name"""
     for entity in await findall(name, world=world):
-        entity.remove()
+        await entity.remove()
 
 
 @expose()

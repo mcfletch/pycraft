@@ -4,7 +4,7 @@
     "description": "Red Sandstone gate with 4 by 3 opening",
     "offset": [
         0,
-        1,
+        0,
         0
     ],
     "blocks": [

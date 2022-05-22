@@ -224,7 +224,7 @@ async def give(item, count=1, *, player=None):
 async def nice_item(item, count=1, *, player=None):
     """Add a nice item to the given inventory, assumes content is up to date"""
     stack = await give(item, count=count, player=player)
-    await enchanted(stack)
+    return await enchanted(stack)
 
 
 @expose()
@@ -293,6 +293,7 @@ async def enchanted(stack, enchantments=DESIRABLE_ENCHANTMENTS):
                 ench,
                 await ench.getMaxLevel(),
             )
+    return stack
 
 
 @expose()

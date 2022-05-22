@@ -765,12 +765,12 @@ class GameRule(ServerObjectProxy):
         return self.name
 
 
-@OverrideType
-class Axolotl(Entity):
-    __namespace__ = 'Axolotl'
+# @OverrideType
+# class Axolotl(Entity):
+#     __namespace__ = 'Axolotl'
 
-    def get_key(self):
-        return self.uuid
+#     def get_key(self):
+#         return self.uuid
 
 
 @OverrideType

@@ -53,6 +53,7 @@ def type_name_to_type(name):
 
 
 def type_coerce(value, typ):
+    """Attempt to coerce value to the given type, providing string-based lookup of type-name"""
     if isinstance(typ, str):
         if typ.startswith('final.'):
             typ = typ[6:]

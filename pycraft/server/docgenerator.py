@@ -111,10 +111,10 @@ async def generate_docs(output=DEFAULT_TARGET):
         if not isinstance(cls, proxyobjects.ServerObjectMeta):
             continue
 
-        if cls.interfaces:
+        if cls.__interfaces__:
             interfaces = [
                 '## Implements',
-            ] + [f'* {cls_link(interface)}' for interface in cls.interfaces]
+            ] + [f'* {cls_link(interface)}' for interface in cls.__interfaces__]
         else:
             interfaces = []
 

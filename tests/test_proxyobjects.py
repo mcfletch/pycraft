@@ -77,11 +77,14 @@ async def test_World(chan):
 
 @pytest.mark.asyncio
 async def test_VillagerInventory(chan):
+    from pycraft import acommands
     from pycraft.server import final
 
-    v = await final.World(name='world').spawnEntity([0, 1, 0], 'minecraft:villager')
+    v = await acommands.spawn(
+        'villager', position=("world", 0, 0, 0), world=final.World(name='world')
+    )
 
     assert isinstance(v, world.Entity)
 
     inventory = await v.getInventory()
-    assert False, inventory
+    assert inventory is not None, inventory

@@ -2,7 +2,7 @@ import re, os, json, logging
 import numpy as np
 from . import expose, directions
 from .server.world import Vector
-from . import bulldozer, parsematerial
+from . import bulldozer, parsematerial, rotations
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES = os.path.join(HERE, 'templates')
@@ -17,6 +17,7 @@ async def copy(
     height=5,
     position=None,
     direction=None,
+    offset=None,
     *,
     world=None,
     player=None,
@@ -62,7 +63,14 @@ async def copy(
 
     layers = await world.getBlockArray(start, stop)
 
-    save_template(player, name, layers)
+    # BUGFIX: Copying an occupied bed makes it useless/broken...
+    for layer in layers:
+        for row in layer:
+            for i, material in enumerate(row):
+                if 'occupied=true' in material:
+                    row[i] = material.replace('occupied=true', '')
+
+    save_template(player, name, layers, offset=offset)
     return f'Saved template to {name} with {layers}'
 
 
@@ -100,13 +108,13 @@ def rotated_template(template, player):
     template = template.copy()
     blocks = template['blocks'][:]
 
-    steps = parsematerial.steps_between(tuple(original_direction), tuple(direction))
+    steps = rotations.steps_between(tuple(original_direction), tuple(direction))
 
     for layer in blocks:
         layer[:] = np.rot90(layer, steps, axes=(1, 0))
 
     for layer in blocks:
-        layer[:] = [[parsematerial.rotate(m, steps) for m in row] for row in layer]
+        layer[:] = [[rotations.rotate(m, steps) for m in row] for row in layer]
 
     template['blocks'] = blocks
     return template
@@ -182,11 +190,19 @@ async def paste(
     else:
         return 'Unable to determine start position'
 
-    locations, blocks = [], []
+    locations, blocks, specials = [], [], []
     for y, layer in enumerate(template_blocks):
         for z, row in enumerate(layer):
             for x, cell in enumerate(row):
-                locations.append(start + (x, y, z))
+                position = start + (x, y, z)
+                if cell == None:
+                    # explicitly don't replace...
+                    continue
+                elif isinstance(cell, dict):
+                    special = cell
+                    cell = special['material']
+                    specials.append((position, special))
+                locations.append(position)
                 blocks.append(cell)
     await world.setBlockList(locations, blocks)
 
@@ -208,7 +224,7 @@ def template_filename(player, template_name):
     return os.path.join(TEMPLATES, template_name) + '.json'
 
 
-def save_template(player, name, template):
+def save_template(player, name, template, **named):
     """Save a template to a file using the proxy encoder to allow saving e.g. locations/directions"""
     from pycraft.server import channel
 
@@ -221,6 +237,9 @@ def save_template(player, name, template):
         'location': player.location,
         'direction': player.direction,
     }
+    for key, value in named.items():
+        if value is not None:
+            struct[key] = value
 
     result = json.dumps(
         struct,

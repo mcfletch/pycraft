@@ -218,8 +218,8 @@
             ],
             [
                 "minecraft:air",
-                "minecraft:blue_bed[facing=east,occupied=true,part=foot]",
-                "minecraft:blue_bed[facing=east,occupied=true,part=head]",
+                "minecraft:blue_bed[facing=east,part=foot]",
+                "minecraft:blue_bed[facing=east,part=head]",
                 "minecraft:stone",
                 "minecraft:stone",
                 "minecraft:powered_rail[powered=true,shape=north_south,waterlogged=false]",
@@ -232,8 +232,8 @@
             ],
             [
                 "minecraft:smithing_table",
-                "minecraft:blue_bed[facing=east,occupied=true,part=foot]",
-                "minecraft:blue_bed[facing=east,occupied=true,part=head]",
+                "minecraft:blue_bed[facing=east,part=foot]",
+                "minecraft:blue_bed[facing=east,part=head]",
                 "minecraft:stone",
                 "minecraft:stone",
                 "minecraft:rail[shape=north_south,waterlogged=false]",
@@ -246,8 +246,8 @@
             ],
             [
                 "minecraft:air",
-                "minecraft:blue_bed[facing=east,occupied=true,part=foot]",
-                "minecraft:blue_bed[facing=east,occupied=true,part=head]",
+                "minecraft:blue_bed[facing=east,part=foot]",
+                "minecraft:blue_bed[facing=east,part=head]",
                 "minecraft:stone",
                 "minecraft:stone",
                 "minecraft:powered_rail[powered=true,shape=north_south,waterlogged=false]",

@@ -567,7 +567,7 @@
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:oak_trapdoor[facing=west,half=bottom,open=false,powered=false,waterlogged=false]",
-                "minecraft:air",
+                "minecraft:oak_trapdoor[facing=west,half=bottom,open=false,powered=false,waterlogged=false]",
                 "minecraft:oak_trapdoor[facing=east,half=bottom,open=false,powered=false,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:air",

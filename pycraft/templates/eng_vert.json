@@ -1,0 +1,48 @@
+{
+    "author": "VRPlumber",
+    "name": "eng_vert",
+    "offset": [
+        0,
+        1,
+        0
+    ],
+    "blocks": [
+        [
+            [
+                "minecraft:observer[facing=down,powered=false]",
+                "minecraft:slime_block"
+            ]
+        ],
+        [
+            [
+                "minecraft:sticky_piston[extended=false,facing=up]",
+                "minecraft:slime_block"
+            ]
+        ],
+        [
+            [
+                "minecraft:slime_block",
+                "minecraft:sticky_piston[extended=false,facing=down]"
+            ]
+        ],
+        [
+            [
+                "minecraft:slime_block",
+                "minecraft:observer[facing=up,powered=false]"
+            ]
+        ]
+    ],
+    "location": [
+        "world",
+        2237.5662687632507,
+        97.0,
+        -920.616575999129,
+        98.55072,
+        -0.14944084
+    ],
+    "direction": [
+        -0.9888846303935208,
+        0.0,
+        -0.14868486059942265
+    ]
+}

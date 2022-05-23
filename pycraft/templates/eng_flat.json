@@ -1,0 +1,38 @@
+{
+    "author": "VRPlumber",
+    "name": "eng_flat",
+    "offset": [
+        0,
+        1,
+        0
+    ],
+    "blocks": [
+        [
+            [
+                "minecraft:slime_block",
+                "minecraft:slime_block",
+                "minecraft:sticky_piston[extended=false,facing=west]",
+                "minecraft:observer[facing=east,powered=false]"
+            ],
+            [
+                "minecraft:observer[facing=west,powered=false]",
+                "minecraft:sticky_piston[extended=false,facing=east]",
+                "minecraft:slime_block",
+                "minecraft:slime_block"
+            ]
+        ]
+    ],
+    "location": [
+        "world",
+        2228.5507277153024,
+        98.0,
+        -933.0445361154667,
+        91.94697,
+        36.89946
+    ],
+    "direction": [
+        -0.9994227001187358,
+        0.0,
+        -0.03397449760298874
+    ]
+}

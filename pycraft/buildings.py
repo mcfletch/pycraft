@@ -591,9 +591,9 @@ def until_change(materials):
 async def column_up(
     material: typing.Union[list, str] = 'chain',
     position=None,
-    height=None,
-    to_air=False,
-    to_surface=False,
+    height: typing.Optional[float] = None,
+    to_air: typing.Optional[bool] = False,
+    to_surface: typing.Optional[bool] = False,
     *,
     player=None,
     world=None,
@@ -645,17 +645,28 @@ async def column_up(
 
 
 @expose.expose()
-async def elevator_up(position=None, to_surface=False, *, player=None, world=None):
+async def elevator_up(
+    position=None,
+    to_surface: typing.Optional[bool] = None,
+    height: typing.Optional[float] = None,
+    to_air: typing.Optional[bool] = None,
+    *,
+    player=None,
+    world=None,
+):
     """Construct a water-elevator going up"""
     if position is None:
         position = player.position + player.direction
     x, y, z = [int(v) for v in position.block_location()[:3]]
+    if to_surface is None and to_air is None and height is None:
+        to_air = True
     await world.setBlockList([[position.world, x, y - 1, z]], ['soul_sand'])
     await column_up(
         material='bubble_column[drag=false]',
         position=position,
-        to_air=not to_surface,
+        to_air=to_air,
         to_surface=to_surface,
+        height=height,
         player=player,
         world=world,
     )
@@ -664,9 +675,9 @@ async def elevator_up(position=None, to_surface=False, *, player=None, world=Non
 @expose.expose()
 async def torch_tower(
     position=None,
-    height=None,
-    to_air=False,
-    to_surface=False,
+    height: typing.Optional[float] = None,
+    to_air: typing.Optional[bool] = False,
+    to_surface: typing.Optional[bool] = False,
     *,
     player=None,
     world=None,

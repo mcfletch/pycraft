@@ -208,6 +208,8 @@ class AInterpreter(object):
             value = await self.interpret_expr(arg.value, namespace)
             if isinstance(arg.slice, ast.Index):
                 return value[await self.interpret_expr(arg.slice.value, namespace)]
+            elif isinstance(arg.slice, ast.Constant):
+                return value[arg.slice.value]
             elif isinstance(arg.slice, ast.Slice):
                 return value[
                     (
@@ -225,7 +227,7 @@ class AInterpreter(object):
                     )
                 ]
             else:
-                raise ValueError('Do not yet support extended indexing')
+                raise ValueError('Do not yet support extended indexing %s'%(type(arg.slice,)))
         elif isinstance(arg, ast.Attribute):
             parent = await self.interpret_expr(arg.value, namespace)
             key = arg.attr

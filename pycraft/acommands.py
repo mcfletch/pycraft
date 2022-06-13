@@ -476,7 +476,7 @@ def matching_players(players: List[world.Player], player_name: str):
     for other in players:
         if player_name == '*':
             yield other
-        elif other.name.lower().startswith(player_name):
+        elif player_name in other.name.lower():
             yield other
 
 

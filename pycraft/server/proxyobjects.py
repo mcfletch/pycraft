@@ -132,9 +132,13 @@ def _dict_typ(value):
             log.warning("No type for dictionary: %s", value)
     return typ
 
+def is_a_generic_alias(typ):
+    if typ.__class__ == getattr(typing, '_GenericAlias', None) or typ.__class__ == getattr(typing, '_SpecialGenericAlias', None):
+        return True
+    return False
 
 def is_a_typing_list(typ):
-    if typ.__class__ == getattr(typing, '_GenericAlias', None):
+    if is_a_generic_alias(typ):
         if typ._name == 'List':
             # YUCK!
             # Python 3.8, using internal damn class name
@@ -146,7 +150,7 @@ def is_a_typing_list(typ):
 
 
 def is_a_typing_dict(typ):
-    if typ.__class__ == getattr(typing, '_GenericAlias', None):
+    if is_a_generic_alias(typ):
         if typ._name == 'Dict':
             # YUCK!
             # Python 3.8, using internal damn class name
@@ -158,7 +162,7 @@ def is_a_typing_dict(typ):
 
 
 def is_a_typing_union(typ):
-    if typ.__class__ == getattr(typing, '_GenericAlias', None):
+    if is_a_generic_alias(typ):
         if typ._name == None and hasattr(typ, '__args__'):
             return True
     return False
@@ -186,7 +190,7 @@ def _type_coerce(value, typ):
     typ = _dict_cls(value) or typ
 
     if is_a_typing_list(typ):
-        if typ.__args__:
+        if getattr(typ, '__args__',()):
             sub_type = typ.__args__[0]  # YUCK!
             return [type_coerce(item, sub_type) for item in value]
         else:
@@ -224,6 +228,7 @@ def _type_coerce(value, typ):
             return typ.from_server(value)
         else:
             return typ(value)
+    # import pdb;pdb.set_trace()
     raise ValueError(
         "Do not know how to convert type %s with value %r"
         % (

@@ -4,8 +4,7 @@ import os, requests, subprocess, argparse, logging, shutil, yaml, glob
 HERE = os.path.abspath(os.path.dirname(__file__))
 DATA = os.path.join(HERE, 'data')
 GEYSER_URL = 'https://ci.opencollab.dev//job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/target/Geyser-Spigot.jar'
-SLIME_FUN_URL = 'https://thebusybiscuit.github.io/builds/TheBusyBiscuit/Slimefun4/master/Slimefun4-944.jar'
-PYCRAFT_SERVER_URL = 'https://github.com/mcfletch/pycraft-server/releases/download/v-1.0.4/PycraftServer-1.0.4.jar'
+PYCRAFT_SERVER_URL = 'https://github.com/mcfletch/pycraft-server/releases/download/v-1.0.5/PycraftServer-1.0.5.jar'
 PLUGINS = 'plugins'
 PLUGIN_SOURCE = os.path.join(HERE, PLUGINS)
 # JARFILE = URL.split('/')[-1]
@@ -53,12 +52,6 @@ def get_options():
         help='If specified, do not install the Geyser plugin in the world',
     )
     parser.add_argument(
-        '--slime-fun',
-        default=False,
-        action='store_true',
-        help='If specified, install the SlimeFun Bukkit plugin',
-    )
-    parser.add_argument(
         '-a',
         '--authentication',
         default=False,
@@ -74,7 +67,7 @@ def get_options():
     return parser
 
 
-def install_pycraftserver_plugin(data, bedrock=True, slime_fun=False):
+def install_pycraftserver_plugin(data, bedrock=True):
     """Install extension to allow for mcpi coding
 
     If bedrock is True, then *also* install the geyser
@@ -92,7 +85,6 @@ def install_pycraftserver_plugin(data, bedrock=True, slime_fun=False):
         for x in [
             PYCRAFT_SERVER_URL,
             GEYSER_URL if bedrock else None,
-            SLIME_FUN_URL if slime_fun else None,
         ]
         if x
     ]:
@@ -167,7 +159,7 @@ def main():
         parser.error('You have not accepted the EULA (read and add the -e) flag')
         return
     data = os.path.normpath(os.path.abspath(options.data))
-    install_pycraftserver_plugin(data, options.bedrock, options.slime_fun)
+    install_pycraftserver_plugin(data, options.bedrock)
     if options.bedrock:
         configure_geyser(data, options.authentication)
     update_config(data, overwrite=options.wipe_config)
@@ -185,6 +177,7 @@ def main():
         '-e',
         # 'TYPE=SPIGOT',
         'TYPE=PUFFERFISH',
+        # 'TYPE=PAPER',
         '-eMEMORY=2g',
         '-eEULA=TRUE',
         '--name',

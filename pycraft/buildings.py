@@ -4,7 +4,7 @@ import numpy as np
 import random, os, typing
 import itertools
 import logging
-from . import expose, directions, randomchoice
+from . import expose, directions, randomchoice, rotations
 from .server.world import Vector
 from .server import final
 
@@ -707,6 +707,10 @@ async def elevators(
     forward, cross = directions.forward_and_cross(player.direction)
     up_pos = player.position + forward + forward
     down_pos = up_pos - cross
+    if to_surface is None and to_air is None and height is None:
+        # default to to_surface because otherwise you wind up with
+        # single-block elevators far more often than not...
+        to_surface = True
     height = await elevator_up(
         position=up_pos,
         player=player,
@@ -781,6 +785,49 @@ async def elevators(
         world=world,
     )
     # Now need doors or signs at the bottom...
+    left = rotations.NESW_NAMES.get(tuple(-cross))
+    right = rotations.NESW_NAMES.get(tuple(cross))
+    signs = [
+        (
+            up_pos - forward,
+            'oak_wall_sign[facing=%(left)s]' % locals(),
+            ['Mind the Sand', 'As you Enter'],
+        ),
+        (
+            up_pos - forward + (0, 1, 0),
+            'oak_wall_sign[facing=%(left)s]' % locals(),
+            'Elevator Up',
+        ),
+        (
+            down_pos - forward,
+            'oak_wall_sign[facing=%(right)s]' % locals(),
+            ['Please Keep Clear', 'Of the Exits'],
+        ),
+        (
+            down_pos - forward + (0, 1, 0),
+            'oak_wall_sign[facing=%(right)s]' % locals(),
+            'Elevator Down',
+        ),
+    ]
+
+    await world.setBlockList([sign[0] for sign in signs], [sign[1] for sign in signs])
+    # TODO: getting correct block-data type out of the getBlockData for a given
+    # block, and exposing e.g. WallSign as a type that is related to the Sign
+    # interface...
+
+    # for sign_info in signs:
+    #     sign_block = await final.Location(sign_info[0]).getBlock()
+    #     sign_data: final.WallSign = await sign_block.getBlockData()
+    #     if isinstance(sign_data, final.WallSign):
+    #         text = sign_info[2]
+    #         if isinstance(text, str):
+    #             text = [text]
+    #         for index, line in enumerate(text):
+    #             await sign_data.setLine(index, line)
+    #         await sign_data.setGlowingText(True)
+    #         await sign_block.setBlockData(sign_data)
+    #     else:
+    #         raise RuntimeError("Not a sign: %s" % (sign_data))
 
 
 @expose.expose()

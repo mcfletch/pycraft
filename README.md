@@ -24,7 +24,7 @@ The server does not require logins due to the broken nature
 of the Pocket Edition Minecraft client, where it will only
 allow users to connect to an authenticating server with their
 *java edition* login... and if they had a java edition login
-they would use the java edition.
+they could use the java edition.
 
 Additionally, the `pycraft-chat-server` gives players *in game*
 incredible power, allowing them to do almost anything that

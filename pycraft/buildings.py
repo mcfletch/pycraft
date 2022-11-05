@@ -607,7 +607,6 @@ async def column_up(
     if y_height < 1:
         return 'At the top of the world'
 
-    step = 20
     above = await world.getBlocks(
         [x, y, z],
         [1, y_height, 1],
@@ -632,7 +631,6 @@ async def column_up(
         def next_material():
             return material
 
-    height = 0
     positions, blocks = [position], [next_material()]
     for index, current in enumerate(above[1:]):
         # note that index is -1 from real index
@@ -641,7 +639,7 @@ async def column_up(
         )  # one for get offset, one for index offset
         blocks.append(next_material())
     await world.setBlockList(positions, blocks)
-    return height
+    return len(above)
 
 
 @expose.expose()
@@ -650,6 +648,7 @@ async def elevator_up(
     to_surface: typing.Optional[bool] = None,
     height: typing.Optional[float] = None,
     to_air: typing.Optional[bool] = None,
+    base: typing.Optional[str] = 'soul_sand',
     *,
     player=None,
     world=None,
@@ -660,8 +659,8 @@ async def elevator_up(
     x, y, z = [int(v) for v in position.block_location()[:3]]
     if to_surface is None and to_air is None and height is None:
         to_air = True
-    await world.setBlockList([[position.world, x, y - 1, z]], ['soul_sand'])
-    await column_up(
+    await world.setBlockList([[position.world, x, y - 1, z]], [base])
+    final_height = await column_up(
         material='bubble_column[drag=false]',
         position=position,
         to_air=to_air,
@@ -670,6 +669,118 @@ async def elevator_up(
         player=player,
         world=world,
     )
+    return final_height
+
+
+@expose.expose()
+async def elevators(
+    position=None,
+    to_surface: typing.Optional[bool] = None,
+    height: typing.Optional[float] = None,
+    to_air: typing.Optional[bool] = None,
+    walls: typing.Optional[str] = 'glass',
+    *,
+    player=None,
+    world=None,
+):
+    """Create a full-featured up-and-down bubble elevator with walls as specified
+
+    Bubble elevators let you quickly descend/ascend. The elevator
+    here provides a full-featured version of the elevator pattern,
+    with one column going up and the other down. The base of the
+    elevator column has doors to control the flow of the water.
+
+    To use, go to the base of where you would like to create the
+    elevator and face where the doors should be. The options:
+
+    * to_surface -- elevator rises to the top-most piece of land in the column
+                    directly in front of you. If there is floating dirt or the
+                    like, the elevator will still rise to that level
+    * to_air -- elevator rises to the first air-pocket it finds in the column
+    * height -- if specified, creates an elevator with an explicit height
+                instead of searching for the height
+
+    * walls -- specifies the material used to surround the water columns to
+               avoid flooding areas of air through which it passes
+
+    """
+    forward, cross = directions.forward_and_cross(player.direction)
+    up_pos = player.position + forward + forward
+    down_pos = up_pos - cross
+    height = await elevator_up(
+        position=up_pos,
+        player=player,
+        world=world,
+        to_surface=to_surface,
+        to_air=to_air,
+        height=height,
+        base='soul_sand',
+    )
+    assert height, height
+    await elevator_up(
+        position=down_pos,
+        player=player,
+        world=world,
+        height=height,
+        base='magma_block',
+    )
+    await column_up(
+        walls,
+        position=up_pos + cross,
+        height=height,
+        player=player,
+        world=world,
+    )
+    await column_up(
+        walls,
+        position=down_pos - cross,
+        height=height,
+        player=player,
+        world=world,
+    )
+    await column_up(
+        [walls] * 10 + ['soul_lantern'],
+        position=up_pos + forward,
+        height=height,
+        player=player,
+        world=world,
+    )
+    await column_up(
+        [walls] * 10 + ['lantern'],
+        position=down_pos + forward,
+        height=height,
+        player=player,
+        world=world,
+    )
+    await column_up(
+        walls,
+        position=up_pos - forward + cross,
+        height=height,
+        player=player,
+        world=world,
+    )
+    await column_up(
+        walls,
+        position=down_pos - forward - cross,
+        height=height,
+        player=player,
+        world=world,
+    )
+    await column_up(
+        walls,
+        position=up_pos - forward + (0, 2, 0),
+        height=height - 2,
+        player=player,
+        world=world,
+    )
+    await column_up(
+        walls,
+        position=down_pos - forward + (0, 2, 0),
+        height=height - 2,
+        player=player,
+        world=world,
+    )
+    # Now need doors or signs at the bottom...
 
 
 @expose.expose()

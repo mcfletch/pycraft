@@ -547,6 +547,7 @@ async def keep_inventory(keep=True, *, player=None, world=None):
     """Enable keep inventory for this world (e.g. the overworld, the nether, the end)"""
     if await world.isGameRule('keepInventory'):
         await world.setGameRule('keepInventory', keep)
+        # world.setGameRuleValue('pvp','true')
         return keep
     else:
         return 'Unknown rule for this world'

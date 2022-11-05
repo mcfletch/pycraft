@@ -19,6 +19,7 @@ setuptools.setup(
         '.',
         exclude=('tests',),
     ),
+    include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -31,5 +32,6 @@ setuptools.setup(
             'pycraft-doc-generator = pycraft.server.docgenerator:main',
         ]
     },
+    install_requires=[],
     python_requires='>=3.6',
 )

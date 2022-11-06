@@ -118,24 +118,41 @@ def _dict_cls(value):
 
 def _dict_typ(value):
     typ = None
+    last_name = value['__type__'].split('.')[-1] if value.get('__type__') else None
 
     if isinstance(value, dict) and '__type__' in value and '__namespace__' in value:
         if value['__type__'] in PROXY_TYPES:
             typ = PROXY_TYPES[value['__type__']]
             # return type_coerce(value, typ)
-        elif '.' in value['__type__'] and value['__type__'].split('.') in PROXY_TYPES:
-            typ = PROXY_TYPES[value['__type__'].split('.')]
+        elif (
+            '.' in value['__type__'] and value['__type__'].split('.')[-1] in PROXY_TYPES
+        ):
+            typ = PROXY_TYPES[value['__type__'].split('.')[-1]]
         elif value['__namespace__'] in PROXY_TYPES:
             typ = PROXY_TYPES[value['__namespace__']]
             # return type_coerce(value, typ)
+        elif value.get('__reference__'):
+            typ = type(
+                last_name,
+                (Reference,),
+                {
+                    'interfaces': value['interfaces'],
+                    '__reference__': None,
+                    '__module__': '.'.join(value['__type__'].split('.')[:-1]),
+                },
+            )
         else:
             log.warning("No type for dictionary: %s", value)
     return typ
 
+
 def is_a_generic_alias(typ):
-    if typ.__class__ == getattr(typing, '_GenericAlias', None) or typ.__class__ == getattr(typing, '_SpecialGenericAlias', None):
+    if typ.__class__ == getattr(
+        typing, '_GenericAlias', None
+    ) or typ.__class__ == getattr(typing, '_SpecialGenericAlias', None):
         return True
     return False
+
 
 def is_a_typing_list(typ):
     if is_a_generic_alias(typ):
@@ -190,7 +207,7 @@ def _type_coerce(value, typ):
     typ = _dict_cls(value) or typ
 
     if is_a_typing_list(typ):
-        if getattr(typ, '__args__',()):
+        if getattr(typ, '__args__', ()):
             sub_type = typ.__args__[0]  # YUCK!
             return [type_coerce(item, sub_type) for item in value]
         else:
@@ -477,6 +494,23 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
             elif typ in PROXY_CLASSES:
                 typ = PROXY_CLASSES[typ]
         return type_coerce(self.__dict__.copy(), typ)
+
+
+# def create_dereferencer(channel,id):
+#     """Create a cleanup call to dereference the ID"""
+
+
+class Reference(ServerObjectProxy):
+    @classmethod
+    def from_server(cls, struct):
+        return cls(struct)
+
+    def get_key(self):
+        return self.__reference__
+
+    def __init__(self, struct):
+        for key, value in struct.items():
+            setattr(self, key, value)
 
 
 class ServerObjectEnum(ServerObjectProxy):

@@ -801,7 +801,7 @@ async def elevators(
         (
             down_pos - forward,
             'oak_wall_sign[facing=%(right)s]' % locals(),
-            ['Please Keep Clear', 'Of the Exits'],
+            ['Please', 'Keep Clear', 'Of the Exits'],
         ),
         (
             down_pos - forward + (0, 1, 0),
@@ -815,19 +815,24 @@ async def elevators(
     # block, and exposing e.g. WallSign as a type that is related to the Sign
     # interface...
 
-    # for sign_info in signs:
-    #     sign_block = await final.Location(sign_info[0]).getBlock()
-    #     sign_data: final.WallSign = await sign_block.getBlockData()
-    #     if isinstance(sign_data, final.WallSign):
-    #         text = sign_info[2]
-    #         if isinstance(text, str):
-    #             text = [text]
-    #         for index, line in enumerate(text):
-    #             await sign_data.setLine(index, line)
-    #         await sign_data.setGlowingText(True)
-    #         await sign_block.setBlockData(sign_data)
-    #     else:
-    #         raise RuntimeError("Not a sign: %s" % (sign_data))
+    for sign_info in signs:
+        sign_block = await final.Location(sign_info[0]).getBlock()
+        await set_sign_text(sign_info[0], sign_info[2])
+
+
+@expose.expose()
+async def set_sign_text(location, text):
+    sign_block: final.Block = await final.Location(location).getBlock()
+    sign_state: final.Sign = await sign_block.getState()
+    if isinstance(sign_state, final.Sign):
+        if isinstance(text, str):
+            text = [text]
+        for index, line in enumerate(text):
+            await sign_state.setLine(index, line)
+        await sign_state.setGlowingText(True)
+        await sign_state.update()
+    else:
+        raise RuntimeError("Not a sign: %s" % (sign_state))
 
 
 @expose.expose()

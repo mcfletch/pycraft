@@ -496,11 +496,16 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
         return type_coerce(self.__dict__.copy(), typ)
 
 
-# def create_dereferencer(channel,id):
-#     """Create a cleanup call to dereference the ID"""
-
-
 class Reference(ServerObjectProxy):
+    """Reference to a particular instance of a particular object on the server
+
+    References have to be explicitly released on the server after
+    they are no longer needed.
+
+    Otherwise the reference looks like a regular proxy object,
+    it uses declared interfaces to control the methods available.
+    """
+
     @classmethod
     def from_server(cls, struct):
         return cls(struct)
@@ -511,6 +516,7 @@ class Reference(ServerObjectProxy):
     def __init__(self, struct):
         for key, value in struct.items():
             setattr(self, key, value)
+        ProxyMethod.channel.dereference_on_delete(self)
 
 
 class ServerObjectEnum(ServerObjectProxy):

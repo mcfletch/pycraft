@@ -56,6 +56,7 @@ class Channel(object):
         self.method_cache = {}
         self.method_cache_lock = asyncio.Lock()
         self.debug = debug
+        self.referents_awaiting_release = []
 
     async def open(self):
         self.wanted = True
@@ -267,3 +268,28 @@ class Channel(object):
         from .final import Server
 
         return Server()
+
+    def dereference_on_delete(self, referent):
+        """Arrange to delete reference to the referent local object is deleted"""
+        import weakref
+
+        ref = weakref.finalize(referent, self.reference_deleter(referent.__reference__))
+        # self.referents[referent.__reference__] = ref
+        return ref
+
+    def reference_deleter(self, reference):
+        def reference_callback():
+            self.referents_awaiting_release.append(reference)
+            asyncio.ensure_future(self._dereferencer())
+
+        return reference_callback
+
+    async def _dereferencer(self):
+        """Create a cleanup call to dereference the ID
+
+        If we have a *lot* of cleanups, they'll be put into a single request,
+        but normally it will be a 1:1 situation...
+        """
+        self.referents_awaiting_release, referents = [], self.referents_awaiting_release
+        if referents:
+            await self.call_remote('dereference', referents)

@@ -109,8 +109,10 @@ async def block(type_name, position=None, offset=(0, 0, 0), *, player=None):
         position = position + offset
     if not ':' in type_name:
         type_name = 'minecraft:%s' % (type_name,)
+    position = final.Location(position)
     block = await position.getBlock()
-    return await block.setBlockData(type_name)
+    await block.setBlockData(type_name)
+    return block
 
 
 # @expose()

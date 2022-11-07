@@ -558,7 +558,7 @@ async def keep_inventory(keep=True, *, player=None, world=None):
 @expose()
 async def potion_of(
     type='water_breathing',
-    name='Potion of Water Breathing',
+    name='My Potion',
     *extra,
     player=None,
     world=None,
@@ -575,6 +575,10 @@ async def potion_of(
     base.type = type
     base.upgraded = True
     base.extended = True
+    for effect in extra:
+        await metadata.addCustomEffect(
+            effect, True
+        )  # overwrite existing of this type...
     await metadata.setBasePotionData(base)
     base = await metadata.getBasePotionData()
     await metadata.setDisplayName(name)

@@ -558,6 +558,7 @@ async def keep_inventory(keep=True, *, player=None, world=None):
 @expose()
 async def potion_of(
     type='water_breathing',
+    name='Potion of Water Breathing',
     *extra,
     player=None,
     world=None,
@@ -566,15 +567,19 @@ async def potion_of(
 ):
     """Give a potion of base with extras as specified"""
     stack = await give('potion', player=player)
-    metadata = await stack.getMeta()
+    metadata = await stack.getItemMeta()
     if not metadata:
         raise ValueError("No metadata on the stack %s", stack)
+    print("metadata instance: %s" % (metadata,))
     base = await metadata.getBasePotionData()
     base.type = type
     base.upgraded = True
     base.extended = True
     await metadata.setBasePotionData(base)
     base = await metadata.getBasePotionData()
+    await metadata.setDisplayName(name)
+    await stack.setItemMeta(metadata)
+
     print(base)
 
 
@@ -717,3 +722,38 @@ async def hopper_cascade(
             else:
                 blocks.append(left_material)
     await world.setBlockList(locations, blocks)
+
+
+@expose()
+async def set_sign_text(block, text, glowing=True, color=None):
+    """Set the text on the passed sign block
+
+    block -- the location of a block or a Block instance from another call
+    text -- a string, or list of strings, to set on the sign
+    glowing -- whether to make the text glow
+    color -- a DyeColor constant such as 'BLUE','PINK','RED', etc
+
+    returns the sign's block on success
+    """
+    sign_block: final.Block = None
+    if isinstance(block, (tuple, Location, list)):
+        location = final.Location(block)
+        sign_block = await location.getBlock()
+    elif isinstance(block, (Block,)):
+        sign_block = block
+    else:
+        raise TypeError('Need a location or a Block reference, not %r' % (block,))
+
+    sign_state: final.Sign = await sign_block.getState()
+    if isinstance(sign_state, final.Sign):
+        if isinstance(text, str):
+            text = [text]
+        for index, line in enumerate(text):
+            await sign_state.setLine(index, line)
+        await sign_state.setGlowingText(True)
+        if color:
+            await sign_state.setColor(color)
+        await sign_state.update()
+        return sign_block
+    else:
+        raise RuntimeError("Not a sign: %s" % (sign_state))

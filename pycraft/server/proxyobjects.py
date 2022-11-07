@@ -506,6 +506,8 @@ class Reference(ServerObjectProxy):
     it uses declared interfaces to control the methods available.
     """
 
+    __reference__ = None
+
     @classmethod
     def from_server(cls, struct):
         return cls(struct)
@@ -517,6 +519,9 @@ class Reference(ServerObjectProxy):
         for key, value in struct.items():
             setattr(self, key, value)
         ProxyMethod.channel.dereference_on_delete(self)
+
+    def __json__(self):
+        return self.__reference__
 
 
 class ServerObjectEnum(ServerObjectProxy):

@@ -5,7 +5,7 @@ import random, os, typing
 import itertools
 import logging
 from . import expose, directions, randomchoice, rotations
-from .server.world import Vector
+from .server.world import Vector, Block, Location
 from .server import final
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -704,6 +704,8 @@ async def elevators(
                avoid flooding areas of air through which it passes
 
     """
+    from .acommands import set_sign_text
+
     forward, cross = directions.forward_and_cross(player.direction)
     up_pos = player.position + forward + forward
     down_pos = up_pos - cross
@@ -792,47 +794,33 @@ async def elevators(
             up_pos - forward,
             'oak_wall_sign[facing=%(left)s]' % locals(),
             ['Mind the Sand', 'As you Enter'],
+            'BLUE',
         ),
         (
             up_pos - forward + (0, 1, 0),
             'oak_wall_sign[facing=%(left)s]' % locals(),
             'Elevator Up',
+            'BLUE',
         ),
         (
             down_pos - forward,
             'oak_wall_sign[facing=%(right)s]' % locals(),
             ['Please', 'Keep Clear', 'Of the Exits'],
+            'RED',
         ),
         (
             down_pos - forward + (0, 1, 0),
             'oak_wall_sign[facing=%(right)s]' % locals(),
             'Elevator Down',
+            'RED',
         ),
     ]
 
     await world.setBlockList([sign[0] for sign in signs], [sign[1] for sign in signs])
-    # TODO: getting correct block-data type out of the getBlockData for a given
-    # block, and exposing e.g. WallSign as a type that is related to the Sign
-    # interface...
 
     for sign_info in signs:
         sign_block = await final.Location(sign_info[0]).getBlock()
-        await set_sign_text(sign_info[0], sign_info[2])
-
-
-@expose.expose()
-async def set_sign_text(location, text):
-    sign_block: final.Block = await final.Location(location).getBlock()
-    sign_state: final.Sign = await sign_block.getState()
-    if isinstance(sign_state, final.Sign):
-        if isinstance(text, str):
-            text = [text]
-        for index, line in enumerate(text):
-            await sign_state.setLine(index, line)
-        await sign_state.setGlowingText(True)
-        await sign_state.update()
-    else:
-        raise RuntimeError("Not a sign: %s" % (sign_state))
+        await set_sign_text(sign_info[0], sign_info[2], color=sign_info[3])
 
 
 @expose.expose()

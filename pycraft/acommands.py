@@ -8,6 +8,8 @@ from .server import final
 from . import parsematerial
 from .server.world import (
     Vector,
+    Location,
+    Block,
 )
 import time, re, os, json
 import numpy as np
@@ -556,6 +558,77 @@ async def keep_inventory(keep=True, *, player=None, world=None):
 
 
 @expose()
+async def mikes_potion(name, *, world=None, player=None):
+    """Creates one of a selection of over-powered potions
+
+    name => effects
+
+    carrots => night_vision, healing
+    heath => health, health_boost, regeneration, saturation
+    gopher => digging, luck, night_vision,
+    """
+    name = name.lower()
+    if name == 'carrots':
+        return await potion_of(
+            'night_vision',
+            "Carrot Juice",
+            {
+                'type': 'heal',
+                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
+                'amplifier': 50,  # likely excessive
+            },
+            {
+                'type': 'saturation',
+                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
+                'amplifier': 1,
+            },
+            player=player,
+            world=world,
+        )
+    elif name == 'health':
+        return await potion_of(
+            'instant_heal',
+            "Tonic Water",
+            {
+                'type': 'heal',
+                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
+                'amplifier': 50,  # likely excessive
+            },
+            {
+                'type': 'saturation',
+                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
+                'amplifier': 1,
+            },
+            {
+                'type': 'health_boost',
+                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
+                'amplifier': 40,
+            },
+            player=player,
+            world=world,
+        )
+    elif name == 'gopher':
+        return await potion_of(
+            'night_vision',
+            "Gopher's Gruel",
+            {
+                'type': 'fast_digging',
+                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
+                'amplifier': 50,  # likely excessive
+            },
+            {
+                'type': 'luck',
+                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
+                'amplifier': 1,
+            },
+            player=player,
+            world=world,
+        )
+
+    return 'Unknown potion %r' % (name,)
+
+
+@expose()
 async def potion_of(
     type='water_breathing',
     name='My Potion',
@@ -563,9 +636,15 @@ async def potion_of(
     player=None,
     world=None,
     server=None,
-    PotionMeta=None,
 ):
-    """Give a potion of base with extras as specified"""
+    """Give a potion of base with extras as specified
+
+    Examples:
+
+        # potion that gives you night vision and also heal's you, as carrots do
+        potion_of('night_vision','Carrot Juice',{'type':'heal'})
+
+    """
     stack = await give('potion', player=player)
     metadata = await stack.getItemMeta()
     if not metadata:

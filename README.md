@@ -1,4 +1,36 @@
-# PyCraft: Python API to Minecraft Java Edition Setup
+# PyCraft Writing Python in Minecraft Chat
+
+Pycraft is a dockerised Minecraft server that lets you
+interactively use Python code from within the world to
+manipulate the environment.
+
+You can open a text-chat window and type code such as:
+
+ ```
+ paste('red_fortress')
+ give('cooked_beef',count=64)
+ ```
+
+and the python server container will paste in a large
+fortress complete with a redstone gate or give you a 
+whole stack of steak.
+
+[![Youtube Video Showing the Paste Command](http://img.youtube.com/vi/dM_s-SX_Vfg/0.jpg)](http://www.youtube.com/watch?v=dM_s-SX_Vfg "Create a Mansion for Exploring Minecraft in one Command")
+[![Youtube Video Showing Paste Command with Redstone](http://img.youtube.com/vi/su93P0UlspY/0.jpg)](http://www.youtube.com/watch?v=su93P0UlspY "Tour the Red Fortress Paste with Pycraft in Minecraft 1.19.2")
+[![Youtube Video Showing Inventory Manipulation](http://img.youtube.com/vi/6jTjcPHK2u0/0.jpg)](http://www.youtube.com/watch?v=6jTjcPHK2u0 "It's dangerous out there, cover yourself in debris with this command in Minecraft with Pycraft")
+[![Youtube Video Showing More Inventory Manipulation](http://img.youtube.com/vi/szqi6IRF1Mo/0.jpg)](http://www.youtube.com/watch?v=szqi6IRF1Mo "Feeding yourself in Minecraft with Pycraft, food, food stacks, super-hoe and wheat farm")
+[![Youtube Video Showing Bubble Columns](http://img.youtube.com/vi/CFb1FQ7Rz94/0.jpg)](http://www.youtube.com/watch?v=CFb1FQ7Rz94 "Up and Down Bubble Elevators for Mine Access in Pycraft with Minecraft 1.19")
+[![Youtube Video Showing Block State Manipulation](http://img.youtube.com/vi/PLyHif5C7-c/0.jpg)](http://www.youtube.com/watch?v=PLyHif5C7-c "Manipulate Block State (new feature) using Bukkit API from Python in Minecraft 1.19")
+
+The Python server supports a fairly large, but not 
+complete subset of Python. The API that is exposed is
+extensive, being most of the common features from the
+Java Bukkit API.
+
+The download on the left should let you launch the server
+and start playing if you are already familiar with
+docker (using Linux or Windows Subsystem for Linux).
+
 
 This repository includes the following:
 

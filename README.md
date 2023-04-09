@@ -27,10 +27,19 @@ complete subset of Python. The API that is exposed is
 extensive, being most of the common features from the
 Java Bukkit API.
 
-The download on the left should let you launch the server
-and start playing if you are already familiar with
-docker (using Linux or Windows Subsystem for Linux).
+## Quick Start
 
+If you are familiar with Docker and Linux, this should get you started:
+
+* Get a Docker + Linux environment (e.g. WSL)
+* [Download a release](https://github.com/mcfletch/pycraft/releases)
+* Unzip into a directory in your Linux environment
+* Read the [Minecraft EULA](https://www.minecraft.net/en-us/eula)
+* Run `run -e -d your-empty-folder-for-your-world`
+
+In Minecraft, connect to the server running on your local machine's IP address.
+
+## What is Here
 
 This repository includes the following:
 

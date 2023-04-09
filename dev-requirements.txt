@@ -1,0 +1,4 @@
+# Build-only requirements
+pyinstaller
+yaml 
+-r ../requirements.txt

@@ -56,13 +56,27 @@ def get_options():
         '--authentication',
         default=False,
         action='store_true',
-        help='If specified, authenticate against Minecraft.net servers (requires BedRock players to have their password handy)',
+        help='If specified, authenticate against Minecraft.net servers (requires BedRock players to have their Java Edition password handy)',
     )
     parser.add_argument(
         '--wipe-config',
         default=False,
         action='store_true',
         help='If specified overwrite the data-directory\'s server.properties and whitelist.json with those in this directory',
+    )
+    parser.add_argument(
+        '--no-chat',
+        default=True,
+        dest='chat',
+        action='store_false',
+        help='Do not start the pycraft-chat-server container (used during development to allow for running it from the source-code tree)',
+    )
+    parser.add_argument(
+        '--stop',
+        default=False,
+        dest='stop',
+        action='store_true',
+        help='If specified, shut down the containers using docker stop',
     )
     return parser
 
@@ -155,8 +169,14 @@ def main():
     parser = get_options()
     options = parser.parse_args()
     docker_name = options.name
+    chat_name = docker_name + '-chatserver'
+    if options.stop:
+        for name in [docker_name,chat_name]:
+            subprocess.call(['docker','stop',name]) # note: we do *not* check results here...
+        subprocess.call(['docker','ps'])
+        return
     if not options.eula:
-        parser.error('You have not accepted the EULA (read and add the -e) flag')
+        parser.error('You have not indicated that you have accepted the Minecraft Server EULA (read and add the -e) flag')
         return
     data = os.path.normpath(os.path.abspath(options.data))
     install_pycraftserver_plugin(data, options.bedrock)
@@ -169,6 +189,7 @@ def main():
     command = [
         'docker',
         'run',
+        '--rm',
         '-d',
         '-p4712:4712',
         '-p25565:25565',
@@ -188,6 +209,23 @@ def main():
     log.info("Java Edition server on port: %s", 25565)
     if options.bedrock:
         log.info("Bedrock Edition server on port: %s", 19132)
+    if options.chat:
+        server_ip = subprocess.check_output([
+            'docker','inspect','-f','{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}',
+            docker_name,
+        ]).decode('utf-8').strip()
+        log.info("Server container is on ip: %s", server_ip)
+
+        if server_ip:
+            subprocess.check_call([
+                'docker',
+                'run',
+                '--rm',
+                '-d',
+                '--name',chat_name,
+                'mcfletch/pycraft-chat-server:latest',
+                '-H', server_ip,
+            ])
 
 
 if __name__ == "__main__":

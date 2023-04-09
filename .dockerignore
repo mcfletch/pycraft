@@ -1,0 +1,11 @@
+.env 
+.vscode
+.pytest_cache
+pycraft-server
+dist
+MockBukkit*
+node_modules
+rpacks
+plugins
+.git
+./data

@@ -2,11 +2,14 @@ __pycache__
 *.egg-info  
 DragonProxy/data
 DragonProxy/DragonProxy.jar
+MockBukkit*
 data
 .vscode
 raspberryjuice-*.jar
 pycraft/items.tsv
 env
 node_modules
+build 
+dist
 
 pycraft-server/pkg/**

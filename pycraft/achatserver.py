@@ -39,63 +39,47 @@ def get_options():
         help='If specified, do verbose API logging',
         action='store_true',
     )
-    parser.add_argument(
-        '--hot-reload',
-        default=False,
-        action='store_true',
-        help='If specified, watch the pychart directory for changes and reload when seen (requires inotify-tools package)',
-    )
     return parser
 
 
-async def run(options):
+async def chatserver(options):
     if options.verbose:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
     server = channel.Channel(host=options.host, port=options.port, debug=True)
-    await server.open()
-    await server.introspect(cached=True)
-
-    worlds = await server.server.getWorlds()
-
-    log.info("getWorlds => %s", worlds)
-    world = worlds[0]
-    world_cls = world.__class__
-
-    listen = alistener.AListener(server)
-
-    def shutdown():
-        listen.wanted = False
+    while True:
         try:
-            log.info("Closing chat socket")
-            server.close()
+            await server.open()
+            await server.introspect(cached=True)
+        except KeyboardInterrupt:
+            return
+        except ConnectionRefusedError as err:
+            log.warning("Connection to server refused (likely not yet running), waiting")
+            await asyncio.sleep(5)
         except Exception as err:
-            pass
+            log.exception("Failure during setup, pausing before reconnection")
+            await asyncio.sleep(10)
+        else:
+            worlds = await server.server.getWorlds()
 
-    if options.hot_reload:
-        # raise RuntimeError('Not yet working')
-        from . import hotreload
+            log.info("getWorlds => %s", worlds)
+            world = worlds[0]
+            world_cls = world.__class__
 
-        t = threading.Thread(
-            target=hotreload.hot_reload,
-            kwargs=dict(
-                callback=shutdown,
-            ),
-            daemon=True,
-        )
-        t.start()
-    try:
-        log.info("Trying to subscribe to chat")
-        await listen.listen()
-        log.info("Listening to chat now")
-    except asyncio.TimeoutError as err:
-        log.warning("Timed out listening to connection")
-        raise
-
+            listen = alistener.AListener(server)
+            try:
+                log.info("Trying to subscribe to chat")
+                await listen.listen()
+                log.info("Listening to chat now")
+            except asyncio.TimeoutError as err:
+                log.warning("Timed out listening to connection")
+                raise
+            else:
+                break
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
     options = get_options().parse_args()
-    asyncio.ensure_future(run(options))
+    asyncio.ensure_future(chatserver(options))
     asyncio.get_event_loop().run_forever()

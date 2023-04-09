@@ -35,7 +35,7 @@ If you are familiar with Docker and Linux, this should get you started:
 * [Download a release](https://github.com/mcfletch/pycraft/releases)
 * Unzip into a directory in your Linux environment
 * Read the [Minecraft EULA](https://www.minecraft.net/en-us/eula)
-* Run `run -e -d your-empty-folder-for-your-world`
+* Run `pycraft-runner -e -d your-empty-folder-for-your-world`
 
 In Minecraft, connect to the server running on your local machine's IP address.
 

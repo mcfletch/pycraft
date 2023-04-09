@@ -3,7 +3,7 @@ import os, requests, subprocess, argparse, logging, shutil, yaml, glob
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 DATA = os.path.join(HERE, 'data')
-GEYSER_URL = 'https://ci.opencollab.dev//job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/target/Geyser-Spigot.jar'
+GEYSER_URL = 'https://ci.opencollab.dev/job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/build/libs/Geyser-Spigot.jar'
 PYCRAFT_SERVER_URL = 'https://github.com/mcfletch/pycraft-server/releases/download/v-1.0.6/PycraftServer-1.0.6.jar'
 PLUGINS = 'plugins'
 PLUGIN_SOURCE = os.path.join(HERE, PLUGINS)
@@ -171,12 +171,16 @@ def main():
     docker_name = options.name
     chat_name = docker_name + '-chatserver'
     if options.stop:
-        for name in [docker_name,chat_name]:
-            subprocess.call(['docker','stop',name]) # note: we do *not* check results here...
-        subprocess.call(['docker','ps'])
+        for name in [docker_name, chat_name]:
+            subprocess.call(
+                ['docker', 'stop', name]
+            )  # note: we do *not* check results here...
+        subprocess.call(['docker', 'ps'])
         return
     if not options.eula:
-        parser.error('You have not indicated that you have accepted the Minecraft Server EULA (read and add the -e) flag')
+        parser.error(
+            'You have not indicated that you have accepted the Minecraft Server EULA (read and add the -e) flag'
+        )
         return
     data = os.path.normpath(os.path.abspath(options.data))
     install_pycraftserver_plugin(data, options.bedrock)
@@ -210,22 +214,35 @@ def main():
     if options.bedrock:
         log.info("Bedrock Edition server on port: %s", 19132)
     if options.chat:
-        server_ip = subprocess.check_output([
-            'docker','inspect','-f','{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}',
-            docker_name,
-        ]).decode('utf-8').strip()
+        server_ip = (
+            subprocess.check_output(
+                [
+                    'docker',
+                    'inspect',
+                    '-f',
+                    '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}',
+                    docker_name,
+                ]
+            )
+            .decode('utf-8')
+            .strip()
+        )
         log.info("Server container is on ip: %s", server_ip)
 
         if server_ip:
-            subprocess.check_call([
-                'docker',
-                'run',
-                '--rm',
-                '-d',
-                '--name',chat_name,
-                'mcfletch/pycraft-chat-server:latest',
-                '-H', server_ip,
-            ])
+            subprocess.check_call(
+                [
+                    'docker',
+                    'run',
+                    '--rm',
+                    '-d',
+                    '--name',
+                    chat_name,
+                    'mcfletch/pycraft-chat-server:latest',
+                    '-H',
+                    server_ip,
+                ]
+            )
 
 
 if __name__ == "__main__":

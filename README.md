@@ -42,7 +42,22 @@ users to connect.
 
 You have to abide by the [Minecraft EULA](https://www.minecraft.net/en-us/eula)
 
-On your (Ubuntu) Linux machine:
+For a Windows Machine:
+
+* Install Windows Subsystem for Linux (will require Administrator permissions)
+* Install Docker in the WSL environment
+
+For (Ubuntu) Linux machine(s):
+* Install docker `apt-get install docker-ce`
+
+For both:
+
+* Download the Stand-Alone Linux Run-script, unpack to a directory
+* Run `run --help` to see options
+* Read the [Minecraft EULA](https://www.minecraft.net/en-us/eula)
+* Run `run -e -d YOURWORLDDIRECTORY`
+
+To run from source-code (for developers):
 
 ```
 apt-get install docker python3 git
@@ -118,7 +133,7 @@ commands.
 
 ### Meta Commands
 ```
-  help() # shows all available commands with summary of purpose
+  dir() # shows all available commands with summary of purpose
   help(command) # show help for that command
   echo( 2+3 ) # evaluates the thing you types and returns it
   echo( player.position ) # show's the calling player's position

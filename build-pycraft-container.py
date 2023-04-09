@@ -27,13 +27,22 @@ def build(release):
     version,tag = release
     new_version = (version[0],version[1],version[2]+1)
     docker_tag = '%d.%d.%d'%new_version
+    tags = [
+        DOCKER_TAG_TEMPLATE%{'tag':docker_tag},
+        DOCKER_TAG_TEMPLATE%{'tag':'latest'},
+    ]
+    tagset = []
+    for tag in tags:
+        tagset.extend([
+            '--tag',
+            tag
+        ])
     subprocess.check_call([
         'docker','build',
-            '--tag',DOCKER_TAG_TEMPLATE%{'tag':docker_tag},
-            '--tag',DOCKER_TAG_TEMPLATE%{'tag':'latest'},
+    ] + tagset + [
             '.',
     ])
-    return new_version
+    return new_version, tags
 
 INCLUDE_FILES = [
     'server.properties',
@@ -72,10 +81,21 @@ def pack_runner(release):
 def main():
     options = get_options().parse_args()
     releases = get_releases()
-    assert releases, """No tags of the form release-%d.%d.%d in git"""
-    new_version = build(releases[-1])
+    assert releases, """No annotated tags of the form release-%d.%d.%d in git"""
+    new_version, tags = build(releases[-1])
     log.info("Built release %d.%d.%d", new_version[0],new_version[1],new_version[2])
     pack_runner(new_version)
+
+    if options.push:
+        for tag in tags:
+            subprocess.check_call([
+                'docker',
+                'push',
+                tag
+            ])
+        subprocess.check_call([
+            'git','tag','-a','-m',"Release %s.%s.%s"%new_version,'%s%d.%d.%d'%(RELEASE_PREFIX,new_version[0],new_version[1],new_version[2])
+        ])
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

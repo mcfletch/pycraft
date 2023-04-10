@@ -221,12 +221,15 @@ class Channel(object):
 
     DEFAULT_CACHE_TIME = 3600 * 24
 
-    async def load_methods(self, cached=False):
+    async def load_methods(self, cached=False, force=False):
         """Load method metadata, use cache if cached == True"""
         if (
             cached
             and os.path.exists(CACHE_FILE)
-            and os.stat(CACHE_FILE).st_mtime > time.time() - self.DEFAULT_CACHE_TIME
+            and (
+                (cached and force)
+                or os.stat(CACHE_FILE).st_mtime > time.time() - self.DEFAULT_CACHE_TIME
+            )
         ):
             try:
                 log.info("Using cache file: %s", CACHE_FILE)
@@ -242,7 +245,7 @@ class Channel(object):
         os.rename(CACHE_FILE + '~', CACHE_FILE)
         return automatic
 
-    async def introspect(self, cached=False):
+    async def introspect(self, cached=False, force=False):
         """Get methods for all registered namespaces
 
         Needs to do all of:
@@ -254,7 +257,7 @@ class Channel(object):
         """
         seen_classes = {}
 
-        automatic = await self.load_methods(cached=cached)
+        automatic = await self.load_methods(cached=cached, force=force)
 
         if 'plugins' in automatic:
             for name, plugin in sorted(automatic['plugins'].items()):

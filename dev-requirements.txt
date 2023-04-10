@@ -1,4 +1,6 @@
 # Build-only requirements
 pyinstaller
-yaml 
--r ../requirements.txt
+sphinx
+sphinx-readable-theme
+
+-r ./requirements.txt

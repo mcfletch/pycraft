@@ -1,4 +1,4 @@
-# PyCraft Writing Python in Minecraft Chat
+# PyCraft: Python in Minecraft Chat
 
 Pycraft is a dockerised Minecraft server that lets you
 interactively use Python code from within the world to

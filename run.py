@@ -12,6 +12,7 @@ log = logging.getLogger('pycraft-setup')
 docker_name = 'minecraft'
 MEGA = 1024 * 1024
 GEYSER_CONFIG = 'Geyser-config.yml'
+RUNDIR = os.path.abspath(os.getcwd())
 
 
 def get_options():
@@ -70,6 +71,13 @@ def get_options():
         dest='chat',
         action='store_false',
         help='Do not start the pycraft-chat-server container (used during development to allow for running it from the source-code tree)',
+    )
+    parser.add_argument(
+        '--jupyter',
+        default=True,
+        dest='jupyter',
+        action='store_true',
+        help='If specified, start a jupyter (ipython) shell, not currently very useful as the token you need to access it is hidden in the docker logs',
     )
     parser.add_argument(
         '--stop',
@@ -165,16 +173,21 @@ def update_config(data, overwrite=True):
                 )
 
 
+def stop_containers(names):
+    """Stop-and-remove the given containers, ignoring errors"""
+    for name in names:
+        subprocess.call(['docker', 'stop', name])
+        # subprocess.call(['docker', 'rm', name])
+
+
 def main():
     parser = get_options()
     options = parser.parse_args()
     docker_name = options.name
     chat_name = docker_name + '-chatserver'
+    jupyter_name = docker_name + '-jupyter'
     if options.stop:
-        for name in [docker_name, chat_name]:
-            subprocess.call(
-                ['docker', 'stop', name]
-            )  # note: we do *not* check results here...
+        stop_containers([docker_name, chat_name, jupyter_name])
         subprocess.call(['docker', 'ps'])
         return
     if not options.eula:
@@ -186,9 +199,8 @@ def main():
     install_pycraftserver_plugin(data, options.bedrock)
     if options.bedrock:
         configure_geyser(data, options.authentication)
+    stop_containers([docker_name, chat_name, jupyter_name])
     update_config(data, overwrite=options.wipe_config)
-    subprocess.call(['docker', 'stop', docker_name])
-    subprocess.call(['docker', 'rm', docker_name])
     subprocess.check_call(['docker', 'pull', 'itzg/minecraft-server'])
     command = [
         'docker',
@@ -213,22 +225,23 @@ def main():
     log.info("Java Edition server on port: %s", 25565)
     if options.bedrock:
         log.info("Bedrock Edition server on port: %s", 19132)
-    if options.chat:
-        server_ip = (
-            subprocess.check_output(
-                [
-                    'docker',
-                    'inspect',
-                    '-f',
-                    '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}',
-                    docker_name,
-                ]
-            )
-            .decode('utf-8')
-            .strip()
-        )
-        log.info("Server container is on ip: %s", server_ip)
 
+    server_ip = (
+        subprocess.check_output(
+            [
+                'docker',
+                'inspect',
+                '-f',
+                '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}',
+                docker_name,
+            ]
+        )
+        .decode('utf-8')
+        .strip()
+    )
+    log.info("Server container is on ip: %s", server_ip)
+
+    if options.chat:
         if server_ip:
             subprocess.check_call(
                 [
@@ -236,11 +249,38 @@ def main():
                     'run',
                     '--rm',
                     '-d',
+                    f'-v{RUNDIR}/pycraft-templates:/var/pycraft-templates',
+                    '-e',
+                    'USER_TEMPLATES=/var/pycraft-templates',
                     '--name',
                     chat_name,
                     'mcfletch/pycraft-chat-server:latest',
+                    "pycraft-chat-server",
                     '-H',
                     server_ip,
+                ]
+            )
+    if options.jupyter:
+        if server_ip:
+            subprocess.check_call(
+                [
+                    'docker',
+                    'run',
+                    '--rm',
+                    '-d',
+                    f'-v{RUNDIR}/notebooks:/var/notebooks',
+                    '-p',
+                    '8888:8888',
+                    '--name',
+                    jupyter_name,
+                    'mcfletch/pycraft-chat-server:latest',
+                    'jupyter',
+                    'notebook',
+                    '--no-browser',
+                    '--allow-root',
+                    '--ip=0.0.0.0',
+                    '--notebook-dir',
+                    '/var/notebooks',
                 ]
             )
 

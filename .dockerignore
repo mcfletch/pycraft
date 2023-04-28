@@ -2,6 +2,8 @@
 .vscode
 .pytest_cache
 pycraft-server
+pycraft-templates
+notebooks
 dist
 MockBukkit*
 node_modules

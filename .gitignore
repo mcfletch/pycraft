@@ -7,6 +7,8 @@ data
 .vscode
 raspberryjuice-*.jar
 pycraft/items.tsv
+pycraft-templates
+notebooks
 env
 node_modules
 build 

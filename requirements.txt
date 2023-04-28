@@ -1,4 +1,4 @@
-ipython
+notebook
 numpy
 pillow
 requests 

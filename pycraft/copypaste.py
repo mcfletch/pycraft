@@ -1,4 +1,4 @@
-import re, os, json, logging
+import re, os, json, logging, glob, functools, time
 import numpy as np
 from . import expose, directions
 from .server.world import Vector
@@ -6,6 +6,8 @@ from . import bulldozer, parsematerial, rotations
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES = os.path.join(HERE, 'templates')
+# When running from source, directly write into templates...
+USER_TEMPLATES = os.path.abspath(os.environ.get('USER_DATA', './pycraft-templates'))
 log = logging.getLogger(__name__)
 
 
@@ -28,6 +30,9 @@ async def copy(
     depth, width, height -- dimensions of the cube to copy
     position, direction -- middle of the lowest slice of the cube will be just
                            in front of position with cube extending in direction
+    offset -- offset from the normal copy position to where that position should be when
+              pasted; so if you want the paste to be 3m below where it would paste
+              normally, use [0,-3,0]
 
     returns message with name and the content copied
     """
@@ -75,7 +80,7 @@ async def copy(
 
 
 @expose.expose()
-async def show_pastes(substring=None):
+async def show_pastes(substring=None, *, player=None):
     """Show the name of pastes that are available
 
     If `substring` is passed, we will restrict to names that have that
@@ -214,21 +219,23 @@ def sanitize(text):
 BAD_CHARS = re.compile(r'[^0-9a-zA-Z_]')
 
 
-def template_filename(player, template_name):
+def template_filename(template_name, user=True):
     """Get the template filename for the given player
 
     names are restriced to A-Za-z0-9_ for both player and template
     """
-    playername = sanitize(player.name)
     template_name = sanitize(template_name)
-    return os.path.join(TEMPLATES, template_name) + '.json'
+    if user:
+        return os.path.join(USER_TEMPLATES, template_name) + '.json'
+    else:
+        return os.path.join(TEMPLATES, template_name) + '.json'
 
 
 def save_template(player, name, template, **named):
     """Save a template to a file using the proxy encoder to allow saving e.g. locations/directions"""
     from pycraft.server import channel
 
-    filename = template_filename(player, name)
+    filename = template_filename(name, user=True)
     log.info("Saving to file: %s", filename)
     struct = {
         'author': player.name,
@@ -245,23 +252,41 @@ def save_template(player, name, template, **named):
         struct,
         cls=channel.ProxyEncoder,
     )
+    dirname = os.path.dirname(filename)
+    # TODO: do we care about the race condition?
+    if os.path.exists(filename):
+        os.rename(
+            filename, filename + time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
+        )
+    elif not os.path.exists(dirname):
+        os.makedirs(dirname)
+
     with open(filename, 'w') as fh:
         fh.write(result)
 
+    list_templates.cache_clear()
+
 
 def load_template(player, name):
-    filename = template_filename(player, name)
-    log.info("Loading from file: %s", filename)
-    if os.path.exists(filename):
-        content = json.loads(open(filename).read())
-        return content
+    for filename in [
+        template_filename(name, True),
+        template_filename(name, False),
+    ]:
+        log.info("Loading from file: %s", filename)
+        if os.path.exists(filename):
+            content = json.loads(open(filename).read())
+            return content
     log.info("No such file: %s", filename)
     return None
 
 
+@functools.lru_cache(maxsize=1)
 def list_templates():
-    return [
-        x[0]
-        for x in [os.path.splitext(x) for x in sorted(os.listdir(TEMPLATES))]
-        if x[1] == '.json'
-    ]
+    result = []
+    for pattern in [
+        os.path.join(TEMPLATES, '*.json'),
+        os.path.join(USER_TEMPLATES, '*.json'),
+    ]:
+        for filename in glob.glob(pattern):
+            result.append(os.path.basename(filename)[:-5])
+    return result

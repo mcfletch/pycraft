@@ -74,7 +74,7 @@ def get_options():
     )
     parser.add_argument(
         '--jupyter',
-        default=True,
+        default=False,
         dest='jupyter',
         action='store_true',
         help='If specified, start a jupyter (ipython) shell, not currently very useful as the token you need to access it is hidden in the docker logs',

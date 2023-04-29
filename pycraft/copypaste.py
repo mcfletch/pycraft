@@ -7,7 +7,9 @@ from . import bulldozer, parsematerial, rotations
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES = os.path.join(HERE, 'templates')
 # When running from source, directly write into templates...
-USER_TEMPLATES = os.path.abspath(os.environ.get('USER_DATA', './pycraft-templates'))
+USER_TEMPLATES = os.path.abspath(
+    os.environ.get('USER_TEMPLATES', './pycraft-templates')
+)
 log = logging.getLogger(__name__)
 
 

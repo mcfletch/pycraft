@@ -374,6 +374,7 @@ class Player(Entity):
     """A particular player (potentially not currently logged in) on the server"""
 
     def __json__(self):
+        """Return the user's UUID as a reference"""
         return self.uuid
 
     __namespace__ = 'Player'
@@ -387,18 +388,22 @@ class Player(Entity):
     last_played: float
 
     def get_key(self):
+        """Return our unique key for lookup on the server (uuid)"""
         return self.uuid
 
     @property
     def id(self):
+        """Get our local unique key for referencing (uuid)"""
         return self.uuid
 
     @property
     def position(self):
+        """Retrieve the location reported when this record was retrieved (not necessarily the *current* location)"""
         return self.location
 
     @property
     def direction(self):
+        """Retrieve the direction reported when this record was retrieved (not necessarily the *current* direction)"""
         return self.location.direction
 
 
@@ -412,6 +417,7 @@ class World(ServerObjectProxy):
     """A particular world on the server"""
 
     def __json__(self):
+        """Return the world's name as a reference"""
         return self.name
 
     __namespace__ = 'World'
@@ -420,17 +426,28 @@ class World(ServerObjectProxy):
     type: str
 
     def get_key(self):
+        """Get the unique value which looks up the world (name)"""
         return self.name
 
     # Provide old-style apis to ease code reuse
     async def setBlock(self, x, y, z, material_or_blockdata):
-        """Set a specific block in this world to given material (blockdata)"""
+        """Set a specific block in this world to given material (blockdata)
+
+        Note: there is a far more flexible mechanism in
+        async world.setBlockList(locations, materials) which
+        should likely be preferred for any non-trivial tasks.
+        """
         return await final.Block(
             location=Location([self.name, x, y, z]).block_location()
         ).setBlockData(material_or_blockdata)
 
     async def oldSetBlocks(self, sx, sy, sz, ex, ey, ez, material):
-        """Use old style code for mcpi setBlocks"""
+        """Use old style code for mcpi setBlocks
+
+        Note: there is a far more flexible mechanism in
+        async world.setBlockList(locations, materials) which
+        should likely be preferred for any non-trivial tasks.
+        """
         from ..directions import as_cube
 
         start, size = as_cube((sx, sy, sz), (ex, ey, ez))
@@ -450,6 +467,7 @@ class Server(ServerObjectProxy):
     """Proxy for the server API"""
 
     def get_key(self):
+        """Get the key to lookup the server (literal 'server')"""
         return "server"
 
     def __json__(self):

@@ -15,8 +15,9 @@ You can open a text-chat window in-game and type code such as::
  give('cooked_beef',count=64) # manipulate your inventory
 
 The code in-world is parsed by the Python interpreter, then
-processed to result in calls to a server component [PyCraftServer](https://github.com/mcfletch/pycraft-server) running 
-in the Minecraft Java Edition Server (technically a Spigot/Bukkit server).
+processed to result in calls to a server component `PyCraftServer <https://github.com/mcfletch/pycraft-server>`_ running 
+in the Minecraft Java Edition Server (technically a Spigot/Bukkit server)
+which is provided by the `itzg/minecraft-server docker image <https://github.com/itzg/docker-minecraft-server>`_ .
 
 Quick Start 
 ------------
@@ -27,12 +28,13 @@ Quick Start
 If you are familiar with Docker and Linux, this should get you started.
 
 * Get a Docker + Linux environment (e.g. WSL)
-* [Download a release](https://github.com/mcfletch/pycraft/releases)
+* `Download a release <https://github.com/mcfletch/pycraft/releases>`_
 * Unzip into a directory in your Linux environment
-* Read the [Minecraft EULA](https://www.minecraft.net/en-us/eula)
+* Read the `Minecraft EULA <https://www.minecraft.net/en-us/eula>`_
 * Run `pycraft-runner -e -d your-empty-folder-for-your-world`
 
-See: :doc:`installation` for details
+See: :doc:`installation` for details and :doc:`devsetup` for running 
+the code on your host for development.
 
 In Minecraft
 
@@ -56,6 +58,7 @@ definitely *not* expose your machine to the internet while running this server.
    :caption: Contents:
 
    installation
+   devsetup
    builtins
    api/modules
    generated/index

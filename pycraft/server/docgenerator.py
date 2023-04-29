@@ -1,5 +1,5 @@
 """Generate documentation by introspecting exposed API"""
-import logging, asyncio, pprint, time, os, inspect
+import logging, asyncio, pprint, time, os, inspect, types
 from pycraft.server.proxyobjects import ProxyMethod, type_coerce
 from . import world, proxyobjects, channel
 
@@ -61,14 +61,18 @@ def cls_link(name, sub_type=None):
 
 def describe_python_method(method, indent=0):
     signature = inspect.signature(method)
-    docs = [f'{" "*indent}* `{method.__name__}{str(signature)}`']
+    if inspect.isawaitable(method) or inspect.iscoroutinefunction(method):
+        async_mark = 'async '
+    else:
+        async_mark = ''
+    docs = [f'{" "*indent}* {async_mark}{method.__name__}{str(signature)}']
     if method.__doc__:
         docs.append('')
         doc_lines = inspect.cleandoc(method.__doc__).splitlines()
         for line in doc_lines:
             if line.strip():
                 docs.append(
-                    f'{" "*indent}  ```{line}```',
+                    f'{" "*indent} {line}',
                 )
             else:
                 docs.append('')
@@ -88,7 +92,7 @@ def describe_java_method(description, indent=0):
     )
     indent = ' ' * indent
 
-    return f'{indent}* {description["name"]}({", ".join(arg_types)}) => {return_type}'
+    return f'{indent}* async {description["name"]}({", ".join(arg_types)}) => {return_type}'
 
 
 def describe_proxy_method(key, method, cls):
@@ -107,8 +111,15 @@ def describe_proxy_method(key, method, cls):
 async def generate_docs(output=DEFAULT_TARGET):
     server = await setup()
     index = [
-        'Pycraft Proxy Objects',
+        'pycraft.server.final',
         '=====================',
+        '',
+        '''The pycraft.server.final module contains the final classes representing the server-side
+        proxy objects which follow the Java Bukkit API. The classes described here are Python classes,
+        but with special proxy methods for calling into the related Java objects. The documentation
+        here is mostly a reference as to what is exposed, while the Bukkit API documentation linked
+        from each Proxy class's page provides details and semantics of what the methods do.
+        ''',
     ]
 
     for key, cls in sorted(proxyobjects.PROXY_TYPES.items()):
@@ -132,17 +143,41 @@ async def generate_docs(output=DEFAULT_TARGET):
             '---------',
             '',
         ]
+        null_methods = len(methods)
+        properties = [
+            'Properties',
+            '----------',
+            '',
+        ]
+        null_properties = len(properties)
         proxy_methods = [
             'Proxy Methods',
             '--------------',
             '',
         ]
-        for key, value in sorted(cls.__dict__.items()):
+        null_proxy = len(proxy_methods)
+        for key, value in inspect.getmembers(cls):
             if isinstance(value, proxyobjects.ProxyMethod):
                 # print(f'    def {key}():')
                 proxy_methods.extend(describe_proxy_method(key, value, cls))
-            elif inspect.isfunction(value):
+            elif inspect.isfunction(value) or inspect.ismethod(value):
                 methods.extend(describe_python_method(value, 0))
+            elif isinstance(value, property):
+                properties.append(f'* {key} -- {value.__doc__}')
+            elif key == 'values' and hasattr(value, 'cache_clear'):
+                methods.append(
+                    f'* {key}() -- (cached) set of values defined for the enumeration'
+                )
+            elif (
+                key.startswith('__')
+                and key.endswith('__')
+                or key in ('interfaces', '_prop_typ')
+            ):
+                continue
+            elif isinstance(value, (int, float, str, bytes, tuple, list, type(None))):
+                properties.append(f'* {key} = {repr(value)}')
+            else:
+                raise KeyError(key, value)
             # else:
             #     print('Not a method: %s %s' % (key, type(value)))
         declaration = getattr(cls, '__declaration__', None)
@@ -157,12 +192,24 @@ async def generate_docs(output=DEFAULT_TARGET):
                 full_name = class_declaration['fullName']
                 javadoc = javadoc_url(full_name)
                 if javadoc:
-                    header.extend([f'Python Proxy to `{full_name} <{javadoc}>`_ ', ''])
+                    header.extend(
+                        [
+                            f'Python Proxy to `{full_name} <{javadoc}>`_ from :py:module:`pycraft.server.final`',
+                            '',
+                        ]
+                    )
             else:
                 log.info("No cls declaration for %s", declaration)
+        if cls.__doc__:
+            header.extend(inspect.cleandoc(cls.__doc__).splitlines())
 
-        page = header + methods + interfaces + proxy_methods
-        page.extend(['', f'Generated {time.strftime("%Y-%m-%d")}'])
+        page = (
+            header
+            + interfaces
+            + (methods if len(methods) > null_methods else [])
+            + (properties if len(properties) > null_properties else [])
+            + (proxy_methods if len(proxy_methods) > null_proxy else [])
+        )
         twrite(os.path.join(output, f'{cls.__name__}.rst'), "\n".join(page))
 
     index.extend(['', f'Generated {time.strftime("%Y-%m-%d")}'])

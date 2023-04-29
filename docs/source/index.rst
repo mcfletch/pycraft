@@ -57,6 +57,8 @@ definitely *not* expose your machine to the internet while running this server.
 
    installation
    builtins
+   api/modules
+   generated/index
 
 
 Indices and tables

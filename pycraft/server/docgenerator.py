@@ -4,7 +4,7 @@ from pycraft.server.proxyobjects import ProxyMethod, type_coerce
 from . import world, proxyobjects, channel
 
 HERE = os.path.dirname(__file__)
-DEFAULT_TARGET = os.path.join(HERE, '..', '..', 'pycraft-server', 'docs')
+DEFAULT_TARGET = os.path.join(HERE, '..', '..', 'docs', 'source', 'generated')
 log = logging.getLogger(__name__)
 
 
@@ -49,7 +49,9 @@ def cls_link(name, sub_type=None):
             return f'typing.List[{" | ".join([cls_link(typ) for typ in sub_type])}]'
         else:
             return 'list'
-    return f'[{name}](./{name}.md)'
+    result = f':doc:`./{name}`'
+    # log.info("cls_link(%s) => %s", name, result)
+    return result
 
 
 def describe_python_method(method, indent=0):
@@ -100,31 +102,32 @@ def describe_proxy_method(key, method, cls):
 async def generate_docs(output=DEFAULT_TARGET):
     server = await setup()
     index = [
-        '# [PycraftServer](https://github.com/mcfletch/pycraft-server) Exposed Namespaces',
-        '',
+        'Pycraft Proxy Objects',
+        '=====================',
     ]
 
     for key, cls in sorted(proxyobjects.PROXY_TYPES.items()):
         index.append(
-            f'* class {cls_link(cls.__name__)}({", ".join([cls_link(interface) for interface in cls.interfaces])})'
+            f'* class {cls_link(cls.__name__)} ( {", ".join([cls_link(interface) for interface in cls.interfaces])} )'
         )
         if not isinstance(cls, proxyobjects.ServerObjectMeta):
             continue
 
         if cls.__interfaces__:
             interfaces = [
-                '## Implements',
+                'Implements',
+                '-----------',
             ] + [f'* {cls_link(interface)}' for interface in cls.__interfaces__]
         else:
             interfaces = []
 
         proxy_methods = [
-            '## Proxy Methods',
-            '',
+            'Proxy Methods',
+            '--------------',
         ]
         methods = [
-            '## Methods',
-            '',
+            'Methods',
+            '---------',
         ]
         for key, value in sorted(cls.__dict__.items()):
             if isinstance(value, proxyobjects.ProxyMethod):
@@ -136,18 +139,18 @@ async def generate_docs(output=DEFAULT_TARGET):
             #     print('Not a method: %s %s' % (key, type(value)))
         page = (
             [
-                f'# [PycraftServer](./README.md) Proxy {cls.__name__}',
-                '',
+                f'{cls.__name__}',
+                '================',
             ]
             + methods
             + interfaces
             + proxy_methods
         )
         page.extend(['', f'Generated {time.strftime("%Y-%m-%d")}'])
-        twrite(os.path.join(output, f'{cls.__name__}.md'), "\n".join(page))
+        twrite(os.path.join(output, f'{cls.__name__}.rst'), "\n".join(page))
 
     index.extend(['', f'Generated {time.strftime("%Y-%m-%d")}'])
-    twrite(os.path.join(output, 'README.md'), '\n'.join(index))
+    twrite(os.path.join(output, 'index.rst'), '\n'.join(index))
 
 
 def main():

@@ -74,3 +74,21 @@ def command_details(name):
         return [
             f'Do not know any function named {name}',
         ]
+
+
+def get_base_namespace():
+    """Get base namespace as should be used for any interpreter"""
+    from .server import proxyobjects
+
+    namespace = DEFAULT_NAMESPACE.copy()
+    namespace.update(proxyobjects.PROXY_TYPES)
+    namespace.update(DEFAULT_COMMANDS)
+    namespace.update(
+        {
+            'list': list,
+            'set': set,
+            'dict': dict,
+            'type': lambda x: type(x),
+        }
+    )
+    return namespace

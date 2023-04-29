@@ -10,6 +10,7 @@ from .expose import (
     DEFAULT_COMMANDS,
     DEFAULT_NAMESPACE,
     expose,
+    get_base_namespace,
 )
 from . import (
     acommands,
@@ -36,16 +37,7 @@ class AInterpreter(object):
         self.listener = listener
 
     def base_namespace(self, message=None, sender=None, **kwargs):
-        namespace = DEFAULT_NAMESPACE.copy()
-        namespace.update(proxyobjects.PROXY_TYPES)
-        namespace.update(DEFAULT_COMMANDS)
-        namespace.update(
-            {
-                'list': list,
-                'set': set,
-                'dict': dict,
-            }
-        )
+        namespace = get_base_namespace()
         namespace['mc'] = self.channel
         namespace['event'] = message
         namespace['user'] = sender
@@ -54,7 +46,6 @@ class AInterpreter(object):
         namespace['world'] = sender.location.get_world()
         namespace['listener'] = self.listener
         namespace['interpreter'] = self
-        namespace['type'] = lambda x: type(x)
 
         return namespace
 
@@ -227,7 +218,14 @@ class AInterpreter(object):
                     )
                 ]
             else:
-                raise ValueError('Do not yet support extended indexing %s'%(type(arg.slice,)))
+                raise ValueError(
+                    'Do not yet support extended indexing %s'
+                    % (
+                        type(
+                            arg.slice,
+                        )
+                    )
+                )
         elif isinstance(arg, ast.Attribute):
             parent = await self.interpret_expr(arg.value, namespace)
             key = arg.attr

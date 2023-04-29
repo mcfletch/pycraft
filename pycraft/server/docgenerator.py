@@ -22,6 +22,11 @@ def twrite(filename, content):
     os.rename(tmp, filename)
 
 
+def javadoc_url(full_name: str) -> str:
+    transformed = full_name.replace('.', '/')
+    return f'https://hub.spigotmc.org/javadocs/spigot/{transformed}.html'
+
+
 CLASS_NAME_LOOKUP = {
     'void': None,
     'String': 'str',
@@ -117,17 +122,20 @@ async def generate_docs(output=DEFAULT_TARGET):
             interfaces = [
                 'Implements',
                 '-----------',
+                '',
             ] + [f'* {cls_link(interface)}' for interface in cls.__interfaces__]
         else:
             interfaces = []
 
-        proxy_methods = [
-            'Proxy Methods',
-            '--------------',
-        ]
         methods = [
             'Methods',
             '---------',
+            '',
+        ]
+        proxy_methods = [
+            'Proxy Methods',
+            '--------------',
+            '',
         ]
         for key, value in sorted(cls.__dict__.items()):
             if isinstance(value, proxyobjects.ProxyMethod):
@@ -137,15 +145,23 @@ async def generate_docs(output=DEFAULT_TARGET):
                 methods.extend(describe_python_method(value, 0))
             # else:
             #     print('Not a method: %s %s' % (key, type(value)))
-        page = (
-            [
-                f'{cls.__name__}',
-                '================',
-            ]
-            + methods
-            + interfaces
-            + proxy_methods
-        )
+        declaration = getattr(cls, '__declaration__', None)
+        header = [
+            f'{cls.__name__}',
+            '================',
+            '',
+        ]
+        if declaration:
+            class_declaration = declaration.get('cls')
+            if class_declaration:
+                full_name = class_declaration['fullName']
+                javadoc = javadoc_url(full_name)
+                if javadoc:
+                    header.extend([f'Python Proxy to `{full_name} <{javadoc}>`_ ', ''])
+            else:
+                log.info("No cls declaration for %s", declaration)
+
+        page = header + methods + interfaces + proxy_methods
         page.extend(['', f'Generated {time.strftime("%Y-%m-%d")}'])
         twrite(os.path.join(output, f'{cls.__name__}.rst'), "\n".join(page))
 

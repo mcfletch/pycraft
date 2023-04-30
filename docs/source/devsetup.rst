@@ -34,6 +34,7 @@ At this point, you should be able to start the minecraft server,
 create containers).
 
 .. code:: shell
+    
     # --no-chat is used so that we can run the chat server locally from this directory
     ./run.py -e -d path-to-scratch-world --no-chat
 

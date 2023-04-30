@@ -98,21 +98,6 @@ For both:
 * Read the [Minecraft EULA](https://www.minecraft.net/en-us/eula)
 * Run `run -e -d YOURWORLDDIRECTORY`
 
-To run from source-code (for developers):
-
-```
-apt-get install docker python3 git
-git clone https://github.com/mcfletch/pycraft.git
-cd pycraft
-# Note the --no-install-recommends, this prevents installing
-# 300MB of unneeded compilation dependencies
-apt-get install python3-virtualenv --no-install-recommends
-virtualenv -p python3 env
-source env/bin/activate
-pip install -r requirements.txt
-# NOTE: -e declares that you accept the Minecraft EULA (see link above)
-./run.py -e -d YOURWORLDDIRECTORY
-```
 
 At this point, you have a vanilla Bukkit server running 
 in docker with the Geyser bridge and PycraftServer plugins 

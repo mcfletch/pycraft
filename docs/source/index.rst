@@ -52,7 +52,6 @@ will be able to run nearly-arbitrary code from the chat window, so you should
 definitely *not* expose your machine to the internet while running this server.
 
 
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -61,7 +60,6 @@ definitely *not* expose your machine to the internet while running this server.
    devsetup
    builtins
    api/modules
-   generated/index
 
 
 Indices and tables

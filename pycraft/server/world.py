@@ -101,45 +101,45 @@ class Vector(ServerObjectProxy):
             record = (record,) + args
         self.vector = np.array(record[:3], dtype='d')
 
-    def __json__(self):
+    def __json__(self) -> np.ndarray:
         return list(self.vector)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.vector)
 
-    def __iter__(self):
+    def __iter__(self) -> np.ScalarType:
         for item in self.vector:
             yield item
 
     def __getitem__(self, slice):
         return self.vector.__getitem__(slice)
 
-    def __add__(self, other):
+    def __add__(self, other) -> 'Vector':
         return Vector(self.vector.copy() + other[:3])
 
-    def __sub__(self, other):
+    def __sub__(self, other) -> 'Vector':
         return Vector(self.vector.copy() - other[:3])
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if isinstance(other, (Vector, Location)):
             return np.allclose(self.vector, other.vector[:3])
         else:
             return np.allclose(self.vector, other)
 
-    def __neg__(self):
+    def __neg__(self) -> 'Vector':
         return Vector(-self.vector)
 
-    def __mul__(self, other):
+    def __mul__(self, other) -> 'Vector':
         if isinstance(other, (Vector, Location)):
             other = other.vector[:3]
         return Vector(self.vector * other)
 
-    def __div__(self, other):
+    def __div__(self, other) -> 'Vector':
         if isinstance(other, (Vector, Location)):
             other = other.vector[:3]
         return Vector(self.vector / other)
 
-    def __floordiv__(self, other):
+    def __floordiv__(self, other) -> 'Vector':
         if isinstance(other, (Vector, Location)):
             other = other.vector[:3]
         return Vector(self.vector // other)
@@ -414,11 +414,32 @@ class OfflinePlayer(Player):
 
 @OverrideType
 class World(ServerObjectProxy):
-    """A particular world on the server"""
+    """A particular world on the server
+
+    Worlds are referenced by their name, with the common worlds being:
+
+    * 'world' -- known as the Overworld, this is the main world you start in
+    * 'nether' -- the Nether is full of lava, magma and Piglins
+    * 'end' -- the End is the boss-level for the Ender Dragon and is full of Endermen
+
+    When referring to a world, you can use the string name of the world,
+    or get a world with :py:meth:`pycraft.server.final.Server.getWorld`
+    or :py:meth:`pycraft.server.final.Server.getWorlds`
+
+    Example usage:
+
+        server.getWorld('world')
+
+    """
 
     def __json__(self):
         """Return the world's name as a reference"""
         return self.name
+
+    def __init__(self, name=None, **named):
+        """Initialise the world record, normally by name"""
+        named['name'] = name
+        super(World, self).__init(**named)
 
     __namespace__ = 'World'
     name: str

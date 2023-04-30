@@ -661,7 +661,7 @@ async def construct_one_interface(declaration, definition_map, seen_classes):
             tuple(super_interfaces),
             {
                 '__namespace__': name,
-                '__module__': 'pycraft.server.introspection',
+                '__module__': 'pycraft.server.final',
                 '__declaration__': declaration,
                 '__interfaces__': clsDeclaration.get('interfaces', [])
                 if clsDeclaration

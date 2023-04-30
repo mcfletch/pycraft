@@ -12,11 +12,48 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 log = logging.getLogger(__name__)
 
 
+def square(
+    position,
+    width,
+    depth,
+    cross,
+    forward,
+) -> typing.Tuple[typing.List[Location]]:
+    """Calculate positions starting at position going for width and depths"""
+    positions = []
+    for j in range(depth):
+        row = forward * j
+        for i in range(width):
+            col = cross * i
+            positions.append(position + row + col)
+    return positions
+
+
+def hollow_square(
+    position,
+    width,
+    depth,
+    cross,
+    forward,
+) -> typing.Tuple[typing.List[Location]]:
+    positions = []
+    for j in range(depth):
+        row = forward * j
+        if j == 0 or j == depth - 1:
+            for i in range(width):
+                col = cross * i
+                positions.append(position + row + col)
+        else:
+            positions.append(position + row)
+            positions.append(position + row + (cross * (width - 1)))
+    return positions
+
+
 @expose.expose()
 async def pyramid(
     position=None,
-    width=15,
-    depth=15,
+    width=9,
+    depth=9,
     material='iron_block',
     ystep=1,
     hollow=False,
@@ -31,21 +68,34 @@ async def pyramid(
     depth -- size in the y direction
     material -- name of the material to use
     zstep -- 1 for upward, -1 for downward
+    hollow -- if true, only the outer walls of the pyramid will be created, otherwise solid
     """
     if position is None:
         position = player.position + player.direction
     forward, cross = directions.forward_and_cross(Vector(player.direction))
     current = position - (cross * width // 2)
-    for i in range(0, min(width, depth), 2):
-        start, size = as_cube(current, current + forward * depth + cross * width)
-        await world.setBlocks(start, size, material)
+    positions = []
+    for stack in range(min(width, depth)):
+        start = (
+            current
+            + (Vector(0, ystep, 0) * stack)
+            + (cross * stack)
+            + (forward * stack)
+        )
         if hollow:
-            await world.setBlocks(
-                start + Vector(1, 0, 1), size - Vector(2, 0, 2), 'air'
+            sq = hollow_square
+        else:
+            sq = square
+        positions.extend(
+            sq(
+                start,
+                width - (stack * 2),
+                depth - (stack * 2),
+                cross=cross,
+                forward=forward,
             )
-        current = current + forward + cross + Vector(0, ystep, 0)
-        width = width - 2
-        depth = depth - 2
+        )
+    await world.setBlockList(positions, [material] * len(positions))
 
 
 @expose.expose()

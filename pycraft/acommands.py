@@ -52,9 +52,19 @@ def help(value):
 
 
 @expose(name='dir')
-def dir_(*args, namespace=None):
-    """Look at the argument and describe what members it has"""
+def dir_(*args, namespace=None) -> List[str]:
+    """Give a directory of the namespace or of an object
+
+    dir() -- show all names in the namespace
+    dir('test') -- show all names in the namespace with 'test' in them
+    dir(object) -- show all names in the given object
+
+    returns
+    """
     if args:
+        if args and isinstance(args[0], str):
+            test = args[0].lower()
+            return [item for item in sorted(namespace.keys()) if test in item.lower()]
         return dir(args[0])
     else:
         return sorted(namespace.keys())
@@ -226,13 +236,35 @@ async def give(item, count=1, *, player=None):
 
 @expose()
 async def nice_item(item, count=1, *, player=None):
-    """Add a nice item to the given inventory, assumes content is up to date"""
+    """Add a nice item to the given inventory
+
+    give() the item, then call enchanted() on it
+
+    returns the :py:class:`pycraft.server.final.ItemStack`
+    """
     stack = await give(item, count=count, player=player)
     return await enchanted(stack)
 
 
 @expose()
 async def nice_gear(material='netherite', *, player=None):
+    """Given the calling player a collection of very nice items for adventuring
+
+    Included:
+    * helmet
+    * chestplate
+    * leggings
+    * boots
+    * shield
+    * sword
+    * pickaxe
+    * shovel
+    * bow
+    * 64 arrows
+
+    material -- determines the material for the gear, supported are iron, netherite and diamond,
+                as those are the only materials with versions of all supported items
+    """
     for item in [
         'minecraft:%(material)s_helmet',
         'minecraft:%(material)s_chestplate',
@@ -289,7 +321,7 @@ DESIRABLE_ENCHANTMENTS = [
 
 @expose()
 async def enchanted(stack, enchantments=DESIRABLE_ENCHANTMENTS):
-    """Enchant the item stack with all available enchantments"""
+    """Enchant the item stack with all available desirable enchantments"""
     for enchantment in enchantments:
         ench = final.Enchantment(enchantment)
         if await ench.canEnchantItem(stack):

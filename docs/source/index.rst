@@ -58,6 +58,7 @@ definitely *not* expose your machine to the internet while running this server.
 
    installation
    devsetup
+   chatserver
    builtins
    api/modules
 

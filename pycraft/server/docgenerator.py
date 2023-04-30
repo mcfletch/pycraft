@@ -135,6 +135,12 @@ def class_methods(cls):
             yield (key, value)
 
 
+def class_properties(cls):
+    for key, value in inspect.getmembers(cls):
+        if isinstance(value, property):
+            yield key, value
+
+
 def describe_method(cls, key, method, indent=0):
     if isinstance(method, proxyobjects.ProxyMethod):
         return describe_proxy_method(key, method, cls, indent=indent)
@@ -215,6 +221,21 @@ def class_page(cls):
         header.append(textwrap.indent(doc, ' ' * indent))
         header.append('')
 
+    propertyset = sorted(class_properties(cls))
+    if propertyset:
+        properties = []
+        for key, value in propertyset:
+            prop = [
+                f'{" "*indent}.. py:property:: {key}',
+            ]
+            docstring = inspect.getdoc(value)
+            if docstring:
+                prop.append(textwrap.indent(docstring, ' ' * (indent + 3)))
+            prop.append('')
+            properties.append('\n'.join(prop))
+    else:
+        properties = []
+
     methodset = sorted(class_methods(cls))
     if methodset:
         methods = []
@@ -225,50 +246,8 @@ def class_page(cls):
                 methods.append('')
     else:
         methods = []
-    # null_methods = len(methods)
-    # properties = [
-    #     'Properties',
-    #     '----------',
-    #     '',
-    # ]
-    # null_properties = len(properties)
-    # proxy_methods = [
-    #     'Proxy Methods',
-    #     '--------------',
-    #     '',
-    # ]
-    # null_proxy = len(proxy_methods)
-    # for key, value in inspect.getmembers(cls):
-    #     if isinstance(value, proxyobjects.ProxyMethod):
-    #         # print(f'    def {key}():')
-    #         proxy_methods.extend(describe_proxy_method(key, value, cls))
-    #     elif inspect.isfunction(value) or inspect.ismethod(value):
-    #         methods.extend(describe_python_method(value, 0))
-    #     elif isinstance(value, property):
-    #         properties.append(f'* {key} -- {value.__doc__}')
-    #     elif key == 'values' and hasattr(value, 'cache_clear'):
-    #         methods.append(
-    #             f'* {key}() -- (cached) set of values defined for the enumeration'
-    #         )
-    #     elif (
-    #         key.startswith('__')
-    #         and key.endswith('__')
-    #         or key in ('interfaces', '_prop_typ')
-    #     ):
-    #         continue
-    #     elif isinstance(value, (int, float, str, bytes, tuple, list, type(None))):
-    #         properties.append(f'* {key} = {repr(value)}')
-    #     else:
-    #         raise KeyError(key, value)
-    #     # else:
-    #     #     print('Not a method: %s %s' % (key, type(value)))
 
-    page = (
-        header
-        + methods
-        # + (properties if len(properties) > null_properties else [])
-        # + (proxy_methods if len(proxy_methods) > null_proxy else [])
-    )
+    page = header + properties + methods
     return page
 
 

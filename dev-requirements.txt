@@ -2,5 +2,6 @@
 pyinstaller
 sphinx
 sphinx-readable-theme
+sphinxcontrib-youtube
 
 -r ./requirements.txt

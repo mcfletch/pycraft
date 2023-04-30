@@ -439,7 +439,7 @@ class World(ServerObjectProxy):
     def __init__(self, name=None, **named):
         """Initialise the world record, normally by name"""
         named['name'] = name
-        super(World, self).__init(**named)
+        super(World, self).__init__(**named)
 
     __namespace__ = 'World'
     name: str

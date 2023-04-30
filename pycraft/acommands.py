@@ -2,7 +2,7 @@
 from .expose import expose, command_details, command_list
 from .directions import roughly_forward
 from .server import proxyobjects
-from typing import List
+import typing
 from .server import world
 from .server import final
 from . import parsematerial
@@ -52,7 +52,7 @@ def help(value):
 
 
 @expose(name='dir')
-def dir_(*args, namespace=None) -> List[str]:
+def dir_(*args, namespace=None) -> typing.List[str]:
     """Give a directory of the namespace or of an object
 
     dir() -- show all names in the namespace
@@ -402,17 +402,31 @@ async def findall(name, *, world=None):
 
 @expose()
 async def stairs(
-    depth=10,
-    ystep=1,
-    clearance=3,
-    position=None,
-    direction=None,
+    depth: int = 10,
+    ystep: int = 1,
+    clearance: int = 3,
+    position: typing.Optional['pycraft.server.final.Location'] = None,
+    direction: typing.Optional['pycraft.server.final.Vector'] = None,
     material='minecraft:obsidian',
     *,
     player=None,
     world=None,
 ):
-    """Create an ascending or descending staircase (based on ystep)"""
+    """Create a staircase forward from player's position for depth steps
+
+    The first step is created such that the player will walk forward
+    one block to be standing on top of the step. The blocks `clearance`
+    above the stairs are set to air so that a stairway from deep
+    underground will allow you to walk to the surface.
+
+    depth -- number of steps to create
+    ystep -- amount each step is offset in the y direction
+    clearance -- how far above the step to clear to air, 0 to disable
+    position -- if provided, used instead of the player's position
+    direction -- if provided, used instead of the player's direction,
+                 is converted to a cardinal direction using :py:func:`roughly_forward`
+    material -- minecraft constant describing the material to use for the base
+    """
 
     if direction is None:
         direction = player.direction
@@ -423,18 +437,17 @@ async def stairs(
 
     step = Vector(direction.x, ystep, direction.z)
     if position is None:
-        position = player.tile_position + (step if ystep < 0 else direction)
+        position = player.tile_position + direction
 
-    current = position
     air = 'minecraft:air'
-    working = position
+    current = position
     locations, materials = [], []
     for i in range(depth):
         locations.append(current)
         materials.append(material)
         for clear in range(1, clearance + 1):
             locations.append(current + (0, clear, 0))
-            materials.append('air')
+            materials.append(air)
         current = current + step
     await world.setBlockList(locations, materials)
 
@@ -507,7 +520,7 @@ async def midas_touch(
     return 'Right click blocks with your empty hand to convert them'
 
 
-def matching_players(players: List[world.Player], player_name: str):
+def matching_players(players: typing.List[world.Player], player_name: str):
     player_name = player_name.lower()
     for other in players:
         if player_name == '*':

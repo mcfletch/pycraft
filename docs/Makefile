@@ -12,7 +12,20 @@ BUILDDIR      = build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile
+apidoc:
+
+	sphinx-apidoc -o "$(SOURCEDIR)/api" "--force" "--separate" "--no-toc" "$(SOURCEDIR)/../../pycraft"
+
+# TODO: this is actually relying on the introspection having been run
+# which may not have happened if you've just checked out the code...
+proxydoc:
+	pycraft-doc-generator
+
+autodocs: apidoc proxydoc
+
+.PHONY: help Makefile apidoc proxydoc autodocs
+
+
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).

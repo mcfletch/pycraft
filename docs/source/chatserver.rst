@@ -7,19 +7,13 @@ commands to users on your server (remember, keep your
 server away from the public). The implementation is in
 :py:mod:`pycraft.achatserver`
 
-Starting the Server
---------------------
+.. note::
 
-The run-script normally starts the chat server in a container
-configured to talk to the Minecraft server. If you'd like to 
-run the server directly you can do so with::
+  The run-script normally starts the chat server in a container
+  configured to talk to the Minecraft server. 
 
-    virtualenv -p python3 env
-    source env/bin/activate
-    pip install -r requirements.txt -e .
-    pycraft-chat-server
-
-See :doc:`./devsetup` for details
+  See :doc:`./installation` for details on how to setup
+  the server containers.
 
 Calling Python from Minecraft
 -----------------------------
@@ -39,23 +33,37 @@ it can recognise as Python code. If it can parse your chat message
 it will attempt to execute the code (here my username is 
 VRPlumberMagic)::
 
-    [03:01:50 INFO]: <VRPlumberMagic> echo('hello')
-    [03:01:51 INFO]: 'hello' (<class 'str'>)
-    [03:10:18 INFO]: <VRPlumberMagic> echo( 2 + 3 )
-    [03:10:18 INFO]: 5 (<class 'int'>)
-    [03:10:23 INFO]: <VRPlumberMagic> echo( 2 * 3 )
-    [03:10:23 INFO]: 6 (<class 'int'>)
-    [03:10:28 INFO]: <VRPlumberMagic> echo( 2 ** 3 )
-    [03:10:28 INFO]: 8 (<class 'int'>)
-    [03:10:36 INFO]: <VRPlumberMagic> echo( 2 / 3 )
-    [03:10:36 INFO]: 0.6666666666666666 (<class 'float'>)
-    [03:10:59 INFO]: <VRPlumberMagic> echo( player.location )
-    [03:11:00 INFO]: ['world',2128.4617685823027,93.0,-1681.4257264464052,-175.81409,4.1994276] (<class 'pycraft.server.world.Location'>)
-    [03:16:20 INFO]: <VRPlumberMagic> player.teleport(player.location+player.direction*2)
-    [03:16:20 INFO]: True (<class 'bool'>)
-    [03:36:25 INFO]: [Not Secure] <VRPlumberMagic> find_blocks('shulk')
-    [03:36:26 INFO]: ['minecraft:shulker_box', 'minecraft:white_shulker_box', 'minecraft:orange_shulker_box', 'minecraft:magenta_shulker_box', 'minecraft:light_blue_shulker_box', 'minecraft:yellow_shulker_box', 'minecraft:lime_shulker_box', 'minecraft:pink_shulker_box', 'minecraft:gray_shulker_box', 'minecraft:light_gray_shulker_box', 'minecraft:cyan_shulker_box', 'minecraft:purple_shulker_box', 'minecraft:blue_shulker_box', 'minecraft:brown_shulker_box', 'minecraft:green_shulker_box', 'minecraft:red_shulker_box', 'minecraft:black_shulker_box', 'minecraft:shulker_spawn_egg', 'minecraft:shulker_shell'] (<class 'list'>)
+    <VRPlumberMagic> echo('hello')
+    'hello' (<class 'str'>)
+    <VRPlumberMagic> echo( 2 + 3 )
+    5 (<class 'int'>)
+    <VRPlumberMagic> echo( 2 * 3 )
+    6 (<class 'int'>)
+    <VRPlumberMagic> echo( 2 ** 3 )
+    8 (<class 'int'>)
+    <VRPlumberMagic> echo( 2 / 3 )
+    0.6666666666666666 (<class 'float'>)
 
+    <VRPlumberMagic> echo( player.location )
+    ['world',2128.4617685823027,93.0,-1681.4257264464052,-175.81409,4.1994276] (<class 'pycraft.server.world.Location'>)
+    <VRPlumberMagic> player.teleport(player.location+player.direction*2)
+    True (<class 'bool'>)
+    <VRPlumberMagic> find_blocks('shulk')
+    ['minecraft:shulker_box', 'minecraft:white_shulker_box', 'minecraft:orange_shulker_box', 'minecraft:magenta_shulker_box', 'minecraft:light_blue_shulker_box', 'minecraft:yellow_shulker_box', 'minecraft:lime_shulker_box', 'minecraft:pink_shulker_box', 'minecraft:gray_shulker_box', 'minecraft:light_gray_shulker_box', 'minecraft:cyan_shulker_box', 'minecraft:purple_shulker_box', 'minecraft:blue_shulker_box', 'minecraft:brown_shulker_box', 'minecraft:green_shulker_box', 'minecraft:red_shulker_box', 'minecraft:black_shulker_box', 'minecraft:shulker_spawn_egg', 'minecraft:shulker_shell'] (<class 'list'>)
+    
+    <VRPlumberMagic> echo([w.name for w in server.getWorlds()])
+    ['world', 'world_nether', 'world_the_end'] (<class 'list'>)
+
+    <VRPlumberMagic> x = 3+4
+    7 (<class 'int'>)
+    <VRPlumberMagic> y = 4+5
+    9 (<class 'int'>)
+    <VRPlumberMagic> echo(x+y)
+    16 (<class 'int'>)
+
+
+`pycraft-chat-server`` will respond to your requests in chat if the command
+returns a non-None result.
 
 
 .. note:: 
@@ -80,7 +88,12 @@ or objects. They allow you to ask the `pycraft-chat-server` what you
 can do from within the chat window.
 
 .. list-table::
+    :header-rows: 1
+    :width: 100%
 
+    * - Implementation 
+      - Chat Call
+      - Description 
     * - :py:func:`pycraft.acommands.dir_`
       - ``dir()``
       - Reports all of the functions, classes and data in the global namespace
@@ -99,18 +112,9 @@ can do from within the chat window.
     * - :py:func:`pycraft.acommands.findall`
       - ``findall(fragment:str)``
       - Searches for entities whose Individual Name contains fragment
-    * - :py:func:`pycraft.acommands.users`
-      - ``users()``
-      - Retrieves :py:class:`pycraft.server.final.Player` references 
-        for all players in the world of the player making the call.
-    * - :py:func:`pycraft.acommands.find_player`
-      - ``find_player(fragment:str)``
-      - Returns the first online :py:class:`pycraft.server.final.Player` whose name contains the given 
-        fragment. The player does not need to be in the same world as 
-        the caller.
     * - :py:func:`pycraft.acommands.this_guy`
       - ``this_guy() => right-click-on-entity``
-      - Returns a reference to the next entity that the user `interacts`
+      - Returns a reference to the next Entity that the user `interacts`
         with; normally by right-clicking on e.g. a Villager.
 
 Shelter and Gear 
@@ -122,7 +126,12 @@ houses, grant advanced equipment and let new players "catch up" with more
 advanced players.
 
 .. list-table:: Basic Shelter
+    :header-rows: 1
+    :width: 100%
 
+    * - Implementation 
+      - Chat Call
+      - Description 
     * - :py:func:`pycraft.acommands.bed`
       - ``bed(color='black')``
       - Creates a bed in front of the user
@@ -141,21 +150,36 @@ advanced players.
 
 
 .. list-table:: paste() Shelter
+    :header-rows: 1
+    :width: 100%
 
-    * - paste('dark_house')
+    * - Implementation 
+      - Chat Call
+      - Description 
+
+    * - :py:func:`pycraft.copypaste.paste`
+      - paste('dark_house')
       - Deepslate and Iron Bar Pavilion Style house with lanterns, bed, crafting table and furnace.
         Does not provide complete shelter, as the iron grill can be shot through and Creepers
         can get close enough to blow up. Use within a larger complex.
     
-    * - paste('lantern_mansion')
+    * - :py:func:`pycraft.copypaste.paste`
+      - paste('lantern_mansion')
       - Large well-appointed house with shulker boxes, multiple beds, crafting table, music box,
         and bookshelves.
 
-    * - paste('red_fortress')
+    * - :py:func:`pycraft.copypaste.paste`
+      - paste('red_fortress')
       - Large well-appointed red-sandstone fortress with enchanting area, bed, crafting table, furnace,
         redstone powered large gate.
 
 .. list-table:: Gear
+    :header-rows: 1
+    :width: 100%
+
+    * - Implementation 
+      - Chat Call
+      - Description 
 
     * - :py:func:`pycraft.acommands.give`
       - ``give('cooked_beef',count=64)``
@@ -175,7 +199,21 @@ Construction
 -------------
 
 These functions allow you to create large or complex structures quickly.
+The 
 
+.. list-table:: Construction
+    :header-rows: 1
+    :width: 100%
+
+    * - Implementation 
+      - Chat Call
+      - Description 
+
+    * - :py:func:`pycraft.acommands.block`
+      - ``block('iron_block')``
+      - Create the given block in front of the player's legs.
+        Note: py:meth:`pycraft.server.final.World.setBlockList` is more 
+        efficient and flexible than setting individual blocks with `block`
     * - :py:func:`pycraft.bulldozer.bulldoze`
       - ``bulldoze(depth=20,height=-3,width=10,material='tnt')``
       - Fills the area in front of the player with the given material.
@@ -200,46 +238,128 @@ These functions allow you to create large or complex structures quickly.
       - Creates a two-way elevator bank with up and down columns, signs 
         telling users which way to go to travel, lighting, and a set of 
         walls to prevent flooding of nearby blocks.
+    * - :py:func:`pycraft.parabolic.parabolic_dome`
+      - ``p_dome()``
+      - Creates a loosely-parabolic dome with stained glass blocks centered
+        around the player's position. The dome has an oculus at the top
+        but makes a pleasant super-structure for setting up a base.
 
-        
+    * - :py:func:`pycraft.parabolic.draw_circle`
+      - ``circle()``
+      - Creates a loosely-circular set of blocks around the user's position
+    
+    * - :py:func:`pycraft.tunnels.tunnel`
+      - ``tunnel(depth=25, width=3, height=3)``
+      - Create a well-lit tunnel with stained-glass walls forward from the
+        player's position. Useful for tunneling through mountains, underwater,
+        or otherwise setting up a passage.
+    * - :py:func:`pycraft.tunnels.tunnel_continue`
+      - ``tunnel_continue()``
+      - Extends the previously created tunnel.
 
-```
+    * - :py:func:`pycraft.tunnels.fast_rail`
+      - ``fr(depth=100, base='glass')``
+      - Create a fast-rail (minecart rails with power) that continues for depth blocks in the 
+        direction the user is facing. Specify ``base`` to have the fast rail 
+        construct a base on which the rails will be placed, otherwise the 
+        rails will be placed, but may immediately fall.
 
-### Construction
-```
-  block('iron_ore') # create a block in front of you
-  p_dome() # creates a parabolic dome out of stained glass
-  circle() # creates a circle of material around you
-  tunnel() # creates a tunnel with windows and torches
-  fr() # create a fast (powered) rail tunnel on the floor ahead
-```
-### Users and Entities
-```
-  users() # get a python list of Player references
-  join('name') # Jump to the current world/position of user with name starting with name
-  bring('name') # Jump user with name starting with name to your current position
-  unjoin() # Jump back to where you were before you were brought or joined
-  back_to_bed() # Jump back to your bed spawn location (last place you slept, normally)
-  find_player('name') # search for first player with name-prefix e.g. `find_player('vr').set_location(player.location)` is `bring('vr')`
-  spawn('blaze') # spawn an entity right in front of you
-  spawn_drop('cow') # spawn an entity 50m above you (it will normally drop dead in front of you if it can't fly)
-  spawn_shower('experience_bottle') # drop 30 of the entity in a shower in front of you
-```
+Manipulating Entities and Players
+-----------------------------------
 
-### Templates and Copying
+.. list-table:: Players and Teleporting
+    :header-rows: 1
+    :width: 100%
+
+    * - Implementation 
+      - Chat Call
+      - Description 
+
+    * - :py:func:`pycraft.acommands.users`
+      - ``users()``
+      - Retrieves :py:class:`pycraft.server.final.Player` references 
+        for all players in the world of the player making the call.
+    * - :py:func:`pycraft.acommands.find_player`
+      - ``find_player(fragment:str)``
+      - Returns the first online :py:class:`pycraft.server.final.Player` whose name contains the given 
+        fragment. The player does not need to be in the same world as 
+        the caller.
+    * - :py:func:`pycraft.acommands.join`
+      - ``join('vr')``
+      - Searches for the (first) player with the fragment 'vr' in their name and teleports to their location
+    * - :py:func:`pycraft.acommands.bring`
+      - ``bring('vr')``
+      - Brings the (first) player with the fragment 'vr' in their name and teleports them to your location
+    * - :py:func:`pycraft.acommands.unjoin`
+      - ``unjoin()``
+      - Returns you to the location you were at before a ``join`` or ``bring`` teleported you.
+     
+    * - :py:func:`pycraft.acommands.back_to_bed`
+      - ``back_to_bed()``
+      - Returns you to the location of your ``Bed Spawn Location`` which is basically the location 
+        of the bed in which you last slept (note that breaking that bed means you no longer have that location)
+
+.. list-table:: Entities and Spawning
+    :header-rows: 1
+    :width: 100%
+
+    * - Implementation 
+      - Chat Call
+      - Description 
+
+    * - :py:func:`pycraft.acommands.spawn`
+      - ``villager = spawn('villager')``
+      - Creates a new entity and returns a reference to them
+    * - :py:func:`pycraft.acommands.spawn_drop`
+      - ``spawn_drop('cow')``
+      - Creates a new entity 50 blocks over your current location, when you are 
+        standing on the surface this has the effect of dropping that entity in 
+        front of you, normally dropping some resources.
+    * - :py:func:`pycraft.acommands.spawn_shower`
+      - ``spawn_shower('experience_bottle', count=50)``
+      - Showers entities with ``spawn_drop`` every 1/10th of a second until 
+        the number of entities specified are dropped. You can specify the 
+        height of the drop (e.g. if the height is 1 most mobs will survive).
+
+Templates and Copying
+----------------------
 
 Copy and paste in minecraft makes it easier to build large and
 complex structures. You can create a repeating element, copy it
 and then paste it many times.
 
-```  
-  getBlocks(8,6,5) # get array of array of block-data for area specified
-  copy(name='stamp',depth=5,width=5,height=5) # copy 5x5x5 block in front of you as a template named stamp
-  paste(name='stamp') # paste back the template from a copy
-```
 
-Pycraft will respond to your requests in chat if the command
-returns a non-None result.
+.. list-table:: Entities and Spawning
+    :header-rows: 1
+    :width: 100%
+
+    * - Implementation 
+      - Chat Call
+      - Description 
+    * - :py:func:`pycraft.copypaste.copy`
+      - copy('my_template', width=10,depth=8, height=7)
+      - Copies a rectangular prism of blocks into a template 
+        which can be pasted later.
+
+    * - :py:func:`pycraft.copypaste.paste`
+      - paste('my_template')
+      - Pastes a previously-copied prism of blocks into a the world 
+    
+    * - :py:func:`pycraft.copypaste.show_pastes`
+      - show_pastes('my')
+      - Lists the names of pastes which contain the given fragment
+
+    * - :py:meth:`pycraft.server.final.World.getBlocks`
+      - world.getBlocks(start_location, (x_size,y_size,z_size))
+      - Returns the materials in the prism with x,y,z sizes
+        core operation on which copy is based
+
+    * - :py:meth:`pycraft.server.final.World.getBlockArray`
+      - world.getBlockArray(start_location, end_location)
+      - Returns the materials in the prism from start to end location 
+        as a list of lists of materials
+
+
 
 ### Adding New Commands
 

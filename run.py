@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-import os, requests, subprocess, argparse, logging, shutil, yaml, glob
+import os, requests, subprocess, argparse, logging, shutil, yaml, glob  # python3 -m pip install requests yaml
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 DATA = os.path.join(HERE, 'data')

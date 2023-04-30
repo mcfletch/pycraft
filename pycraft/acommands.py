@@ -213,14 +213,6 @@ def users(*, world=None):
 
 
 @expose()
-async def getblocks(depth=5, width=5, height=5, *, player=None, world=None):
-
-    return await world.getBlocks(
-        list(player.location[:3]), list((player.location + (depth, height, width))[:3])
-    )
-
-
-@expose()
 async def give(item, count=1, *, player=None):
     inventory = await player.getInventory()
     empty = inventory.empty_slots()

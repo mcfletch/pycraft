@@ -9,12 +9,12 @@ Pycraft Installation
 
 The steps required to get Pycraft Running:
 
-* Get a Docker + Linux environment
-* Get Minecraft (Java Edition Preferred)
-* [Download a release](https://github.com/mcfletch/pycraft/releases)
-* Read the [Minecraft EULA](https://www.minecraft.net/en-us/eula)
-* Run `pycraft-runner -e -d your-empty-folder-for-your-world`
-* In Minecraft, connect to the server running on your local machine's IP address.
+    * Get a Docker + Linux environment
+    * Get Minecraft (Java Edition Preferred)
+    * Get the Runner Script:
+    * Read the `Minecraft EULA <https://www.minecraft.net/en-us/eula>`_
+    * Run ``pycraft-runner -e -d your-empty-folder-for-your-world``
+    * In Minecraft, connect to the server running on your local machine's IP address.
 
 Prerequisites
 --------------
@@ -73,27 +73,57 @@ prerequisites needed to run.
    
 3) Install a `pycraft-runner <https://github.com/mcfletch/pycraft/releases>`_ release
 
-    For Linux or Windows with WSL:
+    .. note:: 
 
-    .. code-block:: bash 
+        The `pycraft-runner` script is a `pyinstaller` wrapped copy of the script 
+        `run.py <https://raw.githubusercontent.com/mcfletch/pycraft/master/run.py>`_ 
+        in the root of the pycraft repository. If you are comfortable with Python 
+        code, you can download the script, install the two dependencies and run 
+        directly from Python.
 
-        wget https://github.com/mcfletch/pycraft/releases/download/version-3.0.1/pycraft-runner-linux-3.0.1.zip
-        mkdir pycraft-runner 
-        cd pycraft-runner 
-        unzip ../pycraft-runner-linux-3.0.1.zip
+    For Linux or Windows with WSL, use one of these approaches:
+
+    A) Use the packaged ``pycraft-runner`` executable (for novices):
+
+        .. code-block:: bash 
+
+            wget https://github.com/mcfletch/pycraft/releases/download/version-3.0.1/pycraft-runner-linux-3.0.1.zip
+            mkdir pycraft-runner 
+            cd pycraft-runner 
+            unzip ../pycraft-runner-linux-3.0.1.zip
+
+    B) Clone the pycraft repository and run from the code checkout (for development or coders comfortable with git and Python):
+
+        .. code-block:: bash 
+
+            apt-get install git python3
+            git clone --recursive https://github.com/mcfletch/pycraft.git
+            cd pycraft
+            python -m venv .env 
+            source .env/bin/activate 
+            pip install -r requirements.txt -e .
+            ./run.py -e -d test-world
+        
+        If you want to develop pycraft itself, or just want to run pycraft on the host, rather than in a container,
+        you can pass ``--no-chat`` to the runner script and run the pycraft-chat-server from this checkout:
+
+        .. code-block:: bash
+
+            source .env/bin/activate 
+            ./run.py -e -d path-to-scratch-world --no-chat
+            pycraft-chat-server 
+
     
-    The actual script that is being run is in the root directory of the 
-    pycraft repository and is called `run.py` there. If you don't have a 
-    packaged repository, or want to develop pycraft itself:
+    C) Copy just the runner script and manually setup dependencies:
 
-    .. code-block:: bash 
+        .. code-block:: bash 
 
-        git clone --recursive https://github.com/mcfletch/pycraft.git
-        cd pycraft
-        python -m venv .env 
-        source .env/bin/activate 
-        pip install -r requirements.txt 
-        ./run.py -e -d test-world
+            wget https://raw.githubusercontent.com/mcfletch/pycraft/master/run.py
+            python -m venv .env 
+            source .env/bin/activate 
+            pip install yaml requests
+            ./run.py -e -d test-world
+
    
 4) Start the containers using `pycraft-runner`
 
@@ -103,7 +133,13 @@ prerequisites needed to run.
             -e \
             -d test-world
     
-    where `-e` means "I have read and agreed to the Minecraft Server EULA" and 
+    or, if running from source code:
+
+        ./run.py \
+            -e \
+            -d test-world
+    
+    where `-e` means "I have read and agreed to the `Minecraft EULA <https://www.minecraft.net/en-us/eula>`_" and 
     `-d test-world` means use (and/or create) a world data directory in `test-world`
 
 5) Connect using Minecraft (Java or Bedrock/Pocket Edition)
@@ -127,10 +163,26 @@ prerequisites needed to run.
     * Start the chat window (T on Java Edition, Button in the middle of HUD on Bedrock)
     * Ask the server to echo some text:
 
-      .. code-block:: pycon
+      .. code-block:: python
 
         >>> echo("Hello world!")
         'Hello world!' (<class 'str'>)
+    
+    * If the server doesn't respond, check:
 
+        * Did you pass the --no-chat flag to the runner?
+        * Did the container crash?
 
-.. TODO:: Debugging, showing running containers, etc
+Docker Commands
+---------------
+
+.. code-block:: shell 
+
+    # show running containers (here the --no-chat was used, so the minecraft-chatserver container isn't running)
+    $ docker ps
+    CONTAINER ID   IMAGE                          COMMAND    CREATED      STATUS                PORTS                                                                                                                                     NAMES
+    867558c2d87e   itzg/minecraft-server:java19   "/start"   2 days ago   Up 2 days (healthy)   0.0.0.0:4712->4712/tcp, :::4712->4712/tcp, 0.0.0.0:25565->25565/tcp, :::25565->25565/tcp, 0.0.0.0:19132->19132/udp, :::19132->19132/udp   minecraft
+    # watch the log output from a container
+    docker logs -f minecraft
+    # stop a container manually 
+    docker stop minecraft

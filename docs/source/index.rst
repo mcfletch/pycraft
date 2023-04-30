@@ -1,4 +1,3 @@
-
 Pycraft: Python Code in Minecraft
 ==================================
 
@@ -33,8 +32,7 @@ If you are familiar with Docker and Linux, this should get you started.
 * Read the `Minecraft EULA <https://www.minecraft.net/en-us/eula>`_
 * Run `pycraft-runner -e -d your-empty-folder-for-your-world`
 
-See: :doc:`installation` for details and :doc:`devsetup` for running 
-the code on your host for development.
+See: :doc:`installation` for details.
 
 In Minecraft
 
@@ -53,14 +51,12 @@ definitely *not* expose your machine to the internet while running this server.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 5
    :caption: Contents:
 
    installation
-   devsetup
-   chatserver
-   builtins
-   api/modules
+   Python from Minecraft <chatserver>
+   API Reference <api/pycraft>
 
 
 Indices and tables

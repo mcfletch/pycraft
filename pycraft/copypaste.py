@@ -26,7 +26,7 @@ async def copy(
     world=None,
     player=None,
 ):
-    """Read blocks to create a template that can be stamped elsewhere
+    """Read rectangular prism of blocks to create a template that can be stamped elsewhere
 
     name -- name that you can use to reference this copy when pasting
     depth, width, height -- dimensions of the cube to copy
@@ -35,6 +35,10 @@ async def copy(
     offset -- offset from the normal copy position to where that position should be when
               pasted; so if you want the paste to be 3m below where it would paste
               normally, use [0,-3,0]
+
+    The prism starts with the block in front of the block on which the player is standing
+    offset int(1/2 of the width) to the left. So if you say width 8, the starting block is
+    forward one block and left 4 blocks. Width 9 starts at the same position.
 
     returns message with name and the content copied
     """
@@ -59,14 +63,14 @@ async def copy(
         + (Vector(0, 1, 0) * (height - 1))
     )
 
-    print(
-        'Start=%s Stop=%s position=%s direction=%s cross=%s',
-        start,
-        stop,
-        position,
-        direction,
-        cross,
-    )
+    # print(
+    #     'Start=%s Stop=%s position=%s direction=%s cross=%s',
+    #     start,
+    #     stop,
+    #     position,
+    #     direction,
+    #     cross,
+    # )
 
     layers = await world.getBlockArray(start, stop)
 

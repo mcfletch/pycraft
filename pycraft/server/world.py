@@ -419,8 +419,8 @@ class World(ServerObjectProxy):
     Worlds are referenced by their name, with the common worlds being:
 
     * 'world' -- known as the Overworld, this is the main world you start in
-    * 'nether' -- the Nether is full of lava, magma and Piglins
-    * 'end' -- the End is the boss-level for the Ender Dragon and is full of Endermen
+    * 'world_nether' -- the Nether is full of lava, magma and Piglins
+    * 'world_the_end' -- the End is the boss-level for the Ender Dragon and is full of Endermen
 
     When referring to a world, you can use the string name of the world,
     or get a world with :py:meth:`pycraft.server.final.Server.getWorld`

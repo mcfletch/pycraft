@@ -370,6 +370,30 @@ proxyobjects.SIMPLE_TYPES["EntityType[]"] = typing.List[Entity]
 
 
 @OverrideType
+class OfflinePlayer(ServerObjectProxy):
+    """Represents a user who is known to the server, but isn't necessarily online right now"""
+
+    __namespace__ = 'OfflinePlayer'
+
+    uuid: uuid.UUID
+    name: str
+    first_played: float
+    last_played: float
+    banned: bool
+    online: bool
+    whitelisted: bool
+
+    def __json__(self):
+        """Return the user's UUID as a reference"""
+        return self.uuid
+
+    @property
+    def id(self):
+        """Get our local unique key for referencing (uuid)"""
+        return self.uuid
+
+
+@OverrideType
 class Player(Entity):
     """A particular player (potentially not currently logged in) on the server"""
 
@@ -384,7 +408,10 @@ class Player(Entity):
     uuid: uuid.UUID
     type: str
     name: str
+    banned: bool
+    online: bool
     display_name: str
+    first_played: float
     last_played: float
 
     def get_key(self):

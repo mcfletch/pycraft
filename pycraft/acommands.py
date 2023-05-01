@@ -412,11 +412,16 @@ async def stairs(
     underground will allow you to walk to the surface.
 
     depth -- number of steps to create
+
     ystep -- amount each step is offset in the y direction
+
     clearance -- how far above the step to clear to air, 0 to disable
+
     position -- if provided, used instead of the player's position
+
     direction -- if provided, used instead of the player's direction,
                  is converted to a cardinal direction using :py:func:`roughly_forward`
+
     material -- minecraft constant describing the material to use for the base
     """
 
@@ -598,11 +603,9 @@ async def keep_inventory(keep=True, *, player=None, world=None):
 async def mikes_potion(name, *, world=None, player=None):
     """Creates one of a selection of over-powered potions
 
-    name => effects
-
-    carrots => night_vision, healing
-    heath => health, health_boost, regeneration, saturation
-    gopher => digging, luck, night_vision,
+    * carrots -- night_vision, healing
+    * heath -- health, health_boost, regeneration, saturation
+    * gopher -- digging, luck, night_vision
     """
     name = name.lower()
     if name == 'carrots':

@@ -1,16 +1,25 @@
-"""Rotational operations on material (strings)"""
+"""Parsing of Minecraft namespaced materials with embedded properties"""
 from functools import lru_cache
 import re
-from telnetlib import NEW_ENVIRON
+import typing
 from . import rotations
+
+
+class ParsedMaterial(typing.TypedDict):
+    """Type annotation for a dictionary used to represent a parsed material"""
+
+    namespace: str
+    name: str
+    properties: typing.Dict[str, str]
+
 
 MATERIAL_MATCHER = re.compile(
     r'(?:(?P<namespace>\w+)[:])?(?P<name>\w+)(?:\[(?P<properties>(\w+?)[=](\w+?)([,]\w+?[=]\w+?)*)\])?'
 )
 
 
-def parse_material(material):
-    """Parse a material for rotations..."""
+def parse_material(material: str) -> ParsedMaterial:
+    """Parse a material string into namespace, name and properties"""
     base = MATERIAL_MATCHER.match(material)
     if not base:
         raise ValueError("Unable to parse %s as a material" % (material,))
@@ -27,14 +36,18 @@ def parse_material(material):
     return base
 
 
-def copy_struct(material, **named):
+def copy_struct(material: typing.Union[str, ParsedMaterial], **named) -> ParsedMaterial:
+    """Given a parsed material, produce a copy with properties updated from named"""
+    if isinstance(material, str):
+        material = parse_material(material)
     material = material.copy()
     material['properties'] = material['properties'].copy()
     material['properties'].update(named)
     return material
 
 
-def unparse_material(material):
+def unparse_material(material: typing.Union[str, ParsedMaterial]) -> str:
+    """Given a parsed material, convert to string form"""
     if isinstance(material, dict):
         base = '%(namespace)s:%(name)s' % material
         if material['properties']:

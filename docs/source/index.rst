@@ -56,6 +56,7 @@ definitely *not* expose your machine to the internet while running this server.
 
    installation
    Python from Minecraft <chatserver>
+   Minecraft from Python <controlling>
    API Reference <api/pycraft>
 
 

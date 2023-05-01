@@ -132,9 +132,14 @@ advanced players.
     * - Implementation 
       - Chat Call
       - Description 
+      - 
     * - :py:func:`pycraft.acommands.bed`
       - ``bed(color='black')``
       - Creates a bed in front of the user
+      - .. image:: _static/img/bed.png
+          :width: 256
+          :alt: Image of a bed
+      
     * - :py:func:`pycraft.buildings.hall`
       - ``hall()``
       - Build a stone hall with bed, crafting table, furnace and the like.
@@ -143,11 +148,16 @@ advanced players.
 
             Note: there are nicer buildings available with :py:func:`pycraft.copypaste.paste`
             hall is more of an example of programatically setting up a building.
+      - .. image:: _static/img/hall.png
+          :width: 256
+          :alt: Image of the generated hall
     * - :py:func:`pycraft.buildings.temple`
       - ``temple()``
       - Build an empty stone temple in front of the user. The inside of the temple is 
         empty and there are no doors on the structure.
-
+      - .. image:: _static/img/temple.png
+          :width: 256
+          :alt: Image of the generated temple
 
 .. list-table:: paste() Shelter
     :header-rows: 1
@@ -156,22 +166,32 @@ advanced players.
     * - Implementation 
       - Chat Call
       - Description 
+      - 
 
     * - :py:func:`pycraft.copypaste.paste`
       - paste('dark_house')
       - Deepslate and Iron Bar Pavilion Style house with lanterns, bed, crafting table and furnace.
         Does not provide complete shelter, as the iron grill can be shot through and Creepers
         can get close enough to blow up. Use within a larger complex.
+      - .. image:: _static/img/dark_house.png
+          :width: 256
+          :alt: Image of the pasted dark house
     
     * - :py:func:`pycraft.copypaste.paste`
       - paste('lantern_mansion')
       - Large well-appointed house with shulker boxes, multiple beds, crafting table, music box,
         and bookshelves.
+      - .. image:: _static/img/lantern_mansion.png
+          :width: 256
+          :alt: Image of the pasted lantern_mansion
 
     * - :py:func:`pycraft.copypaste.paste`
       - paste('red_fortress')
       - Large well-appointed red-sandstone fortress with enchanting area, bed, crafting table, furnace,
         redstone powered large gate.
+      - .. image:: _static/img/red_fortress.png
+          :width: 256
+          :alt: Image of the pasted red_fortress
 
 .. list-table:: Gear
     :header-rows: 1
@@ -275,6 +295,10 @@ Manipulating Entities and Players
       - Chat Call
       - Description 
 
+    * - :py:func:`pycraft.acommands.keep_inventory`
+      - ``keep_inventory(True)``
+      - Turns world's keep-inventory flag on so that novice players aren't 
+        frustrated with losing everything every time they die.
     * - :py:func:`pycraft.acommands.users`
       - ``users()``
       - Retrieves :py:class:`pycraft.server.final.Player` references 

@@ -4,31 +4,29 @@
 # functions have an "async" in front of them and they tell
 # the interpreter to wait for something to finish by using
 # the "await" keyword
-import asyncio
 import logging
-from pycraft.server import channel
+import asyncio
+from pycraft.server import final, channel
+from pycraft import acommands
+
+
+async def get_server():
+    """Get a connected :py:class:`pycraft.server.channel.Channel`"""
+    server = channel.Channel(debug=False)
+    await server.open()
+    await server.introspect()
+    return server
 
 
 async def hello_world():
     # We'll get a connection (channel) to the server, here we're
     # using the default (localhost) server and port
-    chan = channel.Channel()
-    # We're waiting for the connection to the server to open
-    await chan.open()
-    # Now we ask the PycraftServer plugin in the server to
-    # poke around and tell us what APIs are available. This
-    # process will take a while (seconds) and will send a huge
-    # gob of data (MBs) to us that describes what we can do
-    # with the server
-    await chan.introspect()
-
-    from pycraft.server import final
-    from pycraft import acommands
+    chan = await get_server()
 
     # name= here can be any string, the server actually does have
     # a name, but the api will ignore it because there's only
     # one server on the far side of the connection...
-    server_api = world.Server(name='server')
+    server_api = final.Server()
 
     # Again, we have to await the call, otherwise Python will
     # never get around to running the operation...
@@ -49,13 +47,9 @@ async def hello_world():
                 await acommands.give('elytra', player=player)
             except channel.MethodInvocationError as err:
                 print(f"  Could not give elytra to {player.name}: {err}")
-
-
-def main():
-    """This regular function just starts the asyncio event loop"""
-    logging.basicConfig(level=logging.INFO)
-    asyncio.get_event_loop().run_until_complete(hello_world())
+            except RuntimeError as err:
+                print(f"  Could not given elytra to {player.name}: {err}")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(hello_world())

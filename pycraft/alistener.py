@@ -9,7 +9,6 @@ from .expose import (
     expose,
 )
 
-# from .lockedmc import locked
 import numpy as np
 from .server import world
 
@@ -308,16 +307,20 @@ class AListener(object):
         """Wait for events, yielding each as it occurs
 
         event_type -- Java Bukkit API name for the event
+
         filters -- definition of a filter to be applied to the events
                    [1, name] -- filter to entity name
                    [1, uuid] -- filter to entity uuid
                    [2, [0,0,0],[1,1,1]] -- filter to blocks in the (inclusive) area
+
         timeout -- timeout in seconds after which we stop
+
         max_count -- number of events after which we exit
+
         named -- parameters to construct a filter:
-            player/entity -- str or Entity to match
-            location/block -- location or block to match
-            area -- 2 locations for inclusive area match
+                 player/entity -- str or Entity to match
+                 location/block -- location or block to match
+                 area -- 2 locations for inclusive area match
 
         returns async generator producing events matching the filters
         """

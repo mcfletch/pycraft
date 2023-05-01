@@ -1,3 +1,4 @@
+"""Overall runner script for the pycraft-chat-server command"""
 import argparse, logging, threading, asyncio
 from .server import channel
 from . import (
@@ -16,6 +17,7 @@ log = logging.getLogger(__name__)
 
 
 def get_options():
+    """Gets the command-line argument parser for the chat server program"""
     parser = argparse.ArgumentParser(
         description='Run minecraft pycraft chat-command server'
     )
@@ -43,11 +45,14 @@ def get_options():
 
 
 async def chatserver(options):
+    """Top level driver with recovery from connection failure"""
     if options.verbose:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
-    server = channel.Channel(host=options.host, port=options.port, debug=True)
+    server = channel.Channel(
+        host=options.host, port=options.port, debug=options.verbose
+    )
     while True:
         try:
             await server.open()
@@ -55,7 +60,9 @@ async def chatserver(options):
         except KeyboardInterrupt:
             return
         except ConnectionRefusedError as err:
-            log.warning("Connection to server refused (likely not yet running), waiting")
+            log.warning(
+                "Connection to server refused (likely not yet running), waiting"
+            )
             await asyncio.sleep(5)
         except Exception as err:
             log.exception("Failure during setup, pausing before reconnection")
@@ -77,6 +84,7 @@ async def chatserver(options):
                 raise
             else:
                 break
+
 
 def main():
     logging.basicConfig(level=logging.DEBUG)

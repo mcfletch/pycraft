@@ -29,9 +29,12 @@ async def copy(
     """Read rectangular prism of blocks to create a template that can be stamped elsewhere
 
     name -- name that you can use to reference this copy when pasting
+
     depth, width, height -- dimensions of the cube to copy
+
     position, direction -- middle of the lowest slice of the cube will be just
                            in front of position with cube extending in direction
+
     offset -- offset from the normal copy position to where that position should be when
               pasted; so if you want the paste to be 3m below where it would paste
               normally, use [0,-3,0]
@@ -228,7 +231,7 @@ BAD_CHARS = re.compile(r'[^0-9a-zA-Z_]')
 def template_filename(template_name, user=True):
     """Get the template filename for the given player
 
-    names are restriced to A-Za-z0-9_ for both player and template
+    Names are restricted to ``[A-Za-z0-9_]`` for both player and template
     """
     template_name = sanitize(template_name)
     if user:

@@ -31,10 +31,11 @@ log = logging.getLogger(__name__)
 class AInterpreter(object):
     """Provide basic python expression interpretation"""
 
-    def __init__(self, channel, listener=None):
+    def __init__(self, channel, listener=None, scripts=None):
         self.user_namespaces = {}
         self.channel = channel
         self.listener = listener
+        self.scripts = scripts
 
     def base_namespace(self, message=None, sender=None, **kwargs):
         namespace = get_base_namespace()
@@ -59,6 +60,12 @@ class AInterpreter(object):
     async def broadcast_chat(self, text: str):
         """Send a broadcast message directly to chat"""
         await self.channel.server.broadcastMessage(text)
+
+    async def scripts_shovel(self):
+        """Shovel messages from the script loader into the chat"""
+        while True:
+            msg = await self.scripts.msg_queue.get()
+            await self.broadcast_chat(msg)
 
     async def interpret(self, message: world.Event):
         """Interpret a command from our queue"""

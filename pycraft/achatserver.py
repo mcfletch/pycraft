@@ -3,6 +3,7 @@ import argparse, logging, threading, asyncio
 from .server import channel
 from . import (
     alistener,
+    scriptloader,
     # expose,
     # commands,
     parabolic,
@@ -41,6 +42,11 @@ def get_options():
         help='If specified, do verbose API logging',
         action='store_true',
     )
+    parser.add_argument(
+        '--scripts',
+        default='/var/pycraft/scripts',
+        help='A pathsep (%s) separated set of full paths to script-files to load into the interpreter namespace',
+    )
     return parser
 
 
@@ -53,6 +59,8 @@ async def chatserver(options):
     server = channel.Channel(
         host=options.host, port=options.port, debug=options.verbose
     )
+    scripts = scriptloader.ScriptLoader(options.scripts)
+    asyncio.create_task(scripts.main(), name='script-loader')
     while True:
         try:
             await server.open()
@@ -74,7 +82,7 @@ async def chatserver(options):
             world = worlds[0]
             world_cls = world.__class__
 
-            listen = alistener.AListener(server)
+            listen = alistener.AListener(server, scripts=scripts)
             try:
                 log.info("Trying to subscribe to chat")
                 await listen.listen()

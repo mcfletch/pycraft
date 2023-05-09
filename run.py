@@ -73,6 +73,11 @@ def get_options():
         help='Do not start the pycraft-chat-server container (used during development to allow for running it from the source-code tree)',
     )
     parser.add_argument(
+        '--scripts',
+        default=os.path.abspath(os.path.join(HERE, 'scripts')),
+        help='Directories with path separators from which to load scripts',
+    )
+    parser.add_argument(
         '--jupyter',
         default=False,
         dest='jupyter',
@@ -250,6 +255,7 @@ def main():
                     '--rm',
                     '-d',
                     f'-v{RUNDIR}/pycraft-templates:/var/pycraft-templates',
+                    f'-v{options.scripts}:/var/pycraft/scripts',
                     '-e',
                     'USER_TEMPLATES=/var/pycraft-templates',
                     '--name',

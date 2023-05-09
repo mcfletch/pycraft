@@ -14,7 +14,7 @@ def get_releases():
         .splitlines()
     ):
         tag = tag.strip()
-        log.info('tag: %s', tag)
+        log.info('Current tag: %s', tag)
         if tag.strip().startswith(RELEASE_PREFIX):
             tags.append(tag)
     releases = []
@@ -52,6 +52,7 @@ def build(release):
     version, tag = release
     new_version = (version[0], version[1], version[2] + 1)
     docker_tag = '%d.%d.%d' % new_version
+    log.info("New version: %s", docker_tag)
     tags = [
         DOCKER_TAG_TEMPLATE % {'tag': docker_tag},
         DOCKER_TAG_TEMPLATE % {'tag': 'latest'},

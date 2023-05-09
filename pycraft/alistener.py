@@ -186,19 +186,27 @@ WorldUnloadEvent'''.split()
 
 
 class AListener(object):
-    """Asyncio compatible listening service"""
+    """Asyncio compatible listening service
+
+    The AListener is responsible for:
+    * listening to events from the server
+    * using a :py:class:`ainterpreter.AInterpreter` to interpret the events
+    * sending commands back to the server
+    """
 
     channel: 'pycraft.channel.Channel'
     wanted = True
 
-    def __init__(self, channel, interpreter=None):
+    def __init__(self, channel, interpreter=None, scripts=None):
         self.channel = channel
         self.request_queue = None
         self.request_queue_id = None
         if interpreter is None:
             from . import ainterpreter as default_interpreter
 
-            interpreter = default_interpreter.AInterpreter(channel, self)
+            interpreter = default_interpreter.AInterpreter(
+                channel, self, scripts=scripts
+            )
         self.interpreter = interpreter
         self.event_watchers = {}
 
@@ -207,7 +215,10 @@ class AListener(object):
         self.request_queue, self.request_queue_id = await self.channel.subscribe(
             "AsyncPlayerChatEvent"
         )
-        asyncio.ensure_future(self.process_chat_queue(self.request_queue))
+        asyncio.create_task(
+            self.process_chat_queue(self.request_queue), name='chat-queue'
+        )
+        asyncio.create_task(self.interpreter.scripts_shovel(), name='scripts-shovel')
 
     async def process_chat_queue(self, queue):
         """Process chat events from the queue"""

@@ -433,6 +433,31 @@ class Player(Entity):
         """Retrieve the direction reported when this record was retrieved (not necessarily the *current* direction)"""
         return self.location.direction
 
+    @property
+    def forward_and_cross(self):
+        from pycraft import directions
+
+        forward, cross = directions.forward_and_cross(self.direction)
+        return forward, cross
+
+    @property
+    def forward(self):
+        return self.forward_and_cross[0]
+
+    @property
+    def back(self):
+        return -self.forward_and_cross[0]
+
+    backward = back
+
+    @property
+    def left(self):
+        return -self.forward_and_cross[1]
+
+    @property
+    def right(self):
+        return self.forward_and_cross[1]
+
 
 @OverrideType
 class OfflinePlayer(Player):

@@ -34,6 +34,16 @@ def expose(command_set=None, name=None):
 
     def wrapper(function):
         function_name = name or function.__name__
+        docs = inspect.getdoc(function)
+        if docs:
+            docs = (
+                docs
+                + f'''
+    
+    Exposed in pycraft-chat-server as `{function_name}`
+    '''
+            )
+        function.__doc__ = docs
         command_set[function_name] = function
         return function
 

@@ -4,6 +4,7 @@ from collections import deque
 import contextlib, functools
 from typing import Coroutine
 from .server import world
+from .chatmessage import ChatMessage
 from .server.world import Vector
 from .server import proxyobjects
 from .expose import (
@@ -167,7 +168,6 @@ class AInterpreter(object):
                         named[key] = namespace[key]
                     elif key == 'namespace':
                         named[key] = namespace
-
         result = func(*args, **named)
         if isinstance(result, Coroutine):
             return await result
@@ -396,6 +396,8 @@ class Response(object):
                 yield f'Out> {line}'
 
     def __repr__(self):
+        if isinstance(self.value, ChatMessage):
+            return self.value
         return '%r (%s)' % (
             self.value,
             self.value.__class__,

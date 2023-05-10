@@ -299,8 +299,8 @@ Manipulating Entities and Players
       - ``keep_inventory(True)``
       - Turns world's keep-inventory flag on so that novice players aren't 
         frustrated with losing everything every time they die.
-    * - :py:func:`pycraft.acommands.users`
-      - ``users()``
+    * - :py:func:`pycraft.acommands.players`
+      - ``players()``
       - Retrieves :py:class:`pycraft.server.final.Player` references 
         for all players in the world of the player making the call.
     * - :py:func:`pycraft.acommands.find_player`

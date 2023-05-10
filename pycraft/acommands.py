@@ -77,6 +77,8 @@ async def spawn(
     """Spawn a new entity of type_id at position (default in front of player)
 
     type_name -- full minecraft ID for the entity to spawn
+
+    returns :py:class:`pycraft.server.final.Entity` subclass
     """
     if position is None:
         position = player.position + player.direction
@@ -113,18 +115,19 @@ async def spawn_shower(type_id, count=30, height=50, *, player=None, world=None)
 
 
 @expose()
-async def block(type_name, position=None, offset=(0, 0, 0), *, player=None):
-    """Create a block with the given type_id at position"""
+async def block(type_name, position=None, offset=(0, 0, 0), *, player=None, world=None):
+    """Create a block with the given type_id at position
+
+    returns position of the block
+    """
     if position is None:
-        position = player.location + player.location.direction
+        position = player.location + player.forward
     if offset:
         position = position + offset
     if not ':' in type_name:
         type_name = 'minecraft:%s' % (type_name,)
-    position = final.Location(position)
-    block = await position.getBlock()
-    await block.setBlockData(type_name)
-    return block
+    await final.World(position.world).setBlockList([position], [type_name])
+    return position
 
 
 # @expose()
@@ -194,9 +197,42 @@ async def find_entities(name):
     return [e.key for e in await final.EntityType.loosely_match(name)]
 
 
+def matching_players(players: typing.List[world.Player], player_name: str):
+    player_name = player_name.lower()
+    for other in players:
+        if player_name == '*':
+            yield other
+        elif player_name in other.name.lower():
+            yield other
+
+
 @expose()
-def users(*, world=None):
-    return world.getPlayers()
+async def find_player(player_name='*', *, server=None):
+    """Find the first player whose name matches the given name (if *, finds first player)
+
+    returns :py:class:`pycraft.server.final.Player` or raises KeyError if no Player is found
+    """
+    players = await server.getOnlinePlayers()
+    for other in matching_players(players, player_name):
+        return other
+    raise KeyError(
+        'No player with name %s found, found: %s'
+        % (
+            player_name,
+            sorted([p.name for p in players]),
+        )
+    )
+
+
+@expose()
+async def players(player_name='*', *, world=None):
+    """Get the list of players whose name matches player_name (all if *)
+
+    returns list of :py:class:`pycraft.server.final.Player` instances
+    """
+    players = await server.getOnlinePlayers()
+    result = list(await matching_players(players, player_name))
+    return result
 
 
 # @expose()
@@ -517,30 +553,7 @@ async def midas_touch(
     return 'Right click blocks with your empty hand to convert them'
 
 
-def matching_players(players: typing.List[world.Player], player_name: str):
-    player_name = player_name.lower()
-    for other in players:
-        if player_name == '*':
-            yield other
-        elif player_name in other.name.lower():
-            yield other
-
-
 UNJOIN_KEY = 'join.jump_back'
-
-
-@expose()
-async def find_player(player_name='*', *, server=None):
-    players = await server.getOnlinePlayers()
-    for other in matching_players(players, player_name):
-        return other
-    raise KeyError(
-        'No player with name %s found, found: %s'
-        % (
-            player_name,
-            sorted([p.name for p in players]),
-        )
-    )
 
 
 @expose()
@@ -679,11 +692,12 @@ async def potion_of(
 ):
     """Give a potion of base with extras as specified
 
-    Examples:
+    Examples::
 
         # potion that gives you night vision and also heal's you, as carrots do
         potion_of('night_vision','Carrot Juice',{'type':'heal'})
 
+    returns :py:class:`pycraft.server.final.ItemStack`
     """
     stack = await give('potion', player=player)
     metadata = await stack.getItemMeta()
@@ -703,30 +717,7 @@ async def potion_of(
     await metadata.setDisplayName(name)
     await stack.setItemMeta(metadata)
 
-    print(base)
-
-
-@expose()
-async def vengence(*, player=None, listener=None, server=None):
-    """Every hit for the next 50 hits does 100 damage"""
-
-    async def v_watcher():
-        async for event in listener.wait_for_events(
-            'EntityDamageByEntityEvent',
-            count=500,
-            timeout=3600 * 2,
-        ):
-            if event.damager.get('name') == player.name:
-                try:
-                    target = final.Entity(**event.entity)
-                    if target.type != 'Player':
-                        await target.remove()
-                        await server.broadcastMessage('Death to the %s' % (target.name))
-                except Exception as err:
-                    print(err)
-
-    asyncio.ensure_future(v_watcher())
-    return "Vengence shall be harsh"
+    return stack
 
 
 @expose()

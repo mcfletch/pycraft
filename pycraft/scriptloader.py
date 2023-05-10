@@ -21,7 +21,7 @@ class ScriptLoader(object):
         while True:
             for directory in directories:
                 # log.info("Scanning directory: %s", directory)
-                for path in glob.glob(os.path.join(directory, '*.py')):
+                for path in sorted(glob.glob(os.path.join(directory, '*.py'))):
                     try:
                         if path not in self.scripts:
                             self.scripts[path] = await self.load_path(path)
@@ -52,7 +52,7 @@ class ScriptLoader(object):
             with open(path, encoding='utf-8') as fh:
                 content = fh.read()
             new_module = imp.new_module(name)
-            exec(content, new_module.__dict__, {})
+            exec(content, new_module.__dict__, new_module.__dict__)
         except Exception as err:
             await self.msg_queue.put(
                 "Can't import %s:\n %s" % (base, traceback.format_exc()),

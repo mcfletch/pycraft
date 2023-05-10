@@ -1,55 +1,51 @@
-"""Sample script for pycraft"""
-from pycraft.expose import expose
+# # import random
+# names = ['alex', 'mike', 'lupin', 'clark']
 
 
-@expose()
-async def hello():
-    return "Hello World! Let's Craft"
+# # random.shuffle(names)
+# # for number in names:
+# #     if number == 'alex':
+# #         print('hello', number, 'the great')
+# #     elif number == 'lupin':
+# #         print('good boy', number)
+# #     else:
+# #         print('hello', number)
+# def x2(value):
+#     return value * 2
 
 
-@expose()
-async def whoami(*, player=None):
-    """Echo back the user's name"""
-    return player.name
+# print(x2(names))
+# longnamez = [x2(name) for name in names]
+# print(longnamez[::-1])
+from pycraft import expose
+import asyncio
 
 
-@expose()
-async def whereami(*, player=None):
-    """Echo back the user's location"""
+@expose.expose()
+def hello(*, player=None):
+    return f'hide, {player.name} is coming!'
+
+
+@expose.expose()
+def whereami(*, player=None):
     return player.location
 
 
-@expose()
-async def cat(*, player=None, world=None):
-    """Spawn a can in front of the player"""
-    await world.spawnEntity(player.location + player.forward, 'minecraft:cat')
+@expose.expose()
+async def youspinmerightround(*, player=None):
+    from asyncio import sleep
 
-
-@expose()
-async def box(material, *, player=None, world=None):
-    """Create a 5x5 box around the player"""
-
-    materials, positions = [], []
-    # we start from a position 2 blocks left and back from the player's current position
-    start = player.position + player.left + player.left + player.back + player.back
-    # we want to make three layers
-    for layer in start, start + (0, 1, 0), start + (0, 2, 0):
-        # for each layer, draw the sides
-        for i in range(0, 5):
-            # left wall
-            materials.append(material)
-            positions.append(layer + (player.forward * i))
-            # right wall
-            materials.append(material)
-            positions.append(layer + (player.right * 4) + (player.forward * i))
-
-        # and draw the front and back walls...
-        for j in range(1, 4):
-            # back-wall
-            materials.append(material)
-            positions.append(layer + (player.right * j))
-            # back-wall
-            materials.append(material)
-            positions.append(layer + (player.forward * 4) + (player.right * j))
-
-    await world.setBlockList(positions, materials)
+    location = player.location
+    rotation = location.yaw
+    incliation = location.pitch
+    for angle in range(0, 360, 1):
+        target = [
+            location.world,
+            location.x,
+            location.y,
+            location.z,
+            rotation + angle,
+            incliation,
+        ]
+        await player.teleport(target)
+        await sleep(0.02)

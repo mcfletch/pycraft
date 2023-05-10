@@ -34,13 +34,13 @@ After we have the server Channel, we can start making calls on the PycraftServer
 The normal way to do that is to use one of the Proxy classes that are added to the 
 :py:mod:`pycraft.server.final` namespace during the :py:meth:`pycraft.server.channel.Channel.introspect` call.
 
-.. literalinclude :: ../../scripts/showusers.py
+.. literalinclude :: ../../externalapi/showusers.py
    :language: python
 
 Getting Access to a World 
 --------------------------
 
-.. literalinclude :: ../../scripts/startstorm.py
+.. literalinclude :: ../../externalapi/startstorm.py
    :language: python
 
 Reusing ChatServer Code
@@ -58,5 +58,5 @@ but relies on having references to objects or records:
     * - :py:class:`pycraft.server.final.Player`
       - ``player = await acommands.find_player('name',server=server)``
 
-.. literalinclude :: ../../scripts/nicegear.py
+.. literalinclude :: ../../externalapi/nicegear.py
    :language: python

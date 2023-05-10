@@ -84,3 +84,37 @@ async def vengence(*, player=None, listener=None, server=None):
 @expose()
 async def raw_chat_example():
     return ChatMessage('Moo')
+
+
+@expose()
+async def midas_touch(
+    material='minecraft:gold_block',
+    count=25,
+    *,
+    listener=None,
+    player=None,
+    interpreter=None,
+):
+    async def run_midas():
+        converted = set()
+        if not interpreter:
+            return
+        async for event in listener.wait_for_events(
+            event_type='PlayerInteractEvent',
+            player=player,
+            count=count,
+        ):
+            if event.action == 'RIGHT_CLICK_BLOCK':
+                block: final.Block = event.block_clicked
+                location: final.Location = block.location
+                key = location.world, int(location.x), int(location.y), int(location.z)
+                if key in converted:
+                    continue
+                converted.add(key)
+                await final.Block(location=location).setType(material)
+            elif event.action == 'LEFT_CLICK_BLOCK':
+                break
+        await interpreter.broadcast_chat('Finished midas_touch')
+
+    asyncio.ensure_future(run_midas())
+    return 'Right click blocks with your empty hand to convert them'

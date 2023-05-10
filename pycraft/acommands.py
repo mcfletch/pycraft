@@ -5,6 +5,7 @@ from .server import proxyobjects
 import typing
 from .server import world
 from .server import final
+from .chatmessage import ChatMessage
 from . import parsematerial
 from .server.world import (
     Vector,
@@ -28,27 +29,6 @@ Vec3 = Vector
 def echo(message, *, player=None):
     """Return the message to the player"""
     return message
-
-
-@expose()
-def help(value):
-    """Try to get help about the object"""
-    import inspect
-
-    doc = inspect.getdoc(value)
-    if callable(value):
-        params = inspect.signature(value)
-        if doc:
-            return '%s%s\n%s' % (value.__name__, params, doc)
-        else:
-            return '%s%s' % (value.__name__, params)
-    elif doc:
-        return doc
-    else:
-        return '%s instance with members %s' % (
-            value.__class__,
-            dir(value),
-        )
 
 
 @expose(name='dir')
@@ -250,6 +230,13 @@ async def players(player_name='*', *, world=None):
 
 @expose()
 async def give(item, count=1, *, player=None):
+    """Add a (stack of) item(s) to the player's inventory
+
+    item -- item-type-name, such as "cooked_beef" or "netherite_sword"
+    count -- number of items to have in the stack
+
+    returns :py:class:`pycraft.server.final.ItemStack` instance
+    """
     inventory = await player.getInventory()
     empty = inventory.empty_slots()
     if not empty:
@@ -268,7 +255,7 @@ async def nice_item(item, count=1, *, player=None):
 
     give() the item, then call enchanted() on it
 
-    returns the :py:class:`pycraft.server.final.ItemStack`
+    returns :py:class:`pycraft.server.final.ItemStack`
     """
     stack = await give(item, count=count, player=player)
     return await enchanted(stack)
@@ -398,34 +385,34 @@ async def findall(name, *, world=None):
     return result
 
 
-# @expose()
-# async def help(command=None, *args, player=None):
-#     """Help, a command list if no command specified, otherwise per-command details
+@expose()
+async def help(command=None, *args, player=None):
+    """Help, a command list if no command specified, otherwise per-command details
 
-#     help() => Show list of available commands
-#     help('command') => show detailed usage for the given command
-#     help('entity-list') => Show list of available entitity names
-#     help('entity-list', 'name') => Show list of available entitity names matching name
-#     help('block-list') => Show list of available block names
-#     help('block-list', 'name') => Show list of available block names matching name
-#     """
-#     if not command:
-#         output = command_list()
-#     elif command == 'entity-list':
-#         names = []
-#         for entityType in await EntityType.cached_values():
-#             names.append(entityType.key)
-#         return ", ".join(sorted(names))
-#     elif command == 'block-list':
-#         names = []
-#         for entityType in await EntityType.cached_values():
-#             names.append(entityType.key)
-#         if args:
-#             names = [n for n in names if args[0] in n]
-#         return ", ".join(sorted(names))
-#     else:
-#         output = command_details(command)
-#     return "\n".join(output)
+    help() => Show list of available commands
+    help(command) => show detailed usage for the given command
+    help('entity-list') => Show list of available entitity names
+    help('entity-list', 'name') => Show list of available entitity names matching name
+    help('block-list') => Show list of available block names (including *item* names)
+    help('block-list', 'name') => Show list of available block names matching name
+    """
+    if not command:
+        output = command_list()
+    elif command == 'entity-list':
+        names = []
+        for entityType in await final.EntityType.cached_values():
+            names.append(entityType.key)
+        return ", ".join(sorted(names))
+    elif command == 'block-list':
+        names = []
+        for entityType in await final.Material.cached_values():
+            names.append(entityType.key)
+        if args:
+            names = [n for n in names if args[0] in n]
+        return ", ".join(sorted(names))
+    else:
+        output = command_details(command)
+    return ChatMessage("\n".join(output))
 
 
 @expose()
@@ -496,6 +483,17 @@ async def get_blocks(
     world=None,
     player=None,
 ):
+    """Retrieve the materials in a rectangular block in front of you
+
+    returns list of slices of list of lines of materials
+
+        [ # y varies
+            [ # z varies
+                [ material, material, material] # x varies
+            ]
+
+        ]
+    """
     if direction is None:
         direction = player.direction
     if position is None:
@@ -517,40 +515,6 @@ async def get_click(*, listener=None, player=None):
     """Await the next (right) click by the player on a block"""
     event = await listener.wait_for_event(player=player.name)
     return str(event)
-
-
-@expose()
-async def midas_touch(
-    material='minecraft:gold_block',
-    count=25,
-    *,
-    listener=None,
-    player=None,
-    interpreter=None,
-):
-    async def run_midas():
-        converted = set()
-        if not interpreter:
-            return
-        async for event in listener.wait_for_events(
-            event_type='PlayerInteractEvent',
-            player=player,
-            count=count,
-        ):
-            if event.action == 'RIGHT_CLICK_BLOCK':
-                block: final.Block = event.block_clicked
-                location: final.Location = block.location
-                key = location.world, int(location.x), int(location.y), int(location.z)
-                if key in converted:
-                    continue
-                converted.add(key)
-                await final.Block(location=location).setType(material)
-            elif event.action == 'LEFT_CLICK_BLOCK':
-                break
-        await interpreter.broadcast_chat('Finished midas_touch')
-
-    asyncio.ensure_future(run_midas())
-    return 'Right click blocks with your empty hand to convert them'
 
 
 UNJOIN_KEY = 'join.jump_back'
@@ -722,6 +686,12 @@ async def potion_of(
 
 @expose()
 async def fill_inventory(entity, item='wheat_seeds', count=64):
+    """Fill the inventory of the entity with the given item
+
+    Fills all of the slots of the entity with the given item
+
+    returns the entity
+    """
     inventory = await entity.getInventory()
     await inventory.clear()
     for i in range(inventory.size):
@@ -748,7 +718,10 @@ async def this_guy(*, player=None, listener=None, server=None):
 
 @expose()
 async def full_farmer(*, player=None, listener=None, server=None, world=None):
-    """Spawn a master farmer whose inventory is full of seeds"""
+    """Spawn a master farmer whose inventory is full of seeds
+
+    returns :py:class:`pycraft.server.final.Villager`
+    """
     name = random.choice(
         [
             'Drop Master Fred',
@@ -771,6 +744,7 @@ async def full_farmer(*, player=None, listener=None, server=None, world=None):
     await villager.setProfession('FARMER')
     await villager.setVillagerLevel(5)
     await fill_inventory(villager, count=1)
+    return villager
 
 
 @expose()

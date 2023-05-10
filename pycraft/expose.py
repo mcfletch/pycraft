@@ -1,7 +1,8 @@
 """Command namespace exposure and core commands"""
 from . import fuzzymatch
-import inspect
+import inspect, types
 import numpy as np
+from pycraft.chatmessage import ChatMessage
 
 _range = range
 
@@ -40,8 +41,8 @@ def expose(command_set=None, name=None):
                 docs
                 + f'''
     
-    Exposed in pycraft-chat-server as `{function_name}`
-    '''
+Exposed in pycraft-chat-server as `{function_name}`
+'''
             )
         function.__doc__ = docs
         command_set[function_name] = function
@@ -63,27 +64,32 @@ def command_list():
     return result
 
 
-def command_details(name):
-    function = DEFAULT_COMMANDS.get(name)
-    if function:
-        docs = inspect.getdoc(function) or 'Undocumented'
+def command_details(name_or_instance):
+    if isinstance(name_or_instance, str):
+        function = DEFAULT_COMMANDS.get(name_or_instance)
+        if not function:
+            names = sorted(
+                fuzzymatch.similar_names(
+                    name,
+                    DEFAULT_COMMANDS,
+                )
+            )
+            if names:
+                return [
+                    f'Do not know any function named {name}, did you mean: {", ".join(names)}',
+                ]
+            return [
+                f'Do not know any function named {name}',
+            ]
+    else:
+        function = name_or_instance
+    docs = inspect.getdoc(function) or 'Undocumented'
+    if isinstance(function, (types.FunctionType, types.MethodType)):
         return [
-            f'{name}{inspect.formatargspec(*inspect.getfullargspec(function))}',
+            f'{function.__name__}{inspect.formatargspec(*inspect.getfullargspec(function))}',
         ] + [f'    {line}' for line in docs.splitlines()]
     else:
-        names = sorted(
-            fuzzymatch.similar_names(
-                name,
-                DEFAULT_COMMANDS,
-            )
-        )
-        if names:
-            return [
-                f'Do not know any function named {name}, did you mean: {", ".join(names)}',
-            ]
-        return [
-            f'Do not know any function named {name}',
-        ]
+        return docs.splitlines()
 
 
 def get_base_namespace():

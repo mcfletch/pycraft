@@ -1,0 +1,999 @@
+.. currentmodule:: pycraft.server.final
+
+GlowItemFrame
+=============
+
+Inheritance
+------------
+* pycraft.server.final.GlowItemFrame
+* :py:class:`pycraft.server.final.ItemFrame`
+* :py:class:`pycraft.server.final.Hanging`
+* :py:class:`pycraft.server.final.Entity`
+* :py:class:`pycraft.server.world.Entity`
+* :py:class:`pycraft.server.final.Metadatable`
+* :py:class:`pycraft.server.final.CommandSender`
+* :py:class:`pycraft.server.final.Permissible`
+* :py:class:`pycraft.server.final.ServerOperator`
+* :py:class:`pycraft.server.final.PersistentDataHolder`
+* :py:class:`pycraft.server.final.Attachable`
+* :py:class:`pycraft.server.final.BlockData`
+* :py:class:`pycraft.server.world.BlockData`
+* :py:class:`pycraft.server.proxyobjects.ServerObjectProxy`
+
+Python Proxy to `org.bukkit.entity.GlowItemFrame <https://hub.spigotmc.org/javadocs/spigot/org/bukkit/entity/GlowItemFrame.html>`_ from :py:mod:`pycraft.server.final`
+
+.. py:class:: GlowItemFrame(self, string_value=None, **named)
+   :canonical: pycraft.server.final.GlowItemFrame
+
+   A particular entity, such as a mob, or item stack on the server
+
+   .. py:property:: direction
+      Get the direction (3-value array) the entity is facing
+
+   .. py:property:: tile_position
+
+   .. py:method:: __init__(self, string_value=None, **named)
+      
+
+      Set each named key/value as an attribute on object
+
+
+   .. py:method:: __str__(self)
+      
+
+      Return str(self).
+
+
+   .. py:method:: addAttachment
+
+       .. py:method:: addAttachment(self, _0:Plugin) -> :py:class:`PermissionAttachment`
+          :async:
+          :noindex:
+
+       .. py:method:: addAttachment(self, _0:Plugin, _1:int) -> :py:class:`PermissionAttachment`
+          :async:
+          :noindex:
+
+       .. py:method:: addAttachment(self, _0:Plugin, _1:String, _2:boolean) -> :py:class:`PermissionAttachment`
+          :async:
+          :noindex:
+
+       .. py:method:: addAttachment(self, _0:Plugin, _1:String, _2:boolean, _3:int) -> :py:class:`PermissionAttachment`
+          :async:
+          :noindex:
+
+
+   .. py:method:: addPassenger(self, _0:Entity) -> bool
+      :async:
+
+
+   .. py:method:: addScoreboardTag(self, _0:String) -> bool
+      :async:
+
+
+   .. py:method:: asHoverEvent
+
+       .. py:method:: asHoverEvent(self) -> :py:class:`HoverEvent`
+          :async:
+          :noindex:
+
+       .. py:method:: asHoverEvent(self, _0:UnaryOperator) -> :py:class:`HoverEvent`
+          :async:
+          :noindex:
+
+
+   .. py:method:: clearTitle(self) -> None
+      :async:
+
+
+   .. py:method:: collidesAt(self, _0:Location) -> bool
+      :async:
+
+
+   .. py:method:: customName
+
+       .. py:method:: customName(self) -> :py:class:`Component`
+          :async:
+          :noindex:
+
+       .. py:method:: customName(self, _0:Component) -> None
+          :async:
+          :noindex:
+
+
+   .. py:method:: deleteMessage
+
+       .. py:method:: deleteMessage(self, _0:Signature) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: deleteMessage(self, _0:SignedMessage) -> None
+          :async:
+          :noindex:
+
+
+   .. py:method:: eject(self) -> bool
+      :async:
+
+
+   .. py:method:: filterAudience(self, _0:Predicate) -> :py:class:`Audience`
+      :async:
+
+
+   .. py:method:: forEachAudience(self, _0:Consumer) -> None
+      :async:
+
+
+   .. py:method:: fromMobSpawner(self) -> bool
+      :async:
+
+
+   .. py:method:: from_server(named)
+      
+
+      Convert server-side structure to local object
+
+
+   .. py:method:: get(self, _0:Pointer) -> :py:class:`Optional`
+      :async:
+
+
+   .. py:method:: getAsString(self) -> str
+      :async:
+
+
+   .. py:method:: getAttachedFace(self) -> :py:class:`BlockFace`
+      :async:
+
+
+   .. py:method:: getBoundingBox(self) -> :py:class:`BoundingBox`
+      :async:
+
+
+   .. py:method:: getChunk(self) -> :py:class:`Chunk`
+      :async:
+
+
+   .. py:method:: getCustomName(self) -> str
+      :async:
+
+
+   .. py:method:: getEffectivePermissions(self) -> typing.List[:py:class:`PermissionAttachmentInfo`]
+      :async:
+
+
+   .. py:method:: getEntityId(self) -> int
+      :async:
+
+
+   .. py:method:: getEntitySpawnReason(self) -> :py:class:`SpawnReason`
+      :async:
+
+
+   .. py:method:: getFacing
+
+       .. py:method:: getFacing(self) -> :py:class:`BlockFace`
+          :async:
+          :noindex:
+
+       .. py:method:: getFacing(self) -> :py:class:`BlockFace`
+          :async:
+          :noindex:
+
+
+   .. py:method:: getFallDistance(self) -> float
+      :async:
+
+
+   .. py:method:: getFireTicks(self) -> int
+      :async:
+
+
+   .. py:method:: getFreezeTicks(self) -> int
+      :async:
+
+
+   .. py:method:: getHeight(self) -> float
+      :async:
+
+
+   .. py:method:: getItem(self) -> :py:class:`ItemStack`
+      :async:
+
+
+   .. py:method:: getItemDropChance(self) -> float
+      :async:
+
+
+   .. py:method:: getLastDamageCause(self) -> :py:class:`EntityDamageEvent`
+      :async:
+
+
+   .. py:method:: getLightEmission(self) -> int
+      :async:
+
+
+   .. py:method:: getLocation
+
+       .. py:method:: getLocation(self) -> :py:class:`Location`
+          :async:
+          :noindex:
+
+       .. py:method:: getLocation(self, _0:Location) -> :py:class:`Location`
+          :async:
+          :noindex:
+
+
+   .. py:method:: getMaterial(self) -> :py:class:`Material`
+      :async:
+
+
+   .. py:method:: getMaxFireTicks(self) -> int
+      :async:
+
+
+   .. py:method:: getMaxFreezeTicks(self) -> int
+      :async:
+
+
+   .. py:method:: getMetadata(self, _0:String) -> typing.List[:py:class:`MetadataValue`]
+      :async:
+
+
+   .. py:method:: getName(self) -> str
+      :async:
+
+
+   .. py:method:: getNearbyEntities(self, _0:double, _1:double, _2:double) -> typing.List[:py:class:`Entity`]
+      :async:
+
+
+   .. py:method:: getOrDefault(self, _0:Pointer, _1:Object) -> :py:class:`Object`
+      :async:
+
+
+   .. py:method:: getOrDefaultFrom(self, _0:Pointer, _1:Supplier) -> :py:class:`Object`
+      :async:
+
+
+   .. py:method:: getOrigin(self) -> :py:class:`Location`
+      :async:
+
+
+   .. py:method:: getPassenger(self) -> :py:class:`Entity`
+      :async:
+
+
+   .. py:method:: getPassengers(self) -> typing.List[:py:class:`Entity`]
+      :async:
+
+
+   .. py:method:: getPersistentDataContainer(self) -> :py:class:`PersistentDataContainer`
+      :async:
+
+
+   .. py:method:: getPistonMoveReaction(self) -> :py:class:`PistonMoveReaction`
+      :async:
+
+
+   .. py:method:: getPlacementMaterial(self) -> :py:class:`Material`
+      :async:
+
+
+   .. py:method:: getPortalCooldown(self) -> int
+      :async:
+
+
+   .. py:method:: getPose(self) -> :py:class:`Pose`
+      :async:
+
+
+   .. py:method:: getRotation(self) -> :py:class:`Rotation`
+      :async:
+
+
+   .. py:method:: getScoreboardTags(self) -> typing.List[str]
+      :async:
+
+
+   .. py:method:: getServer(self) -> :py:class:`Server`
+      :async:
+
+
+   .. py:method:: getSoundGroup(self) -> :py:class:`SoundGroup`
+      :async:
+
+
+   .. py:method:: getSpawnCategory(self) -> :py:class:`SpawnCategory`
+      :async:
+
+
+   .. py:method:: getSwimHighSpeedSplashSound(self) -> :py:class:`Sound`
+      :async:
+
+
+   .. py:method:: getSwimSound(self) -> :py:class:`Sound`
+      :async:
+
+
+   .. py:method:: getSwimSplashSound(self) -> :py:class:`Sound`
+      :async:
+
+
+   .. py:method:: getTicksLived(self) -> int
+      :async:
+
+
+   .. py:method:: getTrackedPlayers(self) -> typing.List[:py:class:`Player`]
+      :async:
+
+
+   .. py:method:: getType(self) -> :py:class:`EntityType`
+      :async:
+
+
+   .. py:method:: getUniqueId(self) -> uuid.UUID
+      :async:
+
+
+   .. py:method:: getVehicle(self) -> :py:class:`Entity`
+      :async:
+
+
+   .. py:method:: getVelocity(self) -> :py:class:`Vector`
+      :async:
+
+
+   .. py:method:: getWidth(self) -> float
+      :async:
+
+
+   .. py:method:: getWorld(self) -> :py:class:`World`
+      :async:
+
+
+   .. py:method:: get_key(self)
+      
+
+   .. py:method:: hasGravity(self) -> bool
+      :async:
+
+
+   .. py:method:: hasMetadata(self, _0:String) -> bool
+      :async:
+
+
+   .. py:method:: hasPermission
+
+       .. py:method:: hasPermission(self, _0:Permission) -> bool
+          :async:
+          :noindex:
+
+       .. py:method:: hasPermission(self, _0:String) -> bool
+          :async:
+          :noindex:
+
+
+   .. py:method:: hideBossBar(self, _0:BossBar) -> None
+      :async:
+
+
+   .. py:method:: inject_methods(channel, method_descriptions)
+      
+
+      Inject the methods the server reports are available for this namespace
+
+
+   .. py:method:: isAttached(self) -> bool
+      :async:
+
+
+   .. py:method:: isCustomNameVisible(self) -> bool
+      :async:
+
+
+   .. py:method:: isDead(self) -> bool
+      :async:
+
+
+   .. py:method:: isEmpty(self) -> bool
+      :async:
+
+
+   .. py:method:: isFaceSturdy(self, _0:BlockFace, _1:BlockSupport) -> bool
+      :async:
+
+
+   .. py:method:: isFixed(self) -> bool
+      :async:
+
+
+   .. py:method:: isFreezeTickingLocked(self) -> bool
+      :async:
+
+
+   .. py:method:: isFrozen(self) -> bool
+      :async:
+
+
+   .. py:method:: isGlowing(self) -> bool
+      :async:
+
+
+   .. py:method:: isInBubbleColumn(self) -> bool
+      :async:
+
+
+   .. py:method:: isInLava(self) -> bool
+      :async:
+
+
+   .. py:method:: isInPowderedSnow(self) -> bool
+      :async:
+
+
+   .. py:method:: isInRain(self) -> bool
+      :async:
+
+
+   .. py:method:: isInWater(self) -> bool
+      :async:
+
+
+   .. py:method:: isInWaterOrBubbleColumn(self) -> bool
+      :async:
+
+
+   .. py:method:: isInWaterOrRain(self) -> bool
+      :async:
+
+
+   .. py:method:: isInWaterOrRainOrBubbleColumn(self) -> bool
+      :async:
+
+
+   .. py:method:: isInsideVehicle(self) -> bool
+      :async:
+
+
+   .. py:method:: isInvulnerable(self) -> bool
+      :async:
+
+
+   .. py:method:: isOccluding(self) -> bool
+      :async:
+
+
+   .. py:method:: isOnGround(self) -> bool
+      :async:
+
+
+   .. py:method:: isOp(self) -> bool
+      :async:
+
+
+   .. py:method:: isPermissionSet
+
+       .. py:method:: isPermissionSet(self, _0:String) -> bool
+          :async:
+          :noindex:
+
+       .. py:method:: isPermissionSet(self, _0:Permission) -> bool
+          :async:
+          :noindex:
+
+
+   .. py:method:: isPersistent(self) -> bool
+      :async:
+
+
+   .. py:method:: isPreferredTool(self, _0:ItemStack) -> bool
+      :async:
+
+
+   .. py:method:: isRandomlyTicked(self) -> bool
+      :async:
+
+
+   .. py:method:: isSilent(self) -> bool
+      :async:
+
+
+   .. py:method:: isSneaking(self) -> bool
+      :async:
+
+
+   .. py:method:: isSupported
+
+       .. py:method:: isSupported(self, _0:Block) -> bool
+          :async:
+          :noindex:
+
+       .. py:method:: isSupported(self, _0:Location) -> bool
+          :async:
+          :noindex:
+
+
+   .. py:method:: isTicking(self) -> bool
+      :async:
+
+
+   .. py:method:: isUnderWater(self) -> bool
+      :async:
+
+
+   .. py:method:: isValid(self) -> bool
+      :async:
+
+
+   .. py:method:: isVisible(self) -> bool
+      :async:
+
+
+   .. py:method:: isVisibleByDefault(self) -> bool
+      :async:
+
+
+   .. py:method:: isVisualFire(self) -> bool
+      :async:
+
+
+   .. py:method:: leaveVehicle(self) -> bool
+      :async:
+
+
+   .. py:method:: lockFreezeTicks(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: matches(self, _0:BlockData) -> bool
+      :async:
+
+
+   .. py:method:: merge(self, _0:BlockData) -> :py:class:`BlockData`
+      :async:
+
+
+   .. py:method:: name(self) -> :py:class:`Component`
+      :async:
+
+
+   .. py:method:: openBook
+
+       .. py:method:: openBook(self, _0:Book) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: openBook(self, _0:Builder) -> None
+          :async:
+          :noindex:
+
+
+   .. py:method:: permissionValue
+
+       .. py:method:: permissionValue(self, _0:Permission) -> :py:class:`TriState`
+          :async:
+          :noindex:
+
+       .. py:method:: permissionValue(self, _0:String) -> :py:class:`TriState`
+          :async:
+          :noindex:
+
+
+   .. py:method:: playEffect(self, _0:EntityEffect) -> None
+      :async:
+
+
+   .. py:method:: playSound
+
+       .. py:method:: playSound(self, _0:Sound) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: playSound(self, _0:Sound, _1:Emitter) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: playSound(self, _0:Sound, _1:double, _2:double, _3:double) -> None
+          :async:
+          :noindex:
+
+
+   .. py:method:: pointers(self) -> :py:class:`Pointers`
+      :async:
+
+
+   .. py:method:: position(self)
+      
+
+   .. py:method:: recalculatePermissions(self) -> None
+      :async:
+
+
+   .. py:method:: remove(self) -> None
+      :async:
+
+
+   .. py:method:: removeAttachment(self, _0:PermissionAttachment) -> None
+      :async:
+
+
+   .. py:method:: removeMetadata(self, _0:String, _1:Plugin) -> None
+      :async:
+
+
+   .. py:method:: removePassenger(self, _0:Entity) -> bool
+      :async:
+
+
+   .. py:method:: removeScoreboardTag(self, _0:String) -> bool
+      :async:
+
+
+   .. py:method:: requiresCorrectToolForDrops(self) -> bool
+      :async:
+
+
+   .. py:method:: resetTitle(self) -> None
+      :async:
+
+
+   .. py:method:: sendActionBar
+
+       .. py:method:: sendActionBar(self, _0:Component) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendActionBar(self, _0:ComponentLike) -> None
+          :async:
+          :noindex:
+
+
+   .. py:method:: sendMessage
+
+       .. py:method:: sendMessage(self, _0:BaseComponent[]) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:BaseComponent) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:String[]) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:String) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:Component) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:ComponentLike) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:UUID, _1:String) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:UUID, _1:String[]) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:Identity, _1:Component) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:SignedMessage, _1:Bound) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:ComponentLike, _1:Bound) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:Component, _1:Bound) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:Component, _1:MessageType) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:ComponentLike, _1:MessageType) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:Identified, _1:Component) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:Identity, _1:ComponentLike) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:Identified, _1:ComponentLike) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:Identity, _1:Component, _2:MessageType) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:Identified, _1:Component, _2:MessageType) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:Identity, _1:ComponentLike, _2:MessageType) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:Identified, _1:ComponentLike, _2:MessageType) -> None
+          :async:
+          :noindex:
+
+
+   .. py:method:: sendPlainMessage(self, _0:String) -> None
+      :async:
+
+
+   .. py:method:: sendPlayerListFooter
+
+       .. py:method:: sendPlayerListFooter(self, _0:Component) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendPlayerListFooter(self, _0:ComponentLike) -> None
+          :async:
+          :noindex:
+
+
+   .. py:method:: sendPlayerListHeader
+
+       .. py:method:: sendPlayerListHeader(self, _0:Component) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendPlayerListHeader(self, _0:ComponentLike) -> None
+          :async:
+          :noindex:
+
+
+   .. py:method:: sendPlayerListHeaderAndFooter
+
+       .. py:method:: sendPlayerListHeaderAndFooter(self, _0:Component, _1:Component) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendPlayerListHeaderAndFooter(self, _0:ComponentLike, _1:ComponentLike) -> None
+          :async:
+          :noindex:
+
+
+   .. py:method:: sendRichMessage(self, _0:String) -> None
+      :async:
+
+
+   .. py:method:: sendTitlePart(self, _0:TitlePart, _1:Object) -> None
+      :async:
+
+
+   .. py:method:: setAttached(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: setCustomName(self, _0:String) -> None
+      :async:
+
+
+   .. py:method:: setCustomNameVisible(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: setFacingDirection
+
+       .. py:method:: setFacingDirection(self, _0:BlockFace) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: setFacingDirection(self, _0:BlockFace, _1:boolean) -> bool
+          :async:
+          :noindex:
+
+
+   .. py:method:: setFallDistance(self, _0:float) -> None
+      :async:
+
+
+   .. py:method:: setFireTicks(self, _0:int) -> None
+      :async:
+
+
+   .. py:method:: setFixed(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: setFreezeTicks(self, _0:int) -> None
+      :async:
+
+
+   .. py:method:: setGlowing(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: setGravity(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: setInvulnerable(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: setItem
+
+       .. py:method:: setItem(self, _0:ItemStack) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: setItem(self, _0:ItemStack, _1:boolean) -> None
+          :async:
+          :noindex:
+
+
+   .. py:method:: setItemDropChance(self, _0:float) -> None
+      :async:
+
+
+   .. py:method:: setLastDamageCause(self, _0:EntityDamageEvent) -> None
+      :async:
+
+
+   .. py:method:: setMetadata(self, _0:String, _1:MetadataValue) -> None
+      :async:
+
+
+   .. py:method:: setOp(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: setPassenger(self, _0:Entity) -> bool
+      :async:
+
+
+   .. py:method:: setPersistent(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: setPortalCooldown(self, _0:int) -> None
+      :async:
+
+
+   .. py:method:: setRotation
+
+       .. py:method:: setRotation(self, _0:Rotation) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: setRotation(self, _0:float, _1:float) -> None
+          :async:
+          :noindex:
+
+
+   .. py:method:: setSilent(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: setSneaking(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: setTicksLived(self, _0:int) -> None
+      :async:
+
+
+   .. py:method:: setVelocity(self, _0:Vector) -> None
+      :async:
+
+
+   .. py:method:: setVisible(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: setVisibleByDefault(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: setVisualFire(self, _0:boolean) -> None
+      :async:
+
+
+   .. py:method:: set_location(self, location)
+      :async:
+
+      Set the user's position to the given location or vector
+
+
+   .. py:method:: showBossBar(self, _0:BossBar) -> None
+      :async:
+
+
+   .. py:method:: showTitle(self, _0:Title) -> None
+      :async:
+
+
+   .. py:method:: spawnAt
+
+       .. py:method:: spawnAt(self, _0:Location) -> bool
+          :async:
+          :noindex:
+
+       .. py:method:: spawnAt(self, _0:Location, _1:SpawnReason) -> bool
+          :async:
+          :noindex:
+
+
+   .. py:method:: stopSound
+
+       .. py:method:: stopSound(self, _0:SoundStop) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: stopSound(self, _0:Sound) -> None
+          :async:
+          :noindex:
+
+
+   .. py:method:: teamDisplayName(self) -> :py:class:`Component`
+      :async:
+
+
+   .. py:method:: teleport
+
+       .. py:method:: teleport(self, _0:Entity) -> bool
+          :async:
+          :noindex:
+
+       .. py:method:: teleport(self, _0:Location) -> bool
+          :async:
+          :noindex:
+
+       .. py:method:: teleport(self, _0:Location, _1:TeleportFlag[]) -> bool
+          :async:
+          :noindex:
+
+       .. py:method:: teleport(self, _0:Entity, _1:TeleportCause) -> bool
+          :async:
+          :noindex:
+
+       .. py:method:: teleport(self, _0:Location, _1:TeleportCause) -> bool
+          :async:
+          :noindex:
+
+       .. py:method:: teleport(self, _0:Location, _1:TeleportCause, _2:TeleportFlag[]) -> bool
+          :async:
+          :noindex:
+
+
+   .. py:method:: teleportAsync
+
+       .. py:method:: teleportAsync(self, _0:Location) -> :py:class:`CompletableFuture`
+          :async:
+          :noindex:
+
+       .. py:method:: teleportAsync(self, _0:Location, _1:TeleportCause) -> :py:class:`CompletableFuture`
+          :async:
+          :noindex:
+
+
+   .. py:method:: tilt(self)
+      
+
+      Get the rise/run 1 value float telling how far the entity's gaze rises/falls per unit of run
+
+
+   .. py:method:: wouldCollideUsing(self, _0:BoundingBox) -> bool
+      :async:
+

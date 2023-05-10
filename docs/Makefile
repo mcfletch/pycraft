@@ -14,7 +14,7 @@ help:
 
 apidoc:
 
-	sphinx-apidoc -o "$(SOURCEDIR)/api" "--force" "--module-first" "--exclude=final.py" "--separate" "--no-toc" "$(SOURCEDIR)/../../pycraft"
+	sphinx-apidoc -o "$(SOURCEDIR)/api" "--force" "--module-first" "--separate" "--no-toc" "$(SOURCEDIR)/../../pycraft" 'final.py'
 
 # TODO: this is actually relying on the introspection having been run
 # which may not have happened if you've just checked out the code...

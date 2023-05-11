@@ -161,7 +161,7 @@ async def block(type_name, position=None, offset=(0, 0, 0), *, player=None, worl
 
 @expose()
 async def find_blocks(name):
-    """Find blocks with names similar to the given name
+    """Find block-types with names similar to the given name
 
     find_blocks('granite') => ['GRANITE','POLISHED_GRANITE']
     """
@@ -170,7 +170,7 @@ async def find_blocks(name):
 
 @expose()
 async def find_entities(name):
-    """Find entities with names similar to name
+    """Find entity-types with names similar to name
 
     find_entities( 'creep' ) => ['CREEPER']
     """
@@ -178,6 +178,7 @@ async def find_entities(name):
 
 
 def matching_players(players: typing.List[world.Player], player_name: str):
+    """Filters the list of players to those matching player_name"""
     player_name = player_name.lower()
     for other in players:
         if player_name == '*':
@@ -378,6 +379,11 @@ async def killall(name, *, player=None, world=None):
 
 @expose()
 async def findall(name, *, world=None):
+    """Search for all entities with precisely name
+
+    returns a list of :py:class:`pycraft.server.final.Entity`
+    subclasses
+    """
     result = []
     for entity in await world.getEntities():
         if entity.name == name:

@@ -146,3 +146,26 @@ Python Proxy to `org.bukkit.block.BlockFace <https://hub.spigotmc.org/javadocs/s
       :async:
       :classmethod:
 
+
+Values
+-------
+
+* minecraft:NORTH
+* minecraft:EAST
+* minecraft:SOUTH
+* minecraft:WEST
+* minecraft:UP
+* minecraft:DOWN
+* minecraft:NORTH_EAST
+* minecraft:NORTH_WEST
+* minecraft:SOUTH_EAST
+* minecraft:SOUTH_WEST
+* minecraft:WEST_NORTH_WEST
+* minecraft:NORTH_NORTH_WEST
+* minecraft:NORTH_NORTH_EAST
+* minecraft:EAST_NORTH_EAST
+* minecraft:EAST_SOUTH_EAST
+* minecraft:SOUTH_SOUTH_EAST
+* minecraft:SOUTH_SOUTH_WEST
+* minecraft:WEST_SOUTH_WEST
+* minecraft:SELF

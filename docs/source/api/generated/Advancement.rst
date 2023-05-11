@@ -84,3 +84,9 @@ Python Proxy to `org.bukkit.advancement.Advancement <https://hub.spigotmc.org/ja
 
    .. py:method:: loosely_match(name)
       :async:
+
+   .. py:method:: values()
+      :async:
+
+      Get the enumerated values in this class
+

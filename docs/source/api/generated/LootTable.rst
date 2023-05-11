@@ -68,3 +68,9 @@ Python Proxy to `org.bukkit.loot.LootTable <https://hub.spigotmc.org/javadocs/sp
    .. py:method:: populateLoot(self, _0:Random, _1:LootContext) -> typing.List[:py:class:`ItemStack`]
       :async:
 
+
+   .. py:method:: values()
+      :async:
+
+      Get the enumerated values in this class
+

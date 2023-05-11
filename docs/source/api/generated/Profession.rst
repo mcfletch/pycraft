@@ -133,3 +133,22 @@ Python Proxy to `org.bukkit.entity.Villager.Profession <https://hub.spigotmc.org
       :async:
       :classmethod:
 
+
+Values
+-------
+
+* minecraft:none
+* minecraft:armorer
+* minecraft:butcher
+* minecraft:cartographer
+* minecraft:cleric
+* minecraft:farmer
+* minecraft:fisherman
+* minecraft:fletcher
+* minecraft:leatherworker
+* minecraft:librarian
+* minecraft:mason
+* minecraft:nitwit
+* minecraft:shepherd
+* minecraft:toolsmith
+* minecraft:weaponsmith

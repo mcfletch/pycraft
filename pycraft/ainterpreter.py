@@ -1,4 +1,5 @@
 import logging, operator
+import inspect
 import ast
 from collections import deque
 import contextlib, functools
@@ -161,8 +162,10 @@ class AInterpreter(object):
     async def interpret_call(self, call, namespace):
         func = await self.get_function(call, namespace)
         args, named = await self.get_call_args(call, namespace)
-        if getattr(func, '__kwdefaults__', None):
-            for key, default in func.__kwdefaults__.items():
+        sig = inspect.signature(func)
+        for param in sig.parameters.values():
+            if param.kind == param.KEYWORD_ONLY:
+                key = param.name
                 if key not in named:
                     if key in namespace:
                         named[key] = namespace[key]

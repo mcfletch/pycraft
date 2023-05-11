@@ -22,25 +22,31 @@ Python Proxy to `org.bukkit.OfflinePlayer <https://hub.spigotmc.org/javadocs/spi
    A particular player (potentially not currently logged in) on the server
 
    .. py:property:: back
+      The cardinal x,z vector which is most closely aligned to backward from the player's current orientation
 
    .. py:property:: backward
+      The cardinal x,z vector which is most closely aligned to backward from the player's current orientation
 
    .. py:property:: direction
       Retrieve the direction reported when this record was retrieved (not necessarily the *current* direction)
 
    .. py:property:: forward
+      The cardinal x,z vector which is most closely aligned to forward from the player's current orientation
 
    .. py:property:: forward_and_cross
+      Calculate the ordinal directions ahead and right for block-oriented operations
 
    .. py:property:: id
       Get our local unique key for referencing (uuid)
 
    .. py:property:: left
+      The cardinal x,z vector which is most closely aligned to left from the player's current orientation
 
    .. py:property:: position
       Retrieve the location reported when this record was retrieved (not necessarily the *current* location)
 
    .. py:property:: right
+      The cardinal x,z vector which is most closely aligned to left from the player's current orientation
 
    .. py:property:: tile_position
 

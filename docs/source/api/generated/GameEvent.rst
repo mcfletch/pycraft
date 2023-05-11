@@ -94,3 +94,7 @@ Python Proxy to `org.bukkit.GameEvent <https://hub.spigotmc.org/javadocs/spigot/
       :async:
       :classmethod:
 
+
+Values
+-------
+

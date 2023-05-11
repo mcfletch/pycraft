@@ -60,3 +60,9 @@ Python Proxy to `org.bukkit.Keyed <https://hub.spigotmc.org/javadocs/spigot/org/
 
    .. py:method:: loosely_match(name)
       :async:
+
+   .. py:method:: values()
+      :async:
+
+      Get the enumerated values in this class
+

@@ -129,3 +129,14 @@ Python Proxy to `org.bukkit.entity.Villager.Type <https://hub.spigotmc.org/javad
       :async:
       :classmethod:
 
+
+Values
+-------
+
+* minecraft:desert
+* minecraft:jungle
+* minecraft:plains
+* minecraft:savanna
+* minecraft:snow
+* minecraft:swamp
+* minecraft:taiga

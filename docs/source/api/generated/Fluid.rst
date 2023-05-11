@@ -130,3 +130,12 @@ Python Proxy to `org.bukkit.Fluid <https://hub.spigotmc.org/javadocs/spigot/org/
       :async:
       :classmethod:
 
+
+Values
+-------
+
+* minecraft:empty
+* minecraft:water
+* minecraft:flowing_water
+* minecraft:lava
+* minecraft:flowing_lava

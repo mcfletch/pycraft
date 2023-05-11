@@ -131,3 +131,12 @@ Python Proxy to `org.bukkit.block.PistonMoveReaction <https://hub.spigotmc.org/j
       :async:
       :classmethod:
 
+
+Values
+-------
+
+* minecraft:MOVE
+* minecraft:BREAK
+* minecraft:BLOCK
+* minecraft:IGNORE
+* minecraft:PUSH_ONLY

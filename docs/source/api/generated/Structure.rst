@@ -88,3 +88,9 @@ Python Proxy to `org.bukkit.generator.structure.Structure <https://hub.spigotmc.
    .. py:method:: toString(self) -> str
       :async:
 
+
+   .. py:method:: values()
+      :async:
+
+      Get the enumerated values in this class
+

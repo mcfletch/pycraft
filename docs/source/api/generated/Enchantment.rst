@@ -175,3 +175,46 @@ Python Proxy to `org.bukkit.enchantments.Enchantment <https://hub.spigotmc.org/j
       :async:
       :classmethod:
 
+
+Values
+-------
+
+* minecraft:fire_protection
+* minecraft:sharpness
+* minecraft:flame
+* minecraft:soul_speed
+* minecraft:aqua_affinity
+* minecraft:punch
+* minecraft:loyalty
+* minecraft:depth_strider
+* minecraft:vanishing_curse
+* minecraft:unbreaking
+* minecraft:knockback
+* minecraft:luck_of_the_sea
+* minecraft:binding_curse
+* minecraft:fortune
+* minecraft:protection
+* minecraft:efficiency
+* minecraft:mending
+* minecraft:frost_walker
+* minecraft:lure
+* minecraft:looting
+* minecraft:piercing
+* minecraft:blast_protection
+* minecraft:smite
+* minecraft:multishot
+* minecraft:swift_sneak
+* minecraft:fire_aspect
+* minecraft:channeling
+* minecraft:sweeping
+* minecraft:thorns
+* minecraft:bane_of_arthropods
+* minecraft:respiration
+* minecraft:riptide
+* minecraft:silk_touch
+* minecraft:quick_charge
+* minecraft:projectile_protection
+* minecraft:impaling
+* minecraft:feather_falling
+* minecraft:power
+* minecraft:infinity

@@ -41,7 +41,7 @@ def expose(command_set=None, name=None):
                 docs
                 + f'''
     
-Exposed in pycraft-chat-server as `{function_name}`
+Exposed in chat as **{function_name}**
 '''
             )
         function.__doc__ = docs

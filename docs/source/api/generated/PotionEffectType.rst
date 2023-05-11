@@ -154,3 +154,7 @@ Python Proxy to `org.bukkit.potion.PotionEffectType <https://hub.spigotmc.org/ja
       :async:
       :classmethod:
 
+
+Values
+-------
+

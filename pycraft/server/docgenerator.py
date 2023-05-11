@@ -1,5 +1,6 @@
 """Generate documentation by introspecting exposed API"""
 import logging, asyncio, pprint, time, os, inspect, types, textwrap
+from pycraft.server.channel import MethodInvocationError
 from pycraft.server.proxyobjects import ProxyMethod, type_coerce
 from . import world, proxyobjects, channel
 
@@ -160,7 +161,7 @@ SKIP_METHODS = set(
 )
 
 
-def class_page(cls):
+async def class_page(cls):
     """Generate a Sphinx-style class description page"""
     header = [
         '.. currentmodule:: pycraft.server.final',
@@ -247,7 +248,24 @@ def class_page(cls):
     else:
         methods = []
 
-    page = header + properties + methods
+    values = []
+    if issubclass(cls, proxyobjects.KeyedServerObjectEnum):
+        if hasattr(cls, 'values'):
+            values = [
+                f'Values',
+                f'-------',
+                '',
+            ]
+            try:
+                for item in await cls.cached_values():
+                    if item:
+                        values.append(f'* {item.get_key()}')
+                values.append('')
+            except (ValueError, TypeError, MethodInvocationError) as err:
+                log.warning("Failed to get values for %s", cls.__name__)
+                values = []
+
+    page = header + properties + methods + values
     return page
 
 
@@ -278,7 +296,7 @@ async def generate_docs(output=DEFAULT_TARGET):
         if not isinstance(cls, proxyobjects.ServerObjectMeta):
             continue
 
-        page = class_page(cls)
+        page = await class_page(cls)
         twrite(os.path.join(output, f'{cls.__name__}.rst'), "\n".join(page))
 
     index.extend(['', f'Generated {time.strftime("%Y-%m-%d")}'])

@@ -137,3 +137,9 @@ Python Proxy to `org.bukkit.boss.KeyedBossBar <https://hub.spigotmc.org/javadocs
    .. py:method:: show(self) -> None
       :async:
 
+
+   .. py:method:: values()
+      :async:
+
+      Get the enumerated values in this class
+

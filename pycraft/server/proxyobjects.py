@@ -484,6 +484,7 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
         )
 
     __repr__ = __str__
+
     # def __repr__(self):
     #     return repr(self.get_key())
     def as_type(self, typ):
@@ -528,16 +529,19 @@ class ServerObjectEnum(ServerObjectProxy):
     """Holder for an enumeration where the enumeration's key is used to lookup the value"""
 
     key: str
+    _values: typing.Optional[typing.List['ServerObjectEnum']] = None
 
     @classmethod
-    @lru_cache(maxsize=1)
     async def values(cls):
         """Get the enumerated values in this class"""
+        if cls._values is not None:
+            return cls._values
         result = []
         for key in await ProxyMethod.channel.call_remote(
             "%s.values" % (cls.__namespace__,),
         ):
             result.append(cls(key=key))
+        cls._values = result
         return result
 
     def __init__(self, key):

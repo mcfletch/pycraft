@@ -545,4 +545,4 @@ The pycraft.server.final module contains the final classes representing the serv
    class ZombieHorse(AbstractHorse) <./generated/ZombieHorse>
    class ZombieVillager(Zombie) <./generated/ZombieVillager>
 
-Generated 2023-05-09
+Generated 2023-05-10

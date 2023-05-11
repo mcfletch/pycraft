@@ -152,3 +152,37 @@ Python Proxy to `org.bukkit.Art <https://hub.spigotmc.org/javadocs/spigot/org/bu
       :async:
       :classmethod:
 
+
+Values
+-------
+
+* minecraft:kebab
+* minecraft:aztec
+* minecraft:alban
+* minecraft:aztec2
+* minecraft:bomb
+* minecraft:plant
+* minecraft:wasteland
+* minecraft:pool
+* minecraft:courbet
+* minecraft:sea
+* minecraft:sunset
+* minecraft:creebet
+* minecraft:wanderer
+* minecraft:graham
+* minecraft:match
+* minecraft:bust
+* minecraft:stage
+* minecraft:void
+* minecraft:skull_and_roses
+* minecraft:wither
+* minecraft:fighters
+* minecraft:pointer
+* minecraft:pigscene
+* minecraft:burning_skull
+* minecraft:skeleton
+* minecraft:donkey_kong
+* minecraft:earth
+* minecraft:wind
+* minecraft:water
+* minecraft:fire

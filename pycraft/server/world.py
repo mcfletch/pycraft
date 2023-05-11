@@ -435,6 +435,7 @@ class Player(Entity):
 
     @property
     def forward_and_cross(self):
+        """Calculate the ordinal directions ahead and right for block-oriented operations"""
         from pycraft import directions
 
         forward, cross = directions.forward_and_cross(self.direction)
@@ -442,20 +443,24 @@ class Player(Entity):
 
     @property
     def forward(self):
+        """The cardinal x,z vector which is most closely aligned to forward from the player's current orientation"""
         return self.forward_and_cross[0]
 
     @property
     def back(self):
+        """The cardinal x,z vector which is most closely aligned to backward from the player's current orientation"""
         return -self.forward_and_cross[0]
 
     backward = back
 
     @property
     def left(self):
+        """The cardinal x,z vector which is most closely aligned to left from the player's current orientation"""
         return -self.forward_and_cross[1]
 
     @property
     def right(self):
+        """The cardinal x,z vector which is most closely aligned to left from the player's current orientation"""
         return self.forward_and_cross[1]
 
 

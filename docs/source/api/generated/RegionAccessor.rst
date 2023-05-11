@@ -230,3 +230,9 @@ Python Proxy to `org.bukkit.RegionAccessor <https://hub.spigotmc.org/javadocs/sp
           :async:
           :noindex:
 
+
+   .. py:method:: values()
+      :async:
+
+      Get the enumerated values in this class
+

@@ -5,3 +5,9 @@ div.document {
 div.body {
     max-width: 100%;
 }
+
+.video-list {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}

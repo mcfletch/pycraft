@@ -18,11 +18,26 @@ processed to result in calls to a server component `PyCraftServer <https://githu
 in the Minecraft Java Edition Server (technically a Spigot/Bukkit server)
 which is provided by the `itzg/minecraft-server docker image <https://github.com/itzg/docker-minecraft-server>`_ .
 
+Why?
+-----
+
+* Creates a Dockerised Minecraft Java Edition server with reasonable defaults
+
+   * Allows vanilla clients to connect, no plugins required client-side
+   * Allows Java/Bedrock clients to interact in the same world
+   * Start a server with: ``./run.py -d path-to-your-world``
+
+* Lets you use (or learn) Python to interact with the rich `Bukkit API <https://hub.spigotmc.org/javadocs/bukkit/index.html>`_
+* You can call your Python code directly from Minecraft using Python syntax
+
 Quick Start 
 ------------
 .. note::
 
    Keep in mind that you **SHOULD NOT** run this on the public internet!
+   Pycraft is intended to give you a powerful environment where you can do 
+   extremely powerful and cool things, but that power is available to 
+   **anyone who connects to your server**.
 
 If you are familiar with Docker and Linux, this should get you started.
 
@@ -56,8 +71,8 @@ definitely *not* expose your machine to the internet while running this server.
 
    installation
    Python from Minecraft <chatserver>
+   Extending Pycraft <scripts>
    Minecraft from Python <controlling>
-   Scripting Minecraft <scripts>
    API Reference <api/pycraft>
 
 

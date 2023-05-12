@@ -115,4 +115,14 @@ find yourself trying to debug why something didn't happen, check that you've
 `await`'d the operation.
 
 .. literalinclude:: ../../examples/superjump.py 
-    
+
+What is the Difference (scripts vs. builtins) 
+----------------------------------------------
+
+You may be wondering what the difference is between scripts and 
+regular pycraft functions. There isn't one, really. If you come 
+up with a cool script and would like it added to pycraft core,
+feel free to `file an issue on github <https://github.com/mcfletch/pycraft/issues>`_ 
+
+Not everything can or should go into the default namespace, but 
+cool things can be shared.

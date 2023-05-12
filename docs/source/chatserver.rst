@@ -26,8 +26,6 @@ to get the chat window, and type your Python code.
     In iOS and similar Bedrock clients, you will find the chat 
     window is a button between the Health and Hunger bars.
 
-.. youtube:: dM_s-SX_Vfg
-
 The `pycraft-chat-server` is listening for chat commands that 
 it can recognise as Python code. If it can parse your chat message
 it will attempt to execute the code (here my username is 
@@ -79,7 +77,22 @@ returns a non-None result.
     If you find yourself wanting these features, consider making your 
     code a function and using :py:func:`pycraft.expose.expose` to make 
     it usable from the chat server.
-    
+
+.. container:: video-list
+
+  .. youtube:: dM_s-SX_Vfg
+
+  .. youtube:: 6jTjcPHK2u0
+
+  .. youtube:: szqi6IRF1Mo
+
+  .. youtube:: CFb1FQ7Rz94
+
+  .. youtube:: PLyHif5C7-c
+
+  .. youtube:: su93P0UlspY
+
+
 Meta Commands
 --------------
 

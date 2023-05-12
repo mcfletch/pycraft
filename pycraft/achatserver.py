@@ -1,5 +1,5 @@
 """Overall runner script for the pycraft-chat-server command"""
-import argparse, logging, threading, asyncio
+import argparse, logging, asyncio, logging.handlers, os, time
 from .server import channel
 from . import (
     alistener,
@@ -41,6 +41,11 @@ def get_options():
         default=False,
         help='If specified, do verbose API logging',
         action='store_true',
+    )
+    parser.add_argument(
+        '--log-dir',
+        default=None,
+        help='If specified, log chat messages to the given directory, defaults to the calling directory',
     )
     parser.add_argument(
         '--scripts',
@@ -94,8 +99,24 @@ async def chatserver(options):
                 break
 
 
+def chat_log_setup(directory):
+    chat_log = logging.getLogger('chat-log')
+    chat_log.setLevel(logging.INFO)
+    # chat_log.propagate = False
+    chat_handler = logging.handlers.RotatingFileHandler(
+        os.path.join(directory, 'chatserver.log'),
+        maxBytes=1024 * 1024,
+    )
+    chat_formatter = logging.Formatter('%(message)s')
+    chat_handler.setFormatter(chat_formatter)
+    chat_log.addHandler(chat_handler)
+    chat_log.info("Chat Server Started %s", time.strftime('%Y-%m-%d %H:%M:%S'))
+    return chat_log
+
+
 def main():
     logging.basicConfig(level=logging.DEBUG)
     options = get_options().parse_args()
+    chat_log_setup(options.log_dir or '.')
     asyncio.ensure_future(chatserver(options))
     asyncio.get_event_loop().run_forever()

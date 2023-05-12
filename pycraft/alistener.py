@@ -13,6 +13,8 @@ import numpy as np
 from .server import world
 
 log = logging.getLogger(__name__)
+chat_log = logging.getLogger('chat-log')
+
 COMMAND_FINDER = re.compile(
     r'^[ ]*(?P<function>[a-zA-z][_.a-zA-Z0-9]*)[(](?P<args>.*)[)][ ]*$', re.I | re.U
 )
@@ -229,10 +231,12 @@ class AListener(object):
                 log.debug("Message: %s", message)
                 match = COMMAND_FINDER.match(message.message)
                 if match:
+                    chat_log.info('<%s> %s', message.player.name, message.message)
                     asyncio.ensure_future(self.process_command(message))
                 else:
                     match = ASSIGNMENT_FINDER.match(message.message)
                     if match:
+                        chat_log.info('<%s> %s', message.player.name, message.message)
                         message.assignment = match.group('name')
                         message.message = match.group('expr').strip()
                         asyncio.ensure_future(self.process_command(message))
@@ -245,7 +249,9 @@ class AListener(object):
         """Process a command that does not make an assignment"""
         response = await self.interpreter.interpret(message)
         if response is not None:
-            await self.channel.server.broadcastMessage(str(response))
+            text = str(response)
+            await self.channel.server.broadcastMessage(text)
+            chat_log.info('%s', text)
 
     async def process_interact_queue(
         self, queue: asyncio.Queue, event_type: str, watchers: list, queue_id: int
@@ -313,7 +319,7 @@ class AListener(object):
         filters: typing.Optional[list] = None,
         timeout: int = 30,
         max_count: int = 0,
-        **named
+        **named,
     ):
         """Wait for events, yielding each as it occurs
 
@@ -363,7 +369,7 @@ class AListener(object):
         event_type: str = 'PlayerInteractEvent',
         filters: typing.Optional[list] = None,
         timeout: int = 30,
-        **named
+        **named,
     ):
         """Wait for a single event, exiting when it is received...
 
@@ -375,7 +381,7 @@ class AListener(object):
             filters=filters,
             timeout=timeout,
             max_count=1,
-            **named
+            **named,
         ):
             return event
 

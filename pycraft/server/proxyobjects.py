@@ -610,6 +610,16 @@ def filter_star_mro(superinterfaces):
     return result
 
 
+def subordinate_class(fullname):
+    """Should this class live inside the namespace of another class?"""
+    names = fullname.split('.')
+    result = []
+    for name in names:
+        if name and name[0].upper() == name[0]:
+            result.append(name)
+    return result
+
+
 async def construct_one_interface(declaration, definition_map, seen_classes):
     """Construct a single class recursively defining any super-interfaces"""
 
@@ -618,8 +628,11 @@ async def construct_one_interface(declaration, definition_map, seen_classes):
     except KeyError:
         raise KeyError('name', declaration)
 
-    if name in seen_classes:
-        return seen_classes[name]
+    path_name = subordinate_class(declaration['cls']['fullName'])
+    cls_key = '.'.join(path_name)
+
+    if cls_key in seen_classes:
+        return seen_classes[cls_key]
     # if declaration.get('cls') and declaration.get('cls').get('interfaces'):
     #     bases = declaration.get('cls').get('interfaces')
     # else:
@@ -632,7 +645,7 @@ async def construct_one_interface(declaration, definition_map, seen_classes):
             # World shows up as an isKeyed...
             clsDeclaration['isKeyed'] = False
         if clsDeclaration.get('isKeyed'):
-            log.info("Keyed type: %s", name)
+            log.info("Keyed type: %s", cls_key)
             base = KeyedServerObjectEnum
         elif clsDeclaration.get('isEnum'):
             base = ServerObjectEnum
@@ -655,16 +668,16 @@ async def construct_one_interface(declaration, definition_map, seen_classes):
     else:
         super_interfaces = []
     super_interfaces.append(base)
-    overrides = OVERRIDE_TYPES.get(name)
+    overrides = OVERRIDE_TYPES.get(cls_key)
     if overrides:
         super_interfaces.insert(0, overrides)
 
     try:
-        cls = PROXY_TYPES[name] = type(
+        cls = PROXY_TYPES[cls_key] = type(
             name,
             tuple(super_interfaces),
             {
-                '__namespace__': name,
+                '__namespace__': name,  # TODO: this is wrong
                 '__module__': 'pycraft.server.final',
                 '__declaration__': declaration,
                 '__interfaces__': clsDeclaration.get('interfaces', [])
@@ -678,7 +691,7 @@ async def construct_one_interface(declaration, definition_map, seen_classes):
             % (name, '\n'.join([str(s.mro()) for s in super_interfaces]))
         )
 
-    seen_classes[name] = cls
+    seen_classes[cls_key] = cls
     return cls
 
 
@@ -707,11 +720,21 @@ async def construct_from_introspection(automatic: dict, channel):
             declaration, definition_map=definition_map, seen_classes=seen_classes
         )
 
+    def split_string_length(x):
+        return len(x[0].split('.'))
+
     ProxyMethod.set_channel(channel)
-    for name, proxy in seen_classes.items():
+    for name, proxy in sorted(seen_classes.items(), key=split_string_length):
         proxy.inject_methods(channel, proxy.__declaration__)
         PROXY_TYPES[name] = proxy
-        setattr(final, name, proxy)
+        fragments = name.split('.')
+        set_target = final
+        for fragment in fragments[:-1]:
+            set_target = getattr(set_target, fragment, None)
+        if set_target is None:
+            log.error("Did not find the parent for %s in the final namespace", name)
+        else:
+            setattr(set_target, fragments[-1], proxy)
 
     for name, proxy in seen_classes.items():
         mapping = getattr(proxy, '__annotations__', {})

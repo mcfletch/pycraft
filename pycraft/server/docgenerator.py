@@ -250,7 +250,7 @@ async def class_page(cls):
 
     values = []
     if issubclass(cls, proxyobjects.KeyedServerObjectEnum):
-        if hasattr(cls, 'values'):
+        if hasattr(cls, 'cached_values'):
             values = [
                 f'Values',
                 f'-------',
@@ -259,10 +259,12 @@ async def class_page(cls):
             try:
                 for item in await cls.cached_values():
                     if item:
-                        values.append(f'* {item.get_key()}')
+                        values.append(
+                            f'* {item if isinstance(item,str) else item.get_key()}'
+                        )
                 values.append('')
             except (ValueError, TypeError, MethodInvocationError) as err:
-                log.warning("Failed to get values for %s", cls.__name__)
+                log.exception("Failed to get values for %s", cls.__name__)
                 values = []
 
     page = header + properties + methods + values

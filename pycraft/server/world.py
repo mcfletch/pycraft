@@ -270,12 +270,16 @@ class Location(ServerObjectProxy):
         self.vector[4] = value
 
     def __str__(self):
+        return '[%s, %s]' % (
+            repr(self.world),
+            ', '.join([str(round(x, 3)) for x in self.vector]),
+        )
+
+    def __repr__(self):
         return '[%s,%s]' % (
             repr(self.world),
             ','.join([str(x) for x in self.vector]),
         )
-
-    __repr__ = __str__
 
     def __add__(self, other):
         if isinstance(other, (Vector, Location)):

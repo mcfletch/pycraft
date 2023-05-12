@@ -31,6 +31,54 @@ def echo(message, *, player=None):
     return message
 
 
+@expose()
+async def print(*args, sep=' ', end=''):
+    """Format the arguments as a raw message
+
+    Print outputs a ChatMessage that doesn't get turned into a
+    code-like representation, it just gets output as provided.
+
+    Print takes any number of arguments and converts them
+    to strings, joins them with :py:param:`sep` and adds
+    :py:param:`end` to the result.
+
+    Example usage::
+
+        <VRPlumberMagic> print(2+3)
+        5
+        <VRPlumberMagic> print("hello" * 3)
+        hellohellohello
+        <VRPlumberMagic> print(1,2,3)
+        1 2 3
+        <VRPlumberMagic> print((1,2,3))
+        (1, 2, 3)
+        <VRPlumberMagic> print(player.location)
+        ['world',2673.9915696040616,119.0,-1091.0867856973955,-120.993355,-0.15053184]
+        <VRPlumberMagic> print(player.name)
+        VRPlumberMagic
+    """
+    formatted = []
+    for item in args:
+        if isinstance(item, typing.Coroutine):
+            item = await item
+        formatted.append(str(item))
+    return ChatMessage(sep.join(formatted) + end)
+
+
+@expose()
+async def list_players(*, server):
+    """Print out a friendly list of player name, uuid and status"""
+    for player in await server.getOfflinePlayers():
+        if isinstance(player, final.Player):
+            return await print(
+                f'{repr(player.name)} {player.uuid} {"banned" if player.banned else ""} {"whitelisted" if player.whitelisted else ""} currently at {player.location}'
+            )
+        else:
+            return await print(
+                f'{repr(player.name)} {player.uuid} {"banned" if player.banned else ""} {"whitelisted" if player.whitelisted else ""}'
+            )
+
+
 @expose(name='dir')
 def dir_(*args, namespace=None) -> typing.List[str]:
     """Give a directory of the namespace or of an object

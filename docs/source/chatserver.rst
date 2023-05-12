@@ -113,6 +113,9 @@ can do from within the chat window.
     * - :py:func:`pycraft.acommands.help`
       - ``help(object)``
       - Reports the python docstring for the given object/type
+    * - :py:func:`pycraft.acommands.print`
+      - ``print('this',2,3)``
+      - Formats the arguments as a string and outputs directly to the chat window
     * - :py:func:`pycraft.acommands.echo`
       - ``echo(expression)``
       - Prints the result of evaluating the expression to the chat

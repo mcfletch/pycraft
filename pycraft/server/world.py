@@ -596,6 +596,28 @@ class ItemMeta(ServerObjectProxy):
 
 
 @OverrideType
+class AttributeModifier(ServerObjectProxy):
+    __namespace__ = 'AttributeModifier'
+    name: str
+    amount: float
+    operation: str
+    uuid: uuid.UUID
+    slot: str
+
+    def __json__(self):
+        base = {
+            'name': self.name,
+            'amount': self.amount,
+            'operation': self.operation,
+        }
+        if hasattr(self, 'uuid'):
+            base['uuid'] = self.uuid
+        if hasattr(self, 'slot'):
+            base['slog'] = self.slot
+        return base
+
+
+@OverrideType
 class BlockData(ServerObjectProxy):
     """Data describing a particular block (or a potential block)"""
 

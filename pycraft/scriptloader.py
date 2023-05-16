@@ -16,7 +16,10 @@ class ScriptLoader(object):
         log.info("Starting to load scripts from: %s", self.script_dirs)
         import os, glob
 
-        directories = self.script_dirs.split(os.pathsep)
+        directories = [
+            os.path.normpath(os.path.abspath(x))
+            for x in self.script_dirs.split(os.pathsep)
+        ]
 
         while True:
             for directory in directories:
@@ -52,7 +55,9 @@ class ScriptLoader(object):
             with open(path, encoding='utf-8') as fh:
                 content = fh.read()
             new_module = imp.new_module(name)
-            exec(content, new_module.__dict__, new_module.__dict__)
+            new_module.__file__ = path
+            code = compile(content, path, 'exec')
+            exec(code, new_module.__dict__, new_module.__dict__)
         except Exception as err:
             await self.msg_queue.put(
                 "Can't import %s:\n %s" % (base, traceback.format_exc()),

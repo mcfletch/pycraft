@@ -85,6 +85,17 @@ def _get_interfaces(base, seen=None):
         #         yield s_cls
 
 
+def dedupe_interfaces(classes):
+    """Given a set of classes, for each class which is an interface of another class, remove the duplicate class"""
+    duplicates = {}
+    for cls in classes:
+        for other in classes:
+            if cls is not other and other in cls.__mro__:
+                log.info("%s already implements %s", cls, other)
+                duplicates.setdefault(other, []).append(cls)
+    return [c for c in classes if c not in duplicates]
+
+
 def _dict_cls(value):
     if isinstance(value, dict) and '__type__' in value and '__namespace__' in value:
         cls_key = value['__type__']
@@ -92,20 +103,32 @@ def _dict_cls(value):
             # Construct a new class with the interfaces as parents...
             base = _dict_typ(value)
             if base:
-                PROXY_CLASSES[cls_key] = type(
-                    cls_key,
-                    tuple(
-                        _get_interfaces(base),
-                    ),
-                    {
-                        '__doc__': '''Server Side Proxy object representing a %s instance with %s interface'''
-                        % (
-                            cls_key,
-                            base.__name__,
-                        ),
-                        '__module__': 'pycraft.server.final',
-                    },
+                base_classes = tuple(
+                    dedupe_interfaces(
+                        [x for x in _get_interfaces(base) if x is not None]
+                    )
                 )
+
+                try:
+                    PROXY_CLASSES[cls_key] = type(
+                        cls_key,
+                        base_classes,
+                        {
+                            '__doc__': '''Server Side Proxy object representing a %s instance with %s interface'''
+                            % (
+                                cls_key,
+                                base.__name__,
+                            ),
+                            '__module__': 'pycraft.server.final',
+                        },
+                    )
+                except TypeError as err:
+                    log.exception("Failure creating class %s", cls_key)
+                    for base in base_classes:
+                        print(base, base.__mro__)
+                    import pdb
+
+                    pdb.set_trace()
             else:
                 log.warning(
                     "Unable to create a wrapper class for %s from %s", cls_key, value
@@ -733,6 +756,7 @@ async def construct_from_introspection(automatic: dict, channel):
             set_target = getattr(set_target, fragment, None)
         if set_target is None:
             log.error("Did not find the parent for %s in the final namespace", name)
+            setattr(final, '_'.join(fragments), proxy)
         else:
             setattr(set_target, fragments[-1], proxy)
 

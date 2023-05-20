@@ -25,6 +25,12 @@ NESW_DIRS = [
 NESW_NAMES = dict(zip(NESW_DIRS, ['north', 'east', 'south', 'west']))
 
 
+def direction_name(direction):
+    """Get the direction name for a given 3-element direction"""
+    key = tuple(direction[:3])
+    return NESW_NAMES.get(key)
+
+
 def _news_steps():
     i = 0
     for i in range(12):
@@ -82,7 +88,6 @@ def rotate(material, steps=1):
     from .parsematerial import parse_material, unparse_material
 
     if isinstance(material, str):
-
         material = parse_material(material)
     result = rotate_struct(material, steps=steps)
     return unparse_material(result)

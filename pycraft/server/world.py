@@ -259,7 +259,7 @@ class Location(ServerObjectProxy):
 
     @yaw.setter
     def yaw(self, value):
-        self.vector[3] = yaw
+        self.vector[3] = value
 
     @property
     def pitch(self):

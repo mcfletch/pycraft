@@ -219,6 +219,7 @@ async def paste(
                 locations.append(position)
                 blocks.append(cell)
     await world.setBlockList(locations, blocks)
+    return position, direction
 
 
 def sanitize(text):

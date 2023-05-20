@@ -7,6 +7,7 @@ from .server import world
 from .server import final
 from .chatmessage import ChatMessage
 from . import parsematerial
+from . import rotations
 from .server.world import (
     Vector,
     Location,
@@ -402,13 +403,16 @@ async def bed(position=None, direction=None, color='cyan', *, player=None, world
     if direction is None:
         direction = player.direction
     if position is None:
-        position = player.position + direction
+        position = player.position
 
-    await final.Block(location=position + Vector(0, 0, 1)).setBlockData(
-        f'minecraft:{color}_bed[facing=south,occupied=false,part=head]'
+    forward = roughly_forward(direction)
+    facing = rotations.direction_name(forward)
+
+    await final.Block(location=position + forward + forward).setBlockData(
+        f'minecraft:{color}_bed[facing={facing},occupied=false,part=head]'
     )
-    await final.Block(location=position).setBlockData(
-        f'minecraft:{color}_bed[facing=south,occupied=false,part=foot]'
+    await final.Block(location=position + forward).setBlockData(
+        f'minecraft:{color}_bed[facing={facing},occupied=false,part=foot]'
     )
 
 

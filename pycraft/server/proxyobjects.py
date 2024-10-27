@@ -651,7 +651,8 @@ async def construct_one_interface(declaration, definition_map, seen_classes):
     except KeyError:
         raise KeyError('name', declaration)
 
-    path_name = subordinate_class(declaration['cls']['fullName'])
+    full_name = declaration['cls']['fullName']
+    path_name = subordinate_class(full_name)
     cls_key = '.'.join(path_name)
 
     if cls_key in seen_classes:
@@ -691,7 +692,7 @@ async def construct_one_interface(declaration, definition_map, seen_classes):
     else:
         super_interfaces = []
     super_interfaces.append(base)
-    overrides = OVERRIDE_TYPES.get(cls_key)
+    overrides = OVERRIDE_TYPES.get(full_name) or OVERRIDE_TYPES.get(cls_key)
     if overrides:
         super_interfaces.insert(0, overrides)
 

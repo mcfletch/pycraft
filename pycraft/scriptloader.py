@@ -1,5 +1,15 @@
 """Load and reload scripts as the user changes them on disk"""
-import asyncio, os, glob, imp, traceback, logging
+
+import asyncio, os, glob, traceback, logging
+
+try:
+    from imp import new_module
+except ImportError:
+    import importlib, types
+
+    def new_module(name):
+        return types.ModuleType(name)
+
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +49,7 @@ class ScriptLoader(object):
             await asyncio.sleep(2)
 
     async def load_path(self, path):
-        import os, imp, traceback
+        import os, traceback
 
         try:
             base = os.path.splitext(os.path.basename(path))[0]
@@ -54,7 +64,7 @@ class ScriptLoader(object):
             stat = os.stat(path)
             with open(path, encoding='utf-8') as fh:
                 content = fh.read()
-            new_module = imp.new_module(name)
+            new_module = new_module(name)
             new_module.__file__ = path
             code = compile(content, path, 'exec')
             exec(code, new_module.__dict__, new_module.__dict__)

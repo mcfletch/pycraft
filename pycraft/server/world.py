@@ -405,7 +405,7 @@ class Player(Entity):
         """Return the user's UUID as a reference"""
         return self.uuid
 
-    __namespace__ = 'Player'
+    __namespace__ = 'org.bukkit.entity.Player'
 
     world: str
     location: 'final.Location'
@@ -502,7 +502,7 @@ class World(ServerObjectProxy):
         named['name'] = name
         super(World, self).__init__(**named)
 
-    __namespace__ = 'World'
+    __namespace__ = 'org.bukkit.World'
     name: str
     players: typing.List['Player']
     type: str
@@ -555,7 +555,7 @@ class Server(ServerObjectProxy):
     def __json__(self):
         return self.version
 
-    __namespace__ = 'Server'
+    __namespace__ = 'org.bukkit.Server'
     version: str
     pycraft_version: str
     worlds: typing.List['World']

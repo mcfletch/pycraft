@@ -85,7 +85,11 @@ def describe_java_method(description, indent=0, no_index=False):
         self_arg = 'cls'
     else:
         self_arg = 'self'
-    arg_types = [f'_{i}:{n}' for i, n in enumerate(description.get('argtypes', []))]
+    args = zip(description.get('argnames', ()), description.get('argtypes', ()))
+    arg_types = [
+        f'{argname or "_%s"%(index,)}:{argtyp}'
+        for index, (argname, argtyp) in enumerate(args)
+    ]
     arg_types.insert(0, self_arg)
     return_type = cls_link(
         description.get('returntype'), description.get('returntype_subtypes')
@@ -114,7 +118,7 @@ def describe_proxy_method(key, method, cls, indent=0):
     if getattr(method, 'multi', None):
         description.append(f'{" "*indent}.. py:method:: {key}')
         description.append('')
-        for sub in method.multi.get('commands', ()):
+        for sub in method.sorted_commands():
             description.append(
                 describe_java_method(sub, indent=indent + 4, no_index=True)
             )

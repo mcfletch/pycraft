@@ -1,4 +1,5 @@
 """Models RPC proxied objects on the server"""
+
 import typing
 import uuid
 import logging
@@ -332,8 +333,24 @@ class ProxyMethod(object):
     def get_full_method(self):
         return '%s.%s' % (self.namespace, self.description.get('name'))
 
-    async def __call__(self, *args):
+    async def __call__(self, *args, **named):
         method = self.get_full_method()
+        if named:
+            # If the user is using named parameters, we have to resolve them to positional before sending
+            names = self.description.get('argnames', ())
+            extra_args = []
+            for name in names:
+                if name in named:
+                    extra_args.append(named.pop(name))
+                else:
+                    if named:
+                        raise TypeError(
+                            "Argument missing, did not provide: %r" % (name,)
+                        )
+                    break
+            if extra_args:
+                args = args + tuple(extra_args)
+
         log.debug("Call method: %s(%s)", method, ",".join([repr(x) for x in args]))
 
         result = await self.channel.call_remote(
@@ -370,13 +387,29 @@ class MultiMethod(ProxyMethod):
         self.multi = description
         super().__init__(description['commands'][0], namespace)
 
+    def sorted_commands(self):
+        """Get sub-commands in a defined order (for reproducibility)"""
+        commands = self.multi.get('commands', ())
+
+        def command_key(struct):
+            return (
+                struct.get(
+                    'name', ''
+                ),  # should always be the same, but just in case...
+                struct.get('argcount', 0),  # number of arguments
+                struct.get('argtypes', []),  # names of argumentt types
+            )
+
+        commands = sorted(commands, key=command_key)
+        return commands
+
 
 class BoundProxyMethod(object):
     def __init__(self, instance, method):
         if not hasattr(instance, 'get_key'):
             raise TypeError(
-                "Can only operate on proxy objects with get_key() defined, got %s"
-                % (instance,)
+                "Can only operate on proxy objects with get_key() defined, got %s (__mro__=%s)"
+                % (instance, instance.__class__.mro())
             )
         self.instance = instance
 
@@ -704,9 +737,9 @@ async def construct_one_interface(declaration, definition_map, seen_classes):
                 '__namespace__': name,  # TODO: this is wrong
                 '__module__': 'pycraft.server.final',
                 '__declaration__': declaration,
-                '__interfaces__': clsDeclaration.get('interfaces', [])
-                if clsDeclaration
-                else [],
+                '__interfaces__': (
+                    clsDeclaration.get('interfaces', []) if clsDeclaration else []
+                ),
             },
         )
     except TypeError as err:

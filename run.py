@@ -4,7 +4,7 @@ import os, requests, subprocess, argparse, logging, shutil, yaml, glob  # python
 HERE = os.path.abspath(os.path.dirname(__file__))
 DATA = os.path.join(HERE, 'data')
 GEYSER_URL = 'https://ci.opencollab.dev/job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/build/libs/Geyser-Spigot.jar'
-PYCRAFT_SERVER_URL = 'https://github.com/mcfletch/pycraft-server/releases/download/v-1.0.7/PycraftServer-1.0.7.jar'
+PYCRAFT_SERVER_URL = 'https://github.com/mcfletch/pycraft-server/releases/download/v-1.0.8/PycraftServer-1.0.8.jar'
 PLUGINS = 'plugins'
 PLUGIN_SOURCE = os.path.join(HERE, PLUGINS)
 # JARFILE = URL.split('/')[-1]
@@ -33,6 +33,22 @@ def get_options():
         help='Override the default server to run (e.g. to use a scratch server/dataset)',
     )
     parser.add_argument(
+        '--version',
+        default=None,
+        help='Explicitly specify the minecraft server version to run',
+    )
+    parser.add_argument(
+        '--server-type',
+        default='SPIGOT',
+        help='Explicitly specify the server type PAPER is generally most robust/stable, but lags upstream. Paper is reasonably fast and out sooner. PURPUR is an "enterprise" release intended for very large servers',
+        choices=[
+            'SPIGOT',
+            'PAPER',
+            'PURPUR',
+        ],
+    )
+
+    parser.add_argument(
         '-n',
         '--name',
         default=docker_name,
@@ -41,7 +57,7 @@ def get_options():
     parser.add_argument(
         '-b',
         '--bedrock',
-        default=True,
+        default=False,
         action='store_true',
         help='If specified, install the Geyser plugin in the world (default)',
     )
@@ -182,7 +198,7 @@ def stop_containers(names):
     """Stop-and-remove the given containers, ignoring errors"""
     for name in names:
         subprocess.call(['docker', 'stop', name])
-        # subprocess.call(['docker', 'rm', name])
+        subprocess.call(['docker', 'rm', name])
 
 
 def main():
@@ -207,25 +223,43 @@ def main():
     stop_containers([docker_name, chat_name, jupyter_name])
     update_config(data, overwrite=options.wipe_config)
     subprocess.check_call(['docker', 'pull', 'itzg/minecraft-server'])
-    command = [
-        'docker',
-        'run',
-        '--rm',
-        '-d',
-        '-p4712:4712',
-        '-p25565:25565',
-        "-p19132:19132/udp",
-        f'-v{data}:/data',
-        '-e',
-        # 'TYPE=SPIGOT',
-        'TYPE=PUFFERFISH',
-        # 'TYPE=PAPER',
-        '-eMEMORY=2g',
-        '-eEULA=TRUE',
-        '--name',
-        docker_name,
-        'itzg/minecraft-server:java19',
-    ]
+
+    if options.server_type == 'SPIGOT':
+        type_args = ['-e', 'TYPE=SPIGOT']
+    elif options.server_type == 'PAPER':
+        type_args = ['-e', 'TYPE=PAPER', '-e', 'PAPER_CHANNEL=experimental']
+    elif options.server_type == 'PURPUR':
+        type_args = ['-e', 'TYPE=PURPUR']
+    else:
+        raise ValueError("Unimplemented server type: %s" % (options.server_type,))
+
+    version_args = []
+    if options.version:
+        version_args = ['-e', f'VERSION={options.version}']
+
+    command = (
+        [
+            'docker',
+            'run',
+            # '--rm',
+            #'-it',
+            '-d',
+            '-p4712:4712',
+            '-p25565:25565',
+            "-p19132:19132/udp",
+            f'-v{data}:/data',
+        ]
+        + type_args
+        + version_args
+        + [
+            '-eMEMORY=2g',
+            '-eEULA=TRUE',
+            '--name',
+            docker_name,
+            'itzg/minecraft-server:java21',
+        ]
+    )
+    log.info("Docker launch: %s", " ".join(command))
     subprocess.check_output(command)
     log.info("Java Edition server on port: %s", 25565)
     if options.bedrock:

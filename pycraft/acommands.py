@@ -371,7 +371,6 @@ DESIRABLE_ENCHANTMENTS = [
         minecraft:multishot
         minecraft:fire_aspect
         minecraft:channeling
-        minecraft:sweeping
         minecraft:thorns
         minecraft:bane_of_arthropods
         minecraft:respiration

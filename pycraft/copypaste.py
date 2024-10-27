@@ -134,6 +134,13 @@ def rotated_template(template, player):
     return template
 
 
+DATA_UPDATES = {
+    # Updates where templates need to be updated with renamed block names
+    # 1.20.70 changed this...
+    'minecraft:grass': 'minecraft:grass_block',
+}
+
+
 @expose.expose()
 async def paste(
     name='stamp',
@@ -217,6 +224,9 @@ async def paste(
                     cell = special['material']
                     specials.append((position, special))
                 locations.append(position)
+                cell = DATA_UPDATES.get(
+                    f'minecraft:{cell}' if not ':' in cell else cell, cell
+                )
                 blocks.append(cell)
     await world.setBlockList(locations, blocks)
     return position, direction

@@ -39,12 +39,13 @@ def get_options():
     )
     parser.add_argument(
         '--server-type',
-        default='SPIGOT',
-        help='Explicitly specify the server type PAPER is generally most robust/stable, but lags upstream. Paper is reasonably fast and out sooner. PURPUR is an "enterprise" release intended for very large servers',
+        default='PAPER',
+        help='Explicitly specify the server type PAPER is generally most robust/stable, but lags upstream. Fabric and Forge are normally mod-focussed builds',
         choices=[
             'SPIGOT',
             'PAPER',
-            'PURPUR',
+            'FORGE',
+            'FABRIC',
         ],
     )
 
@@ -217,7 +218,8 @@ def main():
         )
         return
     data = os.path.normpath(os.path.abspath(options.data))
-    install_pycraftserver_plugin(data, options.bedrock)
+    if options.server_type != 'FORGE':
+        install_pycraftserver_plugin(data, options.bedrock)
     if options.bedrock:
         configure_geyser(data, options.authentication)
     stop_containers([docker_name, chat_name, jupyter_name])
@@ -227,9 +229,21 @@ def main():
     if options.server_type == 'SPIGOT':
         type_args = ['-e', 'TYPE=SPIGOT']
     elif options.server_type == 'PAPER':
-        type_args = ['-e', 'TYPE=PAPER', '-e', 'PAPER_CHANNEL=experimental']
+        type_args = [
+            '-e',
+            'TYPE=PAPER',
+            '-e',
+            'PAPER_CHANNEL=experimental',
+        ]
     elif options.server_type == 'PURPUR':
         type_args = ['-e', 'TYPE=PURPUR']
+    elif options.server_type == 'FORGE':
+        type_args = ['-e', 'TYPE=FORGE']
+    elif options.server_type == 'FABRIC':
+        type_args = [
+            '-e',
+            'TYPE=FABRIC',
+        ]
     else:
         raise ValueError("Unimplemented server type: %s" % (options.server_type,))
 

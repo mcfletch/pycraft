@@ -21,6 +21,7 @@ export default function CodeEditor() {
   const [code, setCode] = useState('');
   const [playerUuid, setPlayerUuid] = useState('');
   const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const evalMutation = useEvalCode();
   const { data: players } = useOnlinePlayers();
 
@@ -38,12 +39,31 @@ export default function CodeEditor() {
         },
       }
     );
+    setCode('');
+    setHistoryIndex(-1);
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    if (e.key === 'Enter') {
       e.preventDefault();
       handleRun();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (history.length > 0) {
+        const newIdx = Math.min(historyIndex + 1, history.length - 1);
+        setHistoryIndex(newIdx);
+        setCode(history[newIdx].code);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex > 0) {
+        const newIdx = historyIndex - 1;
+        setHistoryIndex(newIdx);
+        setCode(history[newIdx].code);
+      } else if (historyIndex === 0) {
+        setHistoryIndex(-1);
+        setCode('');
+      }
     }
   };
 
@@ -70,14 +90,12 @@ export default function CodeEditor() {
         </Box>
         <TextField
           fullWidth
-          multiline
-          minRows={3}
-          maxRows={10}
           value={code}
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Enter Python code (expressions or statements)... Ctrl+Enter to run"
+          placeholder="Enter Python expression... Enter to run"
           variant="outlined"
+          size="small"
           sx={{
             mb: 1,
             '& .MuiInputBase-input': { fontFamily: 'monospace', fontSize: 14 },

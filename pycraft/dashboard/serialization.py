@@ -69,7 +69,7 @@ def serialize(obj):
             'material': serialize(getattr(obj, 'material', None)),
             'amount': getattr(obj, 'amount', 0),
             'enchantments': serialize(getattr(obj, 'enchantments', {})),
-            'key': getattr(obj, 'key', None),
+            'key': serialize(getattr(obj, 'key', None)),
         }
     if isinstance(obj, world.Inventory):
         return {
@@ -96,7 +96,11 @@ def serialize(obj):
     if isinstance(obj, world.BlockData):
         return getattr(obj, 'string_value', None)
     if isinstance(obj, dict):
-        return {str(k): serialize(v) for k, v in obj.items()}
+        result = {}
+        for k, v in obj.items():
+            sk = serialize(k)
+            result[sk if isinstance(sk, str) else str(sk)] = serialize(v)
+        return result
     if isinstance(obj, (list, tuple)):
         return [serialize(item) for item in obj]
     # Fallback: try __dict__ for other proxy objects

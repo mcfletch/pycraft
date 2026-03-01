@@ -16,10 +16,12 @@ FAITHFUL_URL = (
 CACHE_DIR = pathlib.Path(os.environ.get("PYCRAFT_CACHE", pathlib.Path.home() / ".cache" / "pycraft"))
 ZIP_PATH = CACHE_DIR / "faithful-32x-1.21.11.zip"
 BLOCK_PREFIX = "assets/minecraft/textures/block/"
+ITEM_PREFIX = "assets/minecraft/textures/item/"
 
 # Singleton — opened once on first request
 _zip_file: zipfile.ZipFile | None = None
 _block_index: dict[str, str] | None = None  # bare name → zip entry path
+_item_index: dict[str, str] | None = None   # bare name → zip entry path
 _tinted_cache: dict[str, bytes] = {}  # material → tinted PNG bytes
 PROCESSED_DIR = CACHE_DIR / "textures_processed"
 
@@ -29,6 +31,7 @@ GRASS_TINT = (124, 189, 107)  # #7CBD6B — plains grass
 FOLIAGE_TINT = (87, 162, 63)  # #57A23F — plains foliage
 WATER_TINT = (63, 118, 228)   # #3F76E4 — plains water
 ICE_TINT = (160, 200, 255)    # light blue tint for ice blocks
+LEAF_LITTER_TINT = (139, 105, 61)  # brown tint for leaf litter
 TINT_MAP = {}
 for _name in (
     'grass_block_top', 'short_grass', 'tall_grass_top', 'tall_grass_bottom',
@@ -44,6 +47,8 @@ for _name in ('water_still', 'water_flow'):
     TINT_MAP[_name] = WATER_TINT
 for _name in ('ice', 'packed_ice', 'blue_ice', 'frosted_ice_0', 'frosted_ice_1', 'frosted_ice_2', 'frosted_ice_3'):
     TINT_MAP[_name] = ICE_TINT
+for _name in ('leaf_litter',):
+    TINT_MAP[_name] = LEAF_LITTER_TINT
 
 
 def _ensure_downloaded():
@@ -62,17 +67,22 @@ def _ensure_downloaded():
 
 
 def _open_zip():
-    """Open the ZIP file and build a name → path index of block textures."""
-    global _zip_file, _block_index
+    """Open the ZIP file and build name → path indexes for block and item textures."""
+    global _zip_file, _block_index, _item_index
     if _zip_file is not None:
         return
     _ensure_downloaded()
     _zip_file = zipfile.ZipFile(ZIP_PATH, "r")
     _block_index = {}
+    _item_index = {}
     for entry in _zip_file.namelist():
-        if entry.startswith(BLOCK_PREFIX) and entry.endswith(".png"):
-            bare = entry[len(BLOCK_PREFIX):-4]  # e.g. "oak_log_top"
-            _block_index[bare] = entry
+        if entry.endswith(".png"):
+            if entry.startswith(BLOCK_PREFIX):
+                bare = entry[len(BLOCK_PREFIX):-4]  # e.g. "oak_log_top"
+                _block_index[bare] = entry
+            elif entry.startswith(ITEM_PREFIX):
+                bare = entry[len(ITEM_PREFIX):-4]  # e.g. "diamond_sword"
+                _item_index[bare] = entry
 
 
 def _resolve_top_texture(material: str) -> str | None:
@@ -90,8 +100,23 @@ def _resolve_top_texture(material: str) -> str | None:
     return None
 
 
+def _resolve_item_texture(material: str) -> str | None:
+    """Given a material like 'minecraft:diamond_sword', return the ZIP entry path
+    for the item texture.  Falls back to block texture for placeable items."""
+    _open_zip()
+    assert _item_index is not None and _block_index is not None
+    name = material.split(":")[-1] if ":" in material else material
+    # Direct item match
+    if name in _item_index:
+        return _item_index[name]
+    # Many blocks don't have item textures — fall back to block top-face
+    return _resolve_top_texture(material)
+
+
 def _texture_name_from_path(entry_path: str) -> str:
     """Extract bare texture name from ZIP entry path."""
+    if entry_path.startswith(ITEM_PREFIX):
+        return entry_path[len(ITEM_PREFIX):-4]
     return entry_path[len(BLOCK_PREFIX):-4]
 
 
@@ -171,6 +196,47 @@ def _get_texture_bytes(material: str) -> bytes | None:
     return raw
 
 
+def _get_item_texture_bytes(material: str) -> bytes | None:
+    """Get the PNG bytes for an item material, with animated-frame cropping.
+
+    Uses the same three-tier cache as block textures.
+    """
+    cache_key = "item:" + material
+    if cache_key in _tinted_cache:
+        return _tinted_cache[cache_key]
+    safe_name = "item_" + material.replace(":", "_").replace("/", "_")
+    disk_path = PROCESSED_DIR / f"{safe_name}.png"
+    if disk_path.exists():
+        raw = disk_path.read_bytes()
+        _tinted_cache[cache_key] = raw
+        return raw
+    entry_path = _resolve_item_texture(material)
+    if entry_path is None:
+        return None
+    _open_zip()
+    assert _zip_file is not None
+    raw = _zip_file.read(entry_path)
+    tex_name = _texture_name_from_path(entry_path)
+    tint = TINT_MAP.get(tex_name)
+    if tint:
+        try:
+            raw = _apply_tint(raw, tint)
+        except Exception:
+            log.debug("Failed to tint %s, serving raw", tex_name, exc_info=True)
+    else:
+        try:
+            raw = _crop_first_frame(raw)
+        except Exception:
+            pass
+    _tinted_cache[cache_key] = raw
+    try:
+        PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+        disk_path.write_bytes(raw)
+    except Exception:
+        log.debug("Failed to cache processed item texture to disk", exc_info=True)
+    return raw
+
+
 async def get_texture(request):
     """GET /api/textures/{name} — serve block top-face texture from ZIP.
 
@@ -189,6 +255,27 @@ async def get_texture(request):
         })
     except Exception as err:
         log.exception("Failed to serve texture %s", request.match_info.get("name"))
+        return web.Response(status=500, text=str(err))
+
+
+async def get_item_texture(request):
+    """GET /api/textures/items/{name} — serve item texture from ZIP.
+
+    Checks item textures first, then falls back to block textures for placeable items.
+    """
+    try:
+        raw_name = request.match_info["name"]
+        if raw_name.endswith(".png"):
+            raw_name = raw_name[:-4]
+        material = f"minecraft:{raw_name}"
+        data = _get_item_texture_bytes(material)
+        if data is None:
+            return web.Response(status=404, text=f"No texture for {material}")
+        return web.Response(body=data, content_type="image/png", headers={
+            "Cache-Control": "public, max-age=3600",
+        })
+    except Exception as err:
+        log.exception("Failed to serve item texture %s", request.match_info.get("name"))
         return web.Response(status=500, text=str(err))
 
 

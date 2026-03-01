@@ -25,19 +25,25 @@ import {
   ListItemText,
   Button,
 } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import RotateRightIcon from '@mui/icons-material/RotateRight';
 import CloseIcon from '@mui/icons-material/Close';
-import { useWorldBlocks, useOnlinePlayers, useTemplates, useTemplateDetail } from '../../api/queries';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import InputAdornment from '@mui/material/InputAdornment';
+import Popper from '@mui/material/Popper';
+import Paper from '@mui/material/Paper';
+import ClickAwayListener from '@mui/material/ClickAwayListener';
+import { useWorldBlocks, useOnlinePlayers, useTemplates, useTemplateDetail, useMapSearch } from '../../api/queries';
 import { useTeleportPlayer, usePasteTemplate } from '../../api/mutations';
 import { fetchApi } from '../../api/client';
 
 /* ── Fallback colors for blocks without a loaded texture ── */
 const BLOCK_COLORS = {
-  'minecraft:air': '#87CEEB',
-  'minecraft:cave_air': '#87CEEB',
-  'minecraft:void_air': '#1a1a2e',
+  'minecraft:air': '#111111',
+  'minecraft:cave_air': '#111111',
+  'minecraft:void_air': '#0a0a0a',
   'minecraft:stone': '#808080',
   'minecraft:dirt': '#8B6914',
   'minecraft:grass_block': '#5B8C3E',
@@ -165,9 +171,19 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
   /* Paste state */
   const [pasteDialogOpen, setPasteDialogOpen] = useState(false);
   const [selectedTemplateName, setSelectedTemplateName] = useState(null);
-  const [pastePosition, setPastePosition] = useState(null); // { x, z } world coords
+  const [pastePosition, setPastePosition] = useState(null); // { x, y, z } world coords
   const [pasteRotation, setPasteRotation] = useState(0); // 0-3
   const [pasteMousePos, setPasteMousePos] = useState(null); // { x, z } world coords for hover preview
+
+  /* Search state */
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchAnchorRef = useRef(null);
+
+  /* Zoom popover */
+  const [zoomAnchorEl, setZoomAnchorEl] = useState(null);
+  const [yLevelStr, setYLevelStr] = useState('64');
 
   /*
    * Drag-to-pan state:
@@ -186,6 +202,14 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
   const pasteTemplate = usePasteTemplate();
   const { data: templates } = useTemplates();
   const { data: templateDetail } = useTemplateDetail(selectedTemplateName);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchText), 500);
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
+  const { data: searchResults } = useMapSearch(debouncedSearch, worldName, centerX, centerZ);
 
   // Load textures for template footprint materials
   useEffect(() => {
@@ -242,15 +266,11 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
     }
   }, [followPlayer, players, worldName]); // deliberately omit centerX/centerZ
 
-  // Fetch surface Y at center
+  // Sync yLevelStr → yLevel
   useEffect(() => {
-    if (!worldName) return;
-    let cancelled = false;
-    fetchApi(`/worlds/${worldName}/surface?x=${centerX}&z=${centerZ}`)
-      .then((data) => { if (!cancelled) setYLevel(data.y); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [worldName, centerX, centerZ]);
+    const parsed = parseInt(yLevelStr, 10);
+    if (!isNaN(parsed) && parsed !== yLevel) setYLevel(parsed);
+  }, [yLevelStr]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ESC key to cancel interaction mode
   useEffect(() => {
@@ -536,8 +556,12 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
     }
 
     if (mode === 'paste-preview') {
-      // Click to anchor/finalize position
-      setPastePosition({ x: coords.x, z: coords.z });
+      // Click to anchor/finalize position — capture Y from block height data
+      const bd = blockDataRef.current;
+      const bx = coords.x - (bd?.x1 || 0);
+      const bz = coords.z - (bd?.z1 || 0);
+      const clickY = bd?.heights?.[bx]?.[bz] ?? yLevel;
+      setPastePosition({ x: coords.x, y: clickY, z: coords.z });
       return;
     }
 
@@ -606,6 +630,7 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
       const worldX = bx + (bd.x1 || 0);
       const worldZ = bz + (bd.z1 || 0);
       const material = blocks[bx][bz] || 'minecraft:air';
+      const blockY = bd.heights?.[bx]?.[bz] ?? bd.y;
       // Find entity at this position
       let entityName = null;
       if (bd.entities) {
@@ -622,6 +647,7 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
       setHoverInfo({
         material: material.replace('minecraft:', ''),
         x: worldX,
+        y: blockY,
         z: worldZ,
         entityName,
         screenX: e.clientX,
@@ -680,7 +706,7 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
       worldName,
       template_name: selectedTemplateName,
       x: pastePosition.x,
-      y: yLevel,
+      y: pastePosition.y,
       z: pastePosition.z,
       rotation: pasteRotation,
     });
@@ -704,7 +730,7 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
   if (interactionMode === 'teleport-pick-player') modeLabel = 'Click a player to teleport';
   if (interactionMode === 'teleport-pick-dest') modeLabel = `Click destination for ${teleportTarget?.name}`;
   if (interactionMode === 'paste-preview' && !pastePosition) modeLabel = `Placing ${selectedTemplateName} — click to position`;
-  if (interactionMode === 'paste-preview' && pastePosition) modeLabel = `${selectedTemplateName} at (${pastePosition.x}, ${pastePosition.z})`;
+  if (interactionMode === 'paste-preview' && pastePosition) modeLabel = `${selectedTemplateName} at (${pastePosition.x}, ${pastePosition.y}, ${pastePosition.z})`;
 
   return (
     <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -731,20 +757,28 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
             sx={{ width: 100 }}
             inputProps={{ inputMode: 'numeric', pattern: '-?[0-9]*' }}
           />
-          <Box sx={{ width: 200 }}>
-            <Typography variant="caption">Y Level: {yLevel}</Typography>
-            <Slider
-              value={yLevel} min={-64} max={320} size="small"
-              onChange={(_, v) => setYLevel(v)}
-            />
-          </Box>
-          <Box sx={{ width: 150 }}>
-            <Typography variant="caption">Zoom: {effectiveZoom}px ({blocksW}&times;{blocksH})</Typography>
-            <Slider
-              value={zoom} min={minZoom} max={32} size="small"
-              onChange={(_, v) => setZoom(v)}
-            />
-          </Box>
+          <TextField
+            size="small" label="Y Level" value={yLevelStr}
+            onChange={(e) => setYLevelStr(e.target.value)}
+            sx={{ width: 80 }}
+            inputProps={{ inputMode: 'numeric', pattern: '-?[0-9]*' }}
+          />
+          <Tooltip title={`Zoom: ${effectiveZoom}px (${blocksW}x${blocksH})`}>
+            <IconButton size="small" onClick={(e) => setZoomAnchorEl(zoomAnchorEl ? null : e.currentTarget)}>
+              <ZoomInIcon />
+            </IconButton>
+          </Tooltip>
+          <Popper open={!!zoomAnchorEl} anchorEl={zoomAnchorEl} placement="bottom" sx={{ zIndex: 1300 }}>
+            <ClickAwayListener onClickAway={() => setZoomAnchorEl(null)}>
+              <Paper sx={{ p: 1.5, width: 180 }}>
+                <Typography variant="caption">Zoom: {effectiveZoom}px ({blocksW}&times;{blocksH})</Typography>
+                <Slider
+                  value={zoom} min={minZoom} max={32} size="small"
+                  onChange={(_, v) => setZoom(v)}
+                />
+              </Paper>
+            </ClickAwayListener>
+          </Popper>
 
           {/* Teleport button */}
           <Tooltip title="Teleport: click player, then click destination">
@@ -809,6 +843,66 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
             </Stack>
           )}
 
+          {/* Map search */}
+          <Box sx={{ position: 'relative' }} ref={searchAnchorRef}>
+            <TextField
+              size="small"
+              placeholder="Search map..."
+              value={searchText}
+              onChange={(e) => { setSearchText(e.target.value); setSearchOpen(true); }}
+              onFocus={() => { if (searchText.length >= 2) setSearchOpen(true); }}
+              sx={{ width: 180 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>
+                ),
+                endAdornment: searchText ? (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => { setSearchText(''); setSearchOpen(false); }}>
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null,
+              }}
+            />
+            <Popper
+              open={searchOpen && !!searchResults?.results?.length}
+              anchorEl={searchAnchorRef.current}
+              placement="bottom-start"
+              sx={{ zIndex: 1300 }}
+            >
+              <ClickAwayListener onClickAway={() => setSearchOpen(false)}>
+                <Paper sx={{ maxHeight: 300, overflow: 'auto', minWidth: 280, mt: 0.5 }}>
+                  <List dense>
+                    {searchResults?.results?.map((r, i) => {
+                      const dist = r.location
+                        ? Math.round(Math.sqrt((r.location.x - centerX) ** 2 + (r.location.z - centerZ) ** 2))
+                        : null;
+                      return (
+                        <ListItem key={i} disablePadding>
+                          <ListItemButton onClick={() => {
+                            if (r.location) {
+                              setCenterXStr(String(Math.round(r.location.x)));
+                              setCenterZStr(String(Math.round(r.location.z)));
+                              if (r.location.y) setYLevel(Math.round(r.location.y));
+                              setFollowPlayer(null);
+                            }
+                            setSearchOpen(false);
+                          }}>
+                            <ListItemText
+                              primary={`${r.name}${r.count > 1 ? ` (x${r.count})` : ''}`}
+                              secondary={`${r.type}${dist != null ? ` — ${dist} blocks away` : ''}`}
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                </Paper>
+              </ClickAwayListener>
+            </Popper>
+          </Box>
+
           {followedName && (
             <Chip
               label={`Following ${followedName}`}
@@ -817,36 +911,14 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
               onDelete={() => setFollowPlayer(null)}
             />
           )}
-          {!followPlayer && (interactionMode === 'normal' || interactionMode === 'teleport-pick-player') && players?.length > 0 && (
-            <Stack direction="row" spacing={0.5}>
-              {players.filter((p) => p.location?.world === worldName).map((p) => (
-                <Chip
-                  key={p.uuid}
-                  label={p.name}
-                  size="small"
-                  variant={interactionMode === 'teleport-pick-player' ? 'filled' : 'outlined'}
-                  color={interactionMode === 'teleport-pick-player' ? 'secondary' : 'default'}
-                  onClick={() => {
-                    if (interactionMode === 'teleport-pick-player') {
-                      setTeleportTarget({ uuid: p.uuid, name: p.name });
-                      setInteractionMode('teleport-pick-dest');
-                    } else {
-                      setFollowPlayer(p.uuid);
-                      setCenterXStr(String(Math.round(p.location.x)));
-                      setCenterZStr(String(Math.round(p.location.z)));
-                    }
-                  }}
-                />
-              ))}
-            </Stack>
-          )}
         </Stack>
-        {/* Map container: fills remaining space, no scroll */}
+        {/* Map + player sidebar */}
+        <Box sx={{ display: 'flex', flexGrow: 1, minHeight: 200, overflow: 'hidden', gap: 0.5 }}>
+        {/* Map container */}
         <Box
           ref={containerRef}
           sx={{
             flexGrow: 1,
-            minHeight: 200,
             position: 'relative',
             overflow: 'hidden',
             border: '1px solid rgba(255,255,255,0.1)',
@@ -889,10 +961,46 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
                 whiteSpace: 'nowrap',
               }}
             >
-              <div>{hoverInfo.material} ({hoverInfo.x}, {hoverInfo.z})</div>
+              <div>{hoverInfo.material} ({hoverInfo.x}, {hoverInfo.y}, {hoverInfo.z})</div>
               {hoverInfo.entityName && <div style={{ color: '#ffcc00' }}>{hoverInfo.entityName}</div>}
             </Box>
           )}
+        </Box>
+        {/* Player sidebar */}
+        {players?.length > 0 && (
+          <Box sx={{
+            width: 130,
+            flexShrink: 0,
+            overflow: 'auto',
+            borderLeft: '1px solid rgba(255,255,255,0.1)',
+            pl: 0.5,
+          }}>
+            <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>Players</Typography>
+            <Stack spacing={0.5}>
+              {players.filter((p) => p.location?.world === worldName).map((p) => (
+                <Chip
+                  key={p.uuid}
+                  label={p.name}
+                  size="small"
+                  variant={followPlayer === p.uuid ? 'filled' : interactionMode === 'teleport-pick-player' ? 'filled' : 'outlined'}
+                  color={followPlayer === p.uuid ? 'success' : interactionMode === 'teleport-pick-player' ? 'secondary' : 'default'}
+                  onClick={() => {
+                    if (interactionMode === 'teleport-pick-player') {
+                      setTeleportTarget({ uuid: p.uuid, name: p.name });
+                      setInteractionMode('teleport-pick-dest');
+                    } else {
+                      setFollowPlayer((prev) => prev === p.uuid ? null : p.uuid);
+                      setCenterXStr(String(Math.round(p.location.x)));
+                      setCenterZStr(String(Math.round(p.location.z)));
+                      setYLevelStr(String(Math.round(p.location.y)));
+                    }
+                  }}
+                  sx={{ justifyContent: 'flex-start' }}
+                />
+              ))}
+            </Stack>
+          </Box>
+        )}
         </Box>
         {blockData && (
           <Typography variant="caption" component="div" sx={{ mt: 0.5, opacity: 0.7, fontFamily: 'monospace', fontSize: 11 }}>

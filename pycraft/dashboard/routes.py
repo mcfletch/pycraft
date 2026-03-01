@@ -41,6 +41,7 @@ def setup_routes(app):
     # Search
     app.router.add_get('/api/search/blocks', search.search_blocks)
     app.router.add_get('/api/search/entities', search.search_entities)
+    app.router.add_get('/api/search/map', search.search_map)
 
     # SSE events
     async def sse_handler(request):
@@ -50,4 +51,5 @@ def setup_routes(app):
 
     # Textures (served from Faithful 32x ZIP)
     app.router.add_get('/api/textures', textures.list_textures)
+    app.router.add_get('/api/textures/items/{name}', textures.get_item_texture)
     app.router.add_get('/api/textures/{name}', textures.get_texture)

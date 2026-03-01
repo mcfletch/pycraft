@@ -62,7 +62,7 @@ def _is_air(cell):
     return base in AIR_BLOCKS
 
 
-def _find_surface_block(layers, x_idx, z_idx, num_y, center_y_idx):
+def _find_surface_block(layers, x_idx, z_idx, num_y, center_y_idx, y_lo):
     """Find the visible floor/surface block at this x,z column.
 
     Algorithm (per the user's specification):
@@ -72,6 +72,8 @@ def _find_surface_block(layers, x_idx, z_idx, num_y, center_y_idx):
       it (the surface we'd see looking up)
     - If we exhaust the search depth without finding a transition, render
       whatever is at center_y_idx
+
+    Returns (material, y_world) where y_world is the actual Y coordinate.
     """
     center_y_idx = max(0, min(center_y_idx, num_y - 1))
     center_cell = layers[center_y_idx][z_idx][x_idx]
@@ -82,9 +84,9 @@ def _find_surface_block(layers, x_idx, z_idx, num_y, center_y_idx):
             cell = layers[y_idx][z_idx][x_idx]
             if not _is_air(cell):
                 base = cell.split('[')[0] if isinstance(cell, str) else cell
-                return base
+                return base, y_lo + y_idx
         # Hit bottom of slab without finding solid — return air
-        return 'minecraft:air'
+        return 'minecraft:air', y_lo + center_y_idx
     else:
         # In solid — scan upward to find air, return the block just below air
         for y_idx in range(center_y_idx + 1, num_y):
@@ -93,10 +95,10 @@ def _find_surface_block(layers, x_idx, z_idx, num_y, center_y_idx):
                 # The block below this air is the surface
                 surface = layers[y_idx - 1][z_idx][x_idx]
                 base = surface.split('[')[0] if isinstance(surface, str) else surface
-                return base
+                return base, y_lo + y_idx - 1
         # Hit top of slab without finding air — return the block at center
         base = center_cell.split('[')[0] if isinstance(center_cell, str) else center_cell
-        return base
+        return base, y_lo + center_y_idx
 
 
 async def get_blocks(request):
@@ -129,8 +131,9 @@ async def get_blocks(request):
         center_y_idx = y - y_lo
         total_w = x2 - x1
         total_h = z2 - z1
-        # Pre-allocate the output grid
+        # Pre-allocate the output grids
         blocks = [['minecraft:air'] * total_h for _ in range(total_w)]
+        heights = [[y] * total_h for _ in range(total_w)]
         # Fetch in CHUNK_SIZE x CHUNK_SIZE tiles to avoid overwhelming MC server
         for cx in range(x1, x2, CHUNK_SIZE):
             cx_end = min(cx + CHUNK_SIZE, x2)
@@ -149,10 +152,11 @@ async def get_blocks(request):
                 # Collapse each column and write into the output grid
                 for lx in range(num_x):
                     for lz in range(num_z):
-                        material = _find_surface_block(
-                            layers, lx, lz, num_y, center_y_idx
+                        material, block_y = _find_surface_block(
+                            layers, lx, lz, num_y, center_y_idx, y_lo
                         )
                         blocks[cx - x1 + lx][cz - z1 + lz] = material
+                        heights[cx - x1 + lx][cz - z1 + lz] = block_y
         # Fetch entities in the region (best-effort)
         entities = []
         try:
@@ -175,6 +179,7 @@ async def get_blocks(request):
             'x2': x2,
             'z2': z2,
             'blocks': blocks,
+            'heights': heights,
             'entities': entities,
         })
     except Exception as err:

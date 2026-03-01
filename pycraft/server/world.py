@@ -75,6 +75,11 @@ class Biome(KeyedServerObjectEnum):
 
 
 @OverrideType
+class StructureType(KeyedServerObjectEnum):
+    __namespace__ = 'StructureType'
+
+
+@OverrideType
 class BlockFace(KeyedServerObjectEnum):
     __namespace__ = 'BlockFace'
 
@@ -592,6 +597,12 @@ class ItemMeta(ServerObjectProxy):
     key: object = None
 
     def get_key(self):
+        # When used as a Reference (e.g. from getItemMeta()), __reference__
+        # is set but key may be None. Prefer __reference__ in that case so
+        # that RPC calls can locate the server-side object.
+        ref = getattr(self, '__reference__', None)
+        if ref is not None:
+            return ref
         return self.key
 
 

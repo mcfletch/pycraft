@@ -122,3 +122,14 @@ export function useSearchEntities(query) {
     enabled: query?.length >= 2,
   });
 }
+
+export function useMapSearch(query, world, x, z) {
+  return useQuery({
+    queryKey: ['search', 'map', query, world, x, z],
+    queryFn: () => fetchApi(
+      `/search/map?q=${encodeURIComponent(query)}&world=${encodeURIComponent(world)}&x=${x}&z=${z}`
+    ),
+    staleTime: 30_000,
+    enabled: query?.length >= 2 && !!world,
+  });
+}

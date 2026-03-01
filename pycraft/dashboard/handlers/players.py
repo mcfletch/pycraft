@@ -270,6 +270,7 @@ async def give_item(request):
 
         return web.json_response(result)
     except Exception as err:
+        log.exception("Failed to give item to %s", uuid_str)
         return web.json_response({'error': str(err)}, status=500)
 
 
@@ -313,7 +314,10 @@ async def _apply_potion_meta(stack, potion_type=None, effects=None, name=None):
     if not metadata:
         return []
     if potion_type:
-        await metadata.setBasePotionType(potion_type.upper())
+        # The Java side expects just the bare enum name (e.g. 'NIGHT_VISION'),
+        # not the namespaced key (e.g. 'minecraft:NIGHT_VISION')
+        name = potion_type.split(':')[-1] if ':' in potion_type else potion_type
+        await metadata.setBasePotionType(name.upper())
     applied = []
     for effect in (effects or []):
         try:

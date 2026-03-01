@@ -30,6 +30,7 @@ setuptools.setup(
             'pycraft-chat-server = pycraft.achatserver:main',
             'pycraft-channel-test = pycraft.server.operations:main',
             'pycraft-doc-generator = pycraft.server.docgenerator:main',
+            'pycraft-dashboard = pycraft.dashboard.app:main',
         ]
     },
     install_requires=[],

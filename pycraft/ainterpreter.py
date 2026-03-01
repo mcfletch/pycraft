@@ -162,15 +162,19 @@ class AInterpreter(object):
     async def interpret_call(self, call, namespace):
         func = await self.get_function(call, namespace)
         args, named = await self.get_call_args(call, namespace)
-        sig = inspect.signature(func)
-        for param in sig.parameters.values():
-            if param.kind == param.KEYWORD_ONLY:
-                key = param.name
-                if key not in named:
-                    if key in namespace:
-                        named[key] = namespace[key]
-                    elif key == 'namespace':
-                        named[key] = namespace
+        try:
+            sig = inspect.signature(func)
+        except ValueError:
+            sig = None
+        if sig is not None:
+            for param in sig.parameters.values():
+                if param.kind == param.KEYWORD_ONLY:
+                    key = param.name
+                    if key not in named:
+                        if key in namespace:
+                            named[key] = namespace[key]
+                        elif key == 'namespace':
+                            named[key] = namespace
         result = func(*args, **named)
         if isinstance(result, Coroutine):
             return await result

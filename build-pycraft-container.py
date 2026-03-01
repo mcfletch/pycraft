@@ -78,7 +78,7 @@ INCLUDE_FILES = [
     'whitelist.json',
     'Geyser-config.yml',
     'README.md',
-    'plugins/PycraftServer-1.0.7.jar',
+    'plugins/PycraftServer-1.0.9.jar',
 ]
 
 

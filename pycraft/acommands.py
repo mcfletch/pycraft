@@ -725,16 +725,11 @@ async def potion_of(
     if not metadata:
         raise ValueError("No metadata on the stack %s", stack)
     print("metadata instance: %s" % (metadata,))
-    base = await metadata.getBasePotionData()
-    base.type = type
-    base.upgraded = True
-    base.extended = True
+    await metadata.setBasePotionType(type.upper())
     for effect in extra:
         await metadata.addCustomEffect(
             effect, True
         )  # overwrite existing of this type...
-    await metadata.setBasePotionData(base)
-    base = await metadata.getBasePotionData()
     await metadata.setDisplayName(name)
     await stack.setItemMeta(metadata)
 

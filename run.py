@@ -4,7 +4,7 @@ import os, requests, subprocess, argparse, logging, shutil, yaml, glob  # python
 HERE = os.path.abspath(os.path.dirname(__file__))
 DATA = os.path.join(HERE, 'data')
 GEYSER_URL = 'https://ci.opencollab.dev/job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/build/libs/Geyser-Spigot.jar'
-PYCRAFT_SERVER_URL = 'https://github.com/mcfletch/pycraft-server/releases/download/v-1.0.8/PycraftServer-1.0.8.jar'
+PYCRAFT_SERVER_URL = 'https://github.com/mcfletch/pycraft-server/releases/download/v-1.1.0/PycraftServer-1.1.0.jar'
 PLUGINS = 'plugins'
 PLUGIN_SOURCE = os.path.join(HERE, PLUGINS)
 # JARFILE = URL.split('/')[-1]

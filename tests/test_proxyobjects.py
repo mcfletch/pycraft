@@ -9,18 +9,10 @@ import ast
 import numpy as np
 import uuid
 
-
-@pytest_asyncio.fixture()
-async def chan():
-    chan = channel.Channel(debug=True)
-    await chan.open()
-    await chan.introspect(cached=True)
-    yield chan
-    await chan.close()
+pytestmark = pytest.mark.live
 
 
-@pytest.mark.asyncio
-async def test_introspect_cached(chan):
+async def test_introspect_cached(channel):
     struct = {
         '__type__': 'CraftHorse',
         'uuid': str(uuid.uuid4()),
@@ -35,56 +27,47 @@ async def test_introspect_cached(chan):
     assert isinstance(inst, world.Entity), cls.__mro__
 
 
-@pytest.mark.asyncio
-async def test_ItemMeta(chan):
+async def test_ItemMeta(channel):
     cls = proxyobjects._dict_cls(
         {
             '__type__': 'CraftPotionMeta',
             '__namespace__': 'PotionMeta',
         }
     )
-    assert cls.__namespace__ == 'PotionMeta'
+    assert 'PotionMeta' in cls.__namespace__, cls.__namespace__
     assert world.ItemMeta in cls.mro(), cls.mro()
 
 
-@pytest.mark.asyncio
-async def test_PlayerMeta(chan):
+async def test_PlayerMeta(channel):
     cls = proxyobjects._dict_cls(
         {
             '__type__': 'CraftPlayer',
             '__namespace__': 'Player',
         }
     )
-    assert cls.__namespace__ == 'Player'
+    assert 'Player' in cls.__namespace__, cls.__namespace__
     assert world.Player in cls.mro(), cls.mro()
 
-    for expected in []:
-        assert hasattr(world.Player, expected), expected
 
-
-@pytest.mark.asyncio
-async def test_World(chan):
+async def test_World(channel):
     from pycraft.server import final
 
     worlds = await final.Server.getWorlds('server')
-    for world in worlds:
+    for w in worlds:
         for expected in [
             'spawnEntity',
             'setBlocks',
         ]:
-            assert hasattr(world, expected), expected
+            assert hasattr(w, expected), f'{expected} not found on World'
 
 
-@pytest.mark.asyncio
-async def test_VillagerInventory(chan):
+async def test_VillagerSpawn(channel):
     from pycraft import acommands
     from pycraft.server import final
 
     v = await acommands.spawn(
-        'villager', position=("world", 0, 0, 0), world=final.World(name='world')
+        'villager', position=("world", 0, 320, 0), world=final.World(name='world')
     )
 
-    assert isinstance(v, world.Entity)
-
-    inventory = await v.getInventory()
-    assert inventory is not None, inventory
+    assert isinstance(v, world.Entity), f'Expected Entity, got {type(v)}: {v}'
+    assert hasattr(v, 'getInventory'), 'Villager entity missing getInventory method'

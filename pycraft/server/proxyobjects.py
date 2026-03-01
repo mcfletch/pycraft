@@ -44,12 +44,35 @@ PROXY_RELATIONS = {
 # RETURN_TYPES = {}
 
 
+def _fqn_to_short(name):
+    """Convert fully-qualified underscore name to short dotted class key.
+
+    Extracts the capitalized segments (class names) from an underscore-
+    separated fully-qualified Java name, mirroring the ``subordinate_class``
+    logic used when building PROXY_TYPES.
+
+    Example: ``org_bukkit_entity_Entity`` -> ``Entity``
+    Example: ``org_bukkit_entity_Entity_Spigot`` -> ``Entity.Spigot``
+    """
+    parts = name.split('_')
+    return '.'.join(p for p in parts if p and p[0].isupper())
+
+
 def type_name_to_type(name):
-    """Given java class simple name find the associated type"""
+    """Given java class name find the associated type.
+
+    Handles both short names (``List``, ``Entity``) and fully-qualified
+    underscore-separated names (``java_util_List``, ``org_bukkit_entity_Entity``).
+    """
     if name in SIMPLE_TYPES:
         return SIMPLE_TYPES[name]
-    elif name in PROXY_TYPES:
+    if name in PROXY_TYPES:
         return PROXY_TYPES[name]
+    short = _fqn_to_short(name)
+    if short in SIMPLE_TYPES:
+        return SIMPLE_TYPES[short]
+    if short in PROXY_TYPES:
+        return PROXY_TYPES[short]
     return None
 
 
@@ -104,11 +127,14 @@ def _dict_cls(value):
             # Construct a new class with the interfaces as parents...
             base = _dict_typ(value)
             if base:
-                base_classes = tuple(
-                    dedupe_interfaces(
-                        [x for x in _get_interfaces(base) if x is not None]
-                    )
-                )
+                all_ifaces = [x for x in _get_interfaces(base) if x is not None]
+                # Include entity-specific interfaces from the server response
+                for iface_name in value.get('interfaces', ()):
+                    short = _fqn_to_short(iface_name)
+                    iface_cls = PROXY_TYPES.get(iface_name) or PROXY_TYPES.get(short)
+                    if iface_cls and iface_cls not in all_ifaces:
+                        all_ifaces.insert(0, iface_cls)
+                base_classes = tuple(dedupe_interfaces(all_ifaces))
 
                 try:
                     PROXY_CLASSES[cls_key] = type(

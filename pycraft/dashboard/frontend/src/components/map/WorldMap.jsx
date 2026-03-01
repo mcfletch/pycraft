@@ -1,0 +1,957 @@
+import { useState, useRef, useEffect, useCallback } from 'react';
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  TextField,
+  Stack,
+  Slider,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  CircularProgress,
+  Link,
+  Chip,
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Button,
+} from '@mui/material';
+import GpsFixedIcon from '@mui/icons-material/GpsFixed';
+import ContentPasteIcon from '@mui/icons-material/ContentPaste';
+import RotateRightIcon from '@mui/icons-material/RotateRight';
+import CloseIcon from '@mui/icons-material/Close';
+import { useWorldBlocks, useOnlinePlayers, useTemplates, useTemplateDetail } from '../../api/queries';
+import { useTeleportPlayer, usePasteTemplate } from '../../api/mutations';
+import { fetchApi } from '../../api/client';
+
+/* ── Fallback colors for blocks without a loaded texture ── */
+const BLOCK_COLORS = {
+  'minecraft:air': '#87CEEB',
+  'minecraft:cave_air': '#87CEEB',
+  'minecraft:void_air': '#1a1a2e',
+  'minecraft:stone': '#808080',
+  'minecraft:dirt': '#8B6914',
+  'minecraft:grass_block': '#5B8C3E',
+  'minecraft:water': '#3366CC',
+  'minecraft:lava': '#FF4500',
+  'minecraft:sand': '#E8D672',
+  'minecraft:gravel': '#A0A0A0',
+  'minecraft:bedrock': '#333333',
+  'minecraft:cobblestone': '#6B6B6B',
+  'minecraft:oak_planks': '#B8945F',
+  'minecraft:deepslate': '#505050',
+};
+
+function getBlockColor(material) {
+  if (!material) return '#87CEEB';
+  return BLOCK_COLORS[material] || '#808080';
+}
+
+/* ── Texture cache: shared across renders, persistent for session ── */
+const textureImages = new Map();
+
+function getTextureUrl(material) {
+  const name = material.startsWith('minecraft:') ? material.slice(10) : material;
+  return `/api/textures/${name}.png`;
+}
+
+function loadTexture(material, onLoaded) {
+  if (textureImages.has(material)) return;
+  textureImages.set(material, 'loading');
+  const img = new Image();
+  img.onload = () => { textureImages.set(material, img); onLoaded(); };
+  img.onerror = () => { textureImages.set(material, 'failed'); onLoaded(); };
+  img.src = getTextureUrl(material);
+}
+
+/* ── Entity type colors ── */
+const ENTITY_COLORS = {
+  'minecraft:player': '#FF0000',
+  'minecraft:zombie': '#2B5B2B',
+  'minecraft:skeleton': '#C8C8C8',
+  'minecraft:creeper': '#30B030',
+  'minecraft:spider': '#3B2B1B',
+  'minecraft:enderman': '#1B0B2E',
+  'minecraft:cow': '#6B4423',
+  'minecraft:pig': '#F0A0A0',
+  'minecraft:sheep': '#E0D8D0',
+  'minecraft:chicken': '#F0F0F0',
+  'minecraft:villager': '#8B6914',
+  'minecraft:item': '#FFFF00',
+};
+
+function getEntityColor(type) {
+  return ENTITY_COLORS[type] || '#FF8800';
+}
+
+/** Draw a facing-direction triangle on the canvas */
+function drawFacingArrow(ctx, cx, cy, yaw, radius, color) {
+  const angle = ((yaw + 180) * Math.PI) / 180;
+  const tipX = cx + Math.sin(angle) * radius;
+  const tipY = cy - Math.cos(angle) * radius;
+  const backL = angle - Math.PI * 0.8;
+  const backR = angle + Math.PI * 0.8;
+  const tailR = radius * 0.4;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(tipX, tipY);
+  ctx.lineTo(cx + Math.sin(backL) * tailR, cy - Math.cos(backL) * tailR);
+  ctx.lineTo(cx + Math.sin(backR) * tailR, cy - Math.cos(backR) * tailR);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** Rotate a 2D footprint array [z][x] by steps * 90 degrees CW */
+function rotateFootprint(footprint, steps) {
+  if (!footprint || steps === 0) return footprint;
+  let grid = footprint;
+  for (let s = 0; s < steps; s++) {
+    const rows = grid.length;
+    const cols = grid[0]?.length || 0;
+    const rotated = [];
+    for (let x = 0; x < cols; x++) {
+      const newRow = [];
+      for (let z = rows - 1; z >= 0; z--) {
+        newRow.push(grid[z][x]);
+      }
+      rotated.push(newRow);
+    }
+    grid = rotated;
+  }
+  return grid;
+}
+
+/** Count materials in blocks grid for debug display */
+function countMaterials(blocks) {
+  if (!blocks) return {};
+  const counts = {};
+  for (const col of blocks) {
+    for (const b of col) {
+      const mat = b || 'null';
+      counts[mat] = (counts[mat] || 0) + 1;
+    }
+  }
+  return counts;
+}
+
+const MAX_QUERY = 128;  // cap per-axis; 128x128x60 = ~1M blocks, safe for MC server
+
+export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed }) {
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+  const [containerSize, setContainerSize] = useState({ w: 800, h: 500 });
+  const [worldName, setWorldName] = useState('');
+  const [centerXStr, setCenterXStr] = useState('0');
+  const [centerZStr, setCenterZStr] = useState('0');
+  const [yLevel, setYLevel] = useState(64);
+  const [zoom, setZoom] = useState(4);
+  const [texturesReady, setTexturesReady] = useState(0);
+  const [followPlayer, setFollowPlayer] = useState(null);
+  const [hoverInfo, setHoverInfo] = useState(null);
+
+  /* Interaction modes: 'normal' | 'teleport-pick-player' | 'teleport-pick-dest' | 'paste-preview' */
+  const [interactionMode, setInteractionMode] = useState('normal');
+  const [teleportTarget, setTeleportTarget] = useState(null); // { uuid, name }
+
+  /* Paste state */
+  const [pasteDialogOpen, setPasteDialogOpen] = useState(false);
+  const [selectedTemplateName, setSelectedTemplateName] = useState(null);
+  const [pastePosition, setPastePosition] = useState(null); // { x, z } world coords
+  const [pasteRotation, setPasteRotation] = useState(0); // 0-3
+  const [pasteMousePos, setPasteMousePos] = useState(null); // { x, z } world coords for hover preview
+
+  /*
+   * Drag-to-pan state:
+   * - visualOffset: CSS transform applied to canvas, persists after drag until new data loads
+   * - dragStartRef: tracks mouse-down position for active drag
+   */
+  const [visualOffset, setVisualOffset] = useState({ x: 0, y: 0 });
+  const dragStartRef = useRef(null);
+  const dragOriginOffset = useRef({ x: 0, y: 0 });
+
+  const centerX = parseInt(centerXStr, 10) || 0;
+  const centerZ = parseInt(centerZStr, 10) || 0;
+
+  const { data: players } = useOnlinePlayers();
+  const teleportPlayer = useTeleportPlayer();
+  const pasteTemplate = usePasteTemplate();
+  const { data: templates } = useTemplates();
+  const { data: templateDetail } = useTemplateDetail(selectedTemplateName);
+
+  // Load textures for template footprint materials
+  useEffect(() => {
+    if (!templateDetail?.footprint) return;
+    const onLoaded = () => setTexturesReady((n) => n + 1);
+    for (const row of templateDetail.footprint) {
+      for (const mat of row) {
+        if (mat && mat !== 'minecraft:air') {
+          loadTexture(mat, onLoaded);
+        }
+      }
+    }
+  }, [templateDetail]);
+
+  /* Measure container with ResizeObserver */
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      if (width > 0 && height > 0) {
+        setContainerSize({ w: Math.floor(width), h: Math.floor(height) });
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Auto-select first world
+  useEffect(() => {
+    if (!worldName && worlds?.length) {
+      setWorldName(worlds[0].name);
+    }
+  }, [worlds, worldName]);
+
+  // Accept initial follow player from parent
+  useEffect(() => {
+    if (!initialFollowPlayer) return;
+    setFollowPlayer(initialFollowPlayer);
+    if (onFollowConsumed) onFollowConsumed();
+  }, [initialFollowPlayer, onFollowConsumed]);
+
+  // Follow player: update center from their position
+  useEffect(() => {
+    if (!followPlayer || !players) return;
+    const p = players.find((pl) => pl.uuid === followPlayer);
+    if (p?.location && p.location.world === worldName) {
+      const nx = Math.round(p.location.x);
+      const nz = Math.round(p.location.z);
+      if (Math.abs(nx - centerX) > 2 || Math.abs(nz - centerZ) > 2) {
+        setCenterXStr(String(nx));
+        setCenterZStr(String(nz));
+      }
+    }
+  }, [followPlayer, players, worldName]); // deliberately omit centerX/centerZ
+
+  // Fetch surface Y at center
+  useEffect(() => {
+    if (!worldName) return;
+    let cancelled = false;
+    fetchApi(`/worlds/${worldName}/surface?x=${centerX}&z=${centerZ}`)
+      .then((data) => { if (!cancelled) setYLevel(data.y); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [worldName, centerX, centerZ]);
+
+  // ESC key to cancel interaction mode
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape' && interactionMode !== 'normal') {
+        setInteractionMode('normal');
+        setTeleportTarget(null);
+        setSelectedTemplateName(null);
+        setPastePosition(null);
+        setPasteMousePos(null);
+        setPasteRotation(0);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [interactionMode]);
+
+  // Minimum zoom: don't allow zooming out past what fits MAX_QUERY blocks
+  const minZoom = Math.max(1, Math.ceil(Math.max(containerSize.w, containerSize.h) / MAX_QUERY));
+
+  // Query size derived from container and zoom
+  const effectiveZoom = Math.max(zoom, minZoom);
+  const blocksW = Math.min(Math.floor(containerSize.w / effectiveZoom), MAX_QUERY);
+  const blocksH = Math.min(Math.floor(containerSize.h / effectiveZoom), MAX_QUERY);
+  const canvasW = blocksW * effectiveZoom;
+  const canvasH = blocksH * effectiveZoom;
+  const halfW = Math.floor(blocksW / 2);
+  const halfH = Math.floor(blocksH / 2);
+
+  const params = worldName && blocksW > 0 && blocksH > 0
+    ? {
+        x1: String(centerX - halfW),
+        z1: String(centerZ - halfH),
+        x2: String(centerX + halfW),
+        z2: String(centerZ + halfH),
+        y: String(yLevel),
+      }
+    : null;
+
+  const { data: blockData, isLoading } = useWorldBlocks(worldName, params);
+
+  // When new blockData arrives, clear visual offset
+  const lastRenderedCenterRef = useRef({ x: centerX, z: centerZ });
+  useEffect(() => {
+    if (!blockData) return;
+    setVisualOffset({ x: 0, y: 0 });
+    lastRenderedCenterRef.current = { x: centerX, z: centerZ };
+  }, [blockData]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load textures for new materials
+  useEffect(() => {
+    if (!blockData?.blocks) return;
+    const onLoaded = () => setTexturesReady((n) => n + 1);
+    for (const col of blockData.blocks) {
+      for (const material of col) {
+        if (material && material !== 'minecraft:air') {
+          loadTexture(material, onLoaded);
+        }
+      }
+    }
+  }, [blockData]);
+
+  // Get the paste footprint (rotated) for rendering
+  const pasteFootprint = templateDetail?.footprint
+    ? rotateFootprint(templateDetail.footprint, pasteRotation)
+    : null;
+
+  const drawMap = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !blockData?.blocks) return;
+    const ctx = canvas.getContext('2d');
+    const blocks = blockData.blocks;
+    const w = blocks.length;
+    const h = blocks[0]?.length || 0;
+
+    canvas.width = canvasW;
+    canvas.height = canvasH;
+    ctx.imageSmoothingEnabled = false;
+
+    const bpx = canvasW / w;
+    const bpz = canvasH / h;
+
+    for (let x = 0; x < w; x++) {
+      for (let z = 0; z < h; z++) {
+        const material = blocks[x][z];
+        const cached = material ? textureImages.get(material) : null;
+        if (cached instanceof HTMLImageElement) {
+          ctx.drawImage(cached, x * bpx, z * bpz, bpx, bpz);
+        } else {
+          ctx.fillStyle = getBlockColor(material);
+          ctx.fillRect(x * bpx, z * bpz, bpx, bpz);
+        }
+      }
+    }
+
+    const ox = blockData.x1 || 0;
+    const oz = blockData.z1 || 0;
+
+    if (blockData.entities) {
+      for (const e of blockData.entities) {
+        if (!e.location || e.type === 'minecraft:player') continue;
+        const ex = Math.round(e.location.x) - ox;
+        const ez = Math.round(e.location.z) - oz;
+        if (ex < 0 || ex >= w || ez < 0 || ez >= h) continue;
+        const sz = Math.max(2, bpx * 0.6);
+        ctx.fillStyle = getEntityColor(e.type);
+        ctx.fillRect(ex * bpx + (bpx - sz) / 2, ez * bpz + (bpz - sz) / 2, sz, sz);
+      }
+    }
+
+    // Draw paste preview overlay
+    if (interactionMode === 'paste-preview' && pasteFootprint) {
+      const pos = pastePosition || pasteMousePos;
+      if (pos) {
+        const fpDepth = pasteFootprint.length;
+        const fpWidth = pasteFootprint[0]?.length || 0;
+        const startX = pos.x - Math.floor(fpWidth / 2);
+        const startZ = pos.z - Math.floor(fpDepth / 2);
+
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        for (let fz = 0; fz < fpDepth; fz++) {
+          for (let fx = 0; fx < fpWidth; fx++) {
+            const mat = pasteFootprint[fz][fx];
+            if (!mat) continue;
+            const canvX = (startX + fx - ox) * bpx;
+            const canvZ = (startZ + fz - oz) * bpz;
+            if (canvX + bpx < 0 || canvX > canvasW || canvZ + bpz < 0 || canvZ > canvasH) continue;
+            const cached = textureImages.get(mat);
+            if (cached instanceof HTMLImageElement) {
+              ctx.drawImage(cached, canvX, canvZ, bpx, bpz);
+            } else {
+              ctx.fillStyle = getBlockColor(mat);
+              ctx.fillRect(canvX, canvZ, bpx, bpz);
+            }
+          }
+        }
+        ctx.globalAlpha = 1.0;
+        // Draw border around paste region
+        ctx.strokeStyle = pastePosition ? '#00FF00' : '#FFFF00';
+        ctx.lineWidth = 2;
+        ctx.setLineDash(pastePosition ? [] : [4, 4]);
+        ctx.strokeRect(
+          (startX - ox) * bpx,
+          (startZ - oz) * bpz,
+          fpWidth * bpx,
+          fpDepth * bpz,
+        );
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+    }
+
+    if (players) {
+      for (const p of players) {
+        if (!p.location || p.location.world !== worldName) continue;
+        const px = Math.round(p.location.x) - ox;
+        const pz = Math.round(p.location.z) - oz;
+        if (px < 0 || px >= w || pz < 0 || pz >= h) continue;
+        const cx = px * bpx + bpx / 2;
+        const cz = pz * bpz + bpz / 2;
+        const r = Math.max(3, bpx * 0.4);
+
+        const isFollowed = p.uuid === followPlayer;
+        const isTeleportTarget = teleportTarget?.uuid === p.uuid;
+        const color = isTeleportTarget ? '#FF00FF' : isFollowed ? '#00FF00' : '#FF0000';
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(cx, cz, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (isFollowed || isTeleportTarget) {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(cx, cz, r + 3, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        if (p.location.yaw !== undefined) {
+          drawFacingArrow(ctx, cx, cz, p.location.yaw, r + 6, isFollowed ? '#00FF00' : '#FFFFFF');
+        }
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.font = `bold ${Math.max(10, bpx * 0.5)}px sans-serif`;
+        const label = p.name;
+        const tx = cx + r + 4;
+        const ty = cz + 4;
+        ctx.strokeText(label, tx, ty);
+        ctx.fillText(label, tx, ty);
+      }
+    }
+  }, [blockData, players, worldName, canvasW, canvasH, texturesReady, followPlayer, teleportTarget, interactionMode, pasteFootprint, pastePosition, pasteMousePos]);
+
+  useEffect(() => { drawMap(); }, [drawMap]);
+
+  /* ── Drag-to-pan ── */
+  const handleMouseDown = (e) => {
+    if (!blockData) return;
+    e.preventDefault();
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    dragOriginOffset.current = { ...visualOffset };
+  };
+
+  // Stable refs for values needed in document event listeners
+  const blockDataRef = useRef(blockData);
+  blockDataRef.current = blockData;
+  const centerXRef = useRef(centerX);
+  centerXRef.current = centerX;
+  const centerZRef = useRef(centerZ);
+  centerZRef.current = centerZ;
+  const effectiveZoomRef = useRef(effectiveZoom);
+  effectiveZoomRef.current = effectiveZoom;
+  const interactionModeRef = useRef(interactionMode);
+  interactionModeRef.current = interactionMode;
+
+  /** Convert a mouse event to world coordinates */
+  const eventToWorldCoords = useCallback((e) => {
+    const bd = blockDataRef.current;
+    if (!bd?.blocks) return null;
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const ez = effectiveZoomRef.current;
+    const clickX = Math.floor((e.clientX - rect.left) / ez) + (bd.x1 || 0);
+    const clickZ = Math.floor((e.clientY - rect.top) / ez) + (bd.z1 || 0);
+    return { x: clickX, z: clickZ };
+  }, []);
+
+  /** Find a player near the given world coordinates */
+  const findPlayerAt = useCallback((worldX, worldZ) => {
+    if (!players) return null;
+    for (const p of players) {
+      if (!p.location || p.location.world !== worldName) continue;
+      const dx = Math.round(p.location.x) - worldX;
+      const dz = Math.round(p.location.z) - worldZ;
+      if (Math.abs(dx) <= 2 && Math.abs(dz) <= 2) return p;
+    }
+    return null;
+  }, [players, worldName]);
+
+  const handleClick = useCallback((e) => {
+    const coords = eventToWorldCoords(e);
+    if (!coords) return;
+    const mode = interactionModeRef.current;
+
+    if (mode === 'teleport-pick-player') {
+      const p = findPlayerAt(coords.x, coords.z);
+      if (p) {
+        setTeleportTarget({ uuid: p.uuid, name: p.name });
+        setInteractionMode('teleport-pick-dest');
+      }
+      return;
+    }
+
+    if (mode === 'teleport-pick-dest') {
+      // Teleport the target player to this location
+      fetchApi(`/worlds/${worldName}/surface?x=${coords.x}&z=${coords.z}`)
+        .then((data) => {
+          teleportPlayer.mutate({
+            uuid: teleportTarget.uuid,
+            world: worldName,
+            x: coords.x,
+            y: data.y + 1,
+            z: coords.z,
+          });
+        })
+        .catch(() => {
+          // Fallback: use current Y level
+          teleportPlayer.mutate({
+            uuid: teleportTarget.uuid,
+            world: worldName,
+            x: coords.x,
+            y: yLevel + 1,
+            z: coords.z,
+          });
+        });
+      setInteractionMode('normal');
+      setTeleportTarget(null);
+      return;
+    }
+
+    if (mode === 'paste-preview') {
+      // Click to anchor/finalize position
+      setPastePosition({ x: coords.x, z: coords.z });
+      return;
+    }
+
+    // Normal mode: click player to toggle follow
+    const p = findPlayerAt(coords.x, coords.z);
+    if (p) {
+      setFollowPlayer((prev) => prev === p.uuid ? null : p.uuid);
+    }
+  }, [eventToWorldCoords, findPlayerAt, worldName, teleportTarget, teleportPlayer, yLevel]);
+
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!dragStartRef.current) return;
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+      setVisualOffset({
+        x: dragOriginOffset.current.x + dx,
+        y: dragOriginOffset.current.y + dy,
+      });
+    };
+    const onUp = (e) => {
+      if (!dragStartRef.current) return;
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+      dragStartRef.current = null;
+
+      if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3) {
+        handleClick(e);
+        return;
+      }
+
+      // Convert pixel drag to block offset using effectiveZoom (pixels per block)
+      const ez = effectiveZoomRef.current;
+      const blocksDX = Math.round(dx / ez);
+      const blocksDZ = Math.round(dy / ez);
+
+      setFollowPlayer(null);
+      setCenterXStr(String(centerXRef.current - blocksDX));
+      setCenterZStr(String(centerZRef.current - blocksDZ));
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+  }, [handleClick]);
+
+  /* ── Hover tooltip + paste preview position ── */
+  const handleCanvasMouseMove = useCallback((e) => {
+    if (dragStartRef.current) {
+      setHoverInfo(null);
+      return;
+    }
+    const bd = blockDataRef.current;
+    if (!bd?.blocks) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const ez = effectiveZoomRef.current;
+    const bx = Math.floor((e.clientX - rect.left) / ez);
+    const bz = Math.floor((e.clientY - rect.top) / ez);
+    const blocks = bd.blocks;
+    if (bx >= 0 && bx < blocks.length && bz >= 0 && bz < (blocks[0]?.length || 0)) {
+      const worldX = bx + (bd.x1 || 0);
+      const worldZ = bz + (bd.z1 || 0);
+      const material = blocks[bx][bz] || 'minecraft:air';
+      // Find entity at this position
+      let entityName = null;
+      if (bd.entities) {
+        for (const ent of bd.entities) {
+          if (!ent.location) continue;
+          const ex = Math.round(ent.location.x);
+          const ez2 = Math.round(ent.location.z);
+          if (ex === worldX && ez2 === worldZ) {
+            entityName = (ent.name || ent.type || '').replace('minecraft:', '');
+            break;
+          }
+        }
+      }
+      setHoverInfo({
+        material: material.replace('minecraft:', ''),
+        x: worldX,
+        z: worldZ,
+        entityName,
+        screenX: e.clientX,
+        screenY: e.clientY,
+      });
+      // Update paste preview position when not anchored
+      if (interactionModeRef.current === 'paste-preview' && !pastePosition) {
+        setPasteMousePos({ x: worldX, z: worldZ });
+      }
+    } else {
+      setHoverInfo(null);
+    }
+  }, [pastePosition]);
+
+  const handleCanvasMouseLeave = useCallback(() => {
+    setHoverInfo(null);
+  }, []);
+
+  /* ── Teleport mode toggle ── */
+  const toggleTeleportMode = () => {
+    if (interactionMode === 'teleport-pick-player' || interactionMode === 'teleport-pick-dest') {
+      setInteractionMode('normal');
+      setTeleportTarget(null);
+    } else {
+      setInteractionMode('teleport-pick-player');
+      setTeleportTarget(null);
+      setFollowPlayer(null);
+    }
+  };
+
+  /* ── Paste mode ── */
+  const openPasteDialog = () => {
+    setPasteDialogOpen(true);
+  };
+
+  const selectTemplate = (name) => {
+    setSelectedTemplateName(name);
+    setPasteDialogOpen(false);
+    setInteractionMode('paste-preview');
+    setPastePosition(null);
+    setPasteMousePos(null);
+    setPasteRotation(0);
+  };
+
+  const cancelPaste = () => {
+    setInteractionMode('normal');
+    setSelectedTemplateName(null);
+    setPastePosition(null);
+    setPasteMousePos(null);
+    setPasteRotation(0);
+  };
+
+  const confirmPaste = () => {
+    if (!pastePosition || !selectedTemplateName || !worldName) return;
+    pasteTemplate.mutate({
+      worldName,
+      template_name: selectedTemplateName,
+      x: pastePosition.x,
+      y: yLevel,
+      z: pastePosition.z,
+      rotation: pasteRotation,
+    });
+    cancelPaste();
+  };
+
+  const followedName = followPlayer && players
+    ? players.find((p) => p.uuid === followPlayer)?.name
+    : null;
+
+  const worldList = worlds || [];
+
+  // Determine cursor based on interaction mode
+  let cursor = dragStartRef.current ? 'grabbing' : 'grab';
+  if (interactionMode === 'teleport-pick-player') cursor = 'pointer';
+  if (interactionMode === 'teleport-pick-dest') cursor = 'crosshair';
+  if (interactionMode === 'paste-preview') cursor = pastePosition ? 'default' : 'crosshair';
+
+  // Mode status message
+  let modeLabel = null;
+  if (interactionMode === 'teleport-pick-player') modeLabel = 'Click a player to teleport';
+  if (interactionMode === 'teleport-pick-dest') modeLabel = `Click destination for ${teleportTarget?.name}`;
+  if (interactionMode === 'paste-preview' && !pastePosition) modeLabel = `Placing ${selectedTemplateName} — click to position`;
+  if (interactionMode === 'paste-preview' && pastePosition) modeLabel = `${selectedTemplateName} at (${pastePosition.x}, ${pastePosition.z})`;
+
+  return (
+    <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden', pb: '8px !important' }}>
+        <Typography variant="h5" gutterBottom>World Map</Typography>
+        <Stack direction="row" spacing={2} sx={{ mb: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>World</InputLabel>
+            <Select value={worldName} label="World" onChange={(e) => setWorldName(e.target.value)}>
+              {worldList.map((w) => (
+                <MenuItem key={w.name} value={w.name}>{w.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            size="small" label="Center X" value={centerXStr}
+            onChange={(e) => { setFollowPlayer(null); setCenterXStr(e.target.value); }}
+            sx={{ width: 100 }}
+            inputProps={{ inputMode: 'numeric', pattern: '-?[0-9]*' }}
+          />
+          <TextField
+            size="small" label="Center Z" value={centerZStr}
+            onChange={(e) => { setFollowPlayer(null); setCenterZStr(e.target.value); }}
+            sx={{ width: 100 }}
+            inputProps={{ inputMode: 'numeric', pattern: '-?[0-9]*' }}
+          />
+          <Box sx={{ width: 200 }}>
+            <Typography variant="caption">Y Level: {yLevel}</Typography>
+            <Slider
+              value={yLevel} min={-64} max={320} size="small"
+              onChange={(_, v) => setYLevel(v)}
+            />
+          </Box>
+          <Box sx={{ width: 150 }}>
+            <Typography variant="caption">Zoom: {effectiveZoom}px ({blocksW}&times;{blocksH})</Typography>
+            <Slider
+              value={zoom} min={minZoom} max={32} size="small"
+              onChange={(_, v) => setZoom(v)}
+            />
+          </Box>
+
+          {/* Teleport button */}
+          <Tooltip title="Teleport: click player, then click destination">
+            <IconButton
+              size="small"
+              onClick={toggleTeleportMode}
+              color={interactionMode.startsWith('teleport') ? 'primary' : 'default'}
+            >
+              <GpsFixedIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* Paste button */}
+          <Tooltip title="Paste template onto map">
+            <IconButton
+              size="small"
+              onClick={interactionMode === 'paste-preview' ? cancelPaste : openPasteDialog}
+              color={interactionMode === 'paste-preview' ? 'primary' : 'default'}
+            >
+              <ContentPasteIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* Mode indicator */}
+          {modeLabel && (
+            <Chip
+              label={modeLabel}
+              color={interactionMode.startsWith('teleport') ? 'secondary' : 'warning'}
+              size="small"
+              onDelete={() => {
+                setInteractionMode('normal');
+                setTeleportTarget(null);
+                cancelPaste();
+              }}
+            />
+          )}
+
+          {/* Paste controls (when in paste-preview with anchored position) */}
+          {interactionMode === 'paste-preview' && (
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <Tooltip title="Rotate 90° clockwise">
+                <IconButton size="small" onClick={() => setPasteRotation((r) => (r + 1) % 4)}>
+                  <RotateRightIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Typography variant="caption" sx={{ minWidth: 20, textAlign: 'center' }}>
+                {pasteRotation * 90}°
+              </Typography>
+              {pastePosition && (
+                <>
+                  <Button size="small" variant="contained" color="success" onClick={confirmPaste} sx={{ minWidth: 0 }}>
+                    Paste
+                  </Button>
+                  <Button size="small" variant="outlined" onClick={() => setPastePosition(null)} sx={{ minWidth: 0 }}>
+                    Reposition
+                  </Button>
+                </>
+              )}
+              <Button size="small" variant="outlined" color="error" onClick={cancelPaste} sx={{ minWidth: 0 }}>
+                Cancel
+              </Button>
+            </Stack>
+          )}
+
+          {followedName && (
+            <Chip
+              label={`Following ${followedName}`}
+              color="success"
+              size="small"
+              onDelete={() => setFollowPlayer(null)}
+            />
+          )}
+          {!followPlayer && (interactionMode === 'normal' || interactionMode === 'teleport-pick-player') && players?.length > 0 && (
+            <Stack direction="row" spacing={0.5}>
+              {players.filter((p) => p.location?.world === worldName).map((p) => (
+                <Chip
+                  key={p.uuid}
+                  label={p.name}
+                  size="small"
+                  variant={interactionMode === 'teleport-pick-player' ? 'filled' : 'outlined'}
+                  color={interactionMode === 'teleport-pick-player' ? 'secondary' : 'default'}
+                  onClick={() => {
+                    if (interactionMode === 'teleport-pick-player') {
+                      setTeleportTarget({ uuid: p.uuid, name: p.name });
+                      setInteractionMode('teleport-pick-dest');
+                    } else {
+                      setFollowPlayer(p.uuid);
+                      setCenterXStr(String(Math.round(p.location.x)));
+                      setCenterZStr(String(Math.round(p.location.z)));
+                    }
+                  }}
+                />
+              ))}
+            </Stack>
+          )}
+        </Stack>
+        {/* Map container: fills remaining space, no scroll */}
+        <Box
+          ref={containerRef}
+          sx={{
+            flexGrow: 1,
+            minHeight: 200,
+            position: 'relative',
+            overflow: 'hidden',
+            border: '1px solid rgba(255,255,255,0.1)',
+          }}
+        >
+          {isLoading && (
+            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 1 }}>
+              <CircularProgress />
+            </Box>
+          )}
+          <canvas
+            ref={canvasRef}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleCanvasMouseMove}
+            onMouseLeave={handleCanvasMouseLeave}
+            style={{
+              cursor,
+              display: 'block',
+              transform: (visualOffset.x || visualOffset.y)
+                ? `translate(${visualOffset.x}px, ${visualOffset.y}px)`
+                : undefined,
+              userSelect: 'none',
+            }}
+          />
+          {hoverInfo && (
+            <Box
+              sx={{
+                position: 'fixed',
+                left: hoverInfo.screenX + 12,
+                top: hoverInfo.screenY - 8,
+                bgcolor: 'rgba(0,0,0,0.85)',
+                color: '#fff',
+                px: 1,
+                py: 0.5,
+                borderRadius: 0.5,
+                fontSize: 11,
+                fontFamily: 'monospace',
+                pointerEvents: 'none',
+                zIndex: 1000,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <div>{hoverInfo.material} ({hoverInfo.x}, {hoverInfo.z})</div>
+              {hoverInfo.entityName && <div style={{ color: '#ffcc00' }}>{hoverInfo.entityName}</div>}
+            </Box>
+          )}
+        </Box>
+        {blockData && (
+          <Typography variant="caption" component="div" sx={{ mt: 0.5, opacity: 0.7, fontFamily: 'monospace', fontSize: 11 }}>
+            Y={blockData.y} region=[{blockData.x1},{blockData.z1}]-[{blockData.x2},{blockData.z2}]
+            {blockData.entities?.length > 0 && ` | ${blockData.entities.length} entities`}
+            {' | '}
+            {Object.entries(countMaterials(blockData.blocks))
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 8)
+              .map(([m, c]) => `${m.replace('minecraft:', '')}:${c}`)
+              .join(', ')}
+          </Typography>
+        )}
+        <Typography variant="caption" component="div" sx={{ mt: 0.5, opacity: 0.5, fontSize: 10 }}>
+          Textures:{' '}
+          <Link href="https://faithfulpack.net/" target="_blank" rel="noopener noreferrer" sx={{ fontSize: 'inherit', opacity: 0.8 }}>
+            Faithful 32x
+          </Link>
+          {' '}by the Faithful team, used under the{' '}
+          <Link href="https://faithfulpack.net/license" target="_blank" rel="noopener noreferrer" sx={{ fontSize: 'inherit', opacity: 0.8 }}>
+            Faithful License
+          </Link>
+          {' | Drag to pan, click a player to follow'}
+        </Typography>
+      </CardContent>
+
+      {/* Template selection dialog */}
+      <Dialog
+        open={pasteDialogOpen}
+        onClose={() => setPasteDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Select Template
+          <IconButton size="small" onClick={() => setPasteDialogOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          <List dense>
+            {templates?.map((t) => (
+              <ListItem key={t.name} disablePadding>
+                <ListItemButton onClick={() => selectTemplate(t.name)}>
+                  <ListItemText
+                    primary={t.name}
+                    secondary={`${t.width}x${t.depth}x${t.height}${t.author ? ` by ${t.author}` : ''}${t.description ? ` — ${t.description}` : ''}`}
+                  />
+                </ListItemButton>
+              </ListItem>
+            ))}
+            {(!templates || templates.length === 0) && (
+              <ListItem>
+                <ListItemText primary="No templates available" secondary="Use the copy command in-game to create templates" />
+              </ListItem>
+            )}
+          </List>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+}

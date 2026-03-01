@@ -578,14 +578,14 @@
         ],
         [
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y,waterlogged=false]"
             ],
             [
                 "minecraft:air",
@@ -611,8 +611,8 @@
                 "minecraft:air",
                 "minecraft:iron_bars[east=false,north=true,south=true,waterlogged=false,west=false]",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:iron_bars[east=false,north=true,south=true,waterlogged=false,west=false]",
                 "minecraft:air"
@@ -681,8 +681,8 @@
                 "minecraft:air",
                 "minecraft:iron_bars[east=false,north=true,south=true,waterlogged=false,west=false]",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:iron_bars[east=false,north=true,south=true,waterlogged=false,west=false]",
                 "minecraft:air"
@@ -708,14 +708,14 @@
                 "minecraft:air"
             ],
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y,waterlogged=false]"
             ]
         ],
         [
@@ -753,8 +753,8 @@
                 "minecraft:polished_deepslate_stairs[facing=east,half=bottom,shape=straight,waterlogged=false]",
                 "minecraft:chiseled_deepslate",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:chiseled_deepslate",
                 "minecraft:polished_deepslate_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]"
@@ -823,8 +823,8 @@
                 "minecraft:polished_deepslate_stairs[facing=east,half=bottom,shape=straight,waterlogged=false]",
                 "minecraft:chiseled_deepslate",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y,waterlogged=false]",
                 "minecraft:air",
                 "minecraft:chiseled_deepslate",
                 "minecraft:polished_deepslate_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]"

@@ -248,8 +248,10 @@ def _type_coerce(value, typ):
         # Not ideal to assume 'd' type
         return np.array(value, dtype='d')
     if hasattr(typing, 'ForwardRef') and isinstance(typ, typing.ForwardRef):
-        # Yuck, why can't typing make an api that's actually usable???
-        if sys.version_info >= (3, 10):
+        if hasattr(typing, 'evaluate_forward_ref'):
+            # Python 3.14+: use the public API
+            typ = typing.evaluate_forward_ref(typ, globals=PROXY_TYPES, locals=PROXY_CLASSES)
+        elif sys.version_info >= (3, 10):
             typ = typ._evaluate(PROXY_TYPES, PROXY_CLASSES, set())
         else:
             typ = typ._evaluate(PROXY_TYPES, PROXY_CLASSES)

@@ -3,6 +3,7 @@ import json
 import uuid as uuid_mod
 import numpy as np
 from pycraft.server import world
+from pycraft.server.proxyobjects import KeyedServerObjectEnum, ServerObjectEnum
 
 
 def serialize(obj):
@@ -19,6 +20,11 @@ def serialize(obj):
         return float(obj)
     if isinstance(obj, np.ndarray):
         return [serialize(v) for v in obj]
+    # Keyed enums (Material, EntityType, Enchantment, etc.) → their key string
+    if isinstance(obj, KeyedServerObjectEnum):
+        return obj.key
+    if isinstance(obj, ServerObjectEnum):
+        return obj.key if hasattr(obj, 'key') else str(obj)
     if isinstance(obj, world.Location):
         return {
             'world': obj.world,
@@ -40,7 +46,7 @@ def serialize(obj):
             'name': getattr(obj, 'name', None),
             'display_name': getattr(obj, 'display_name', None),
             'location': serialize(getattr(obj, 'location', None)),
-            'type': getattr(obj, 'type', None),
+            'type': serialize(getattr(obj, 'type', None)),
             'online': getattr(obj, 'online', None),
             'banned': getattr(obj, 'banned', None),
             'whitelisted': getattr(obj, 'whitelisted', None),
@@ -50,7 +56,7 @@ def serialize(obj):
             'uuid': str(obj.uuid) if hasattr(obj, 'uuid') else None,
             'name': getattr(obj, 'name', None),
             'display_name': getattr(obj, 'display_name', None),
-            'type': getattr(obj, 'type', None),
+            'type': serialize(getattr(obj, 'type', None)),
             'location': serialize(getattr(obj, 'location', None)),
         }
     if isinstance(obj, world.World):
@@ -60,7 +66,7 @@ def serialize(obj):
         }
     if isinstance(obj, world.ItemStack):
         return {
-            'material': getattr(obj, 'material', None),
+            'material': serialize(getattr(obj, 'material', None)),
             'amount': getattr(obj, 'amount', 0),
             'enchantments': serialize(getattr(obj, 'enchantments', {})),
             'key': getattr(obj, 'key', None),

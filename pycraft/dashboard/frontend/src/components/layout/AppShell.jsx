@@ -17,6 +17,10 @@ import MenuIcon from '@mui/icons-material/Menu';
 import DnsIcon from '@mui/icons-material/Dns';
 import PeopleIcon from '@mui/icons-material/People';
 import ListAltIcon from '@mui/icons-material/ListAlt';
+import MapIcon from '@mui/icons-material/Map';
+import CodeIcon from '@mui/icons-material/Code';
+import SearchIcon from '@mui/icons-material/Search';
+import PetsIcon from '@mui/icons-material/Pets';
 
 const DRAWER_WIDTH = 240;
 
@@ -24,6 +28,10 @@ const NAV_ITEMS = [
   { label: 'Server', icon: <DnsIcon />, id: 'server' },
   { label: 'Players', icon: <PeopleIcon />, id: 'players' },
   { label: 'Events', icon: <ListAltIcon />, id: 'events' },
+  { label: 'Map', icon: <MapIcon />, id: 'map' },
+  { label: 'Editor', icon: <CodeIcon />, id: 'editor' },
+  { label: 'Search', icon: <SearchIcon />, id: 'search' },
+  { label: 'Entities', icon: <PetsIcon />, id: 'entities' },
 ];
 
 export default function AppShell({ children, activeTab, onTabChange, sseConnected }) {
@@ -106,6 +114,10 @@ export default function AppShell({ children, activeTab, onTabChange, sseConnecte
           p: 3,
           mt: 8,
           ml: { md: `${DRAWER_WIDTH}px` },
+          height: 'calc(100vh - 64px)',
+          overflow: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {children}

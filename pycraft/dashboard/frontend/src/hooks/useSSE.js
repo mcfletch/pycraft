@@ -31,10 +31,23 @@ export function useSSE() {
           queryClient.invalidateQueries({ queryKey: ['players'] });
         } else if (type === 'player_move' && data.uuid) {
           queryClient.setQueryData(['players'], (old) => {
-            if (!Array.isArray(old)) return old;
-            return old.map((p) =>
-              p.uuid === data.uuid ? { ...p, location: data.location } : p
-            );
+            if (!old) return old;
+            // Handle new {online, offline} format
+            if (old.online) {
+              return {
+                ...old,
+                online: old.online.map((p) =>
+                  p.uuid === data.uuid ? { ...p, location: data.location } : p
+                ),
+              };
+            }
+            // Legacy flat array fallback
+            if (Array.isArray(old)) {
+              return old.map((p) =>
+                p.uuid === data.uuid ? { ...p, location: data.location } : p
+              );
+            }
+            return old;
           });
         }
       },

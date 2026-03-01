@@ -643,7 +643,7 @@ Values
 * minecraft:red_mushroom_block
 * minecraft:mushroom_stem
 * minecraft:iron_bars
-* minecraft:chain
+* minecraft:iron_chain
 * minecraft:glass_pane
 * minecraft:melon
 * minecraft:vine
@@ -802,7 +802,7 @@ Values
 * minecraft:cut_red_sandstone
 * minecraft:red_sandstone_stairs
 * minecraft:repeating_command_block
-* minecraft:chain_command_block
+* minecraft:iron_chain_command_block
 * minecraft:magma_block
 * minecraft:nether_wart_block
 * minecraft:warped_wart_block
@@ -1127,10 +1127,10 @@ Values
 * minecraft:leather_chestplate
 * minecraft:leather_leggings
 * minecraft:leather_boots
-* minecraft:chainmail_helmet
-* minecraft:chainmail_chestplate
-* minecraft:chainmail_leggings
-* minecraft:chainmail_boots
+* minecraft:iron_chainmail_helmet
+* minecraft:iron_chainmail_chestplate
+* minecraft:iron_chainmail_leggings
+* minecraft:iron_chainmail_boots
 * minecraft:iron_helmet
 * minecraft:iron_chestplate
 * minecraft:iron_leggings

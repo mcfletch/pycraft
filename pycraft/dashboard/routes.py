@@ -1,5 +1,6 @@
 """Route registration for the dashboard API"""
-from .handlers import server, players
+from .handlers import server, players, world, commands, search, templates
+from . import textures
 
 
 def setup_routes(app):
@@ -10,9 +11,43 @@ def setup_routes(app):
 
     # Players
     app.router.add_get('/api/players', players.get_players)
+    app.router.add_get('/api/players/{uuid}', players.get_player_detail)
+    app.router.add_get('/api/players/{uuid}/inventory', players.get_player_inventory)
+    app.router.add_post('/api/players/{uuid}/teleport', players.teleport_player)
+    app.router.add_post('/api/players/{uuid}/inventory/give', players.give_item)
+    app.router.add_post('/api/players/{uuid}/inventory/enchant', players.enchant_item)
+
+    # World
+    app.router.add_get('/api/worlds/{name}/entities', world.get_world_entities)
+    app.router.add_post('/api/worlds/{name}/entities/spawn', world.spawn_entity)
+    app.router.add_get('/api/worlds/{name}/blocks', world.get_blocks)
+    app.router.add_post('/api/worlds/{name}/blocks', world.set_blocks)
+    app.router.add_get('/api/worlds/{name}/surface', world.get_surface_y)
+
+    # Enchantments
+    app.router.add_get('/api/enchantments', players.list_enchantments)
+
+    # Potions
+    app.router.add_get('/api/potion-types', players.list_potion_types)
+
+    # Templates (copy/paste)
+    app.router.add_get('/api/templates', templates.list_templates)
+    app.router.add_get('/api/templates/{name}', templates.get_template)
+    app.router.add_post('/api/worlds/{name}/paste', templates.paste_template)
+
+    # Code evaluation
+    app.router.add_post('/api/eval', commands.eval_code)
+
+    # Search
+    app.router.add_get('/api/search/blocks', search.search_blocks)
+    app.router.add_get('/api/search/entities', search.search_entities)
 
     # SSE events
     async def sse_handler(request):
         return await request.app['services'].sse_manager.add_client(request)
 
     app.router.add_get('/api/events', sse_handler)
+
+    # Textures (served from Faithful 32x ZIP)
+    app.router.add_get('/api/textures', textures.list_textures)
+    app.router.add_get('/api/textures/{name}', textures.get_texture)

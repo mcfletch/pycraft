@@ -25,3 +25,100 @@ export function usePlayers() {
     refetchInterval: 10_000,
   });
 }
+
+/** Returns just the online players array for map/editor use */
+export function useOnlinePlayers() {
+  const { data, ...rest } = usePlayers();
+  const online = data?.online || (Array.isArray(data) ? data : []);
+  return { data: online, ...rest };
+}
+
+export function usePlayerDetail(uuid) {
+  return useQuery({
+    queryKey: ['players', uuid],
+    queryFn: () => fetchApi(`/players/${uuid}`),
+    staleTime: 5_000,
+    enabled: !!uuid,
+  });
+}
+
+export function usePlayerInventory(uuid) {
+  return useQuery({
+    queryKey: ['players', uuid, 'inventory'],
+    queryFn: () => fetchApi(`/players/${uuid}/inventory`),
+    staleTime: 10_000,
+    enabled: !!uuid,
+  });
+}
+
+export function useWorldEntities(worldName) {
+  return useQuery({
+    queryKey: ['worlds', worldName, 'entities'],
+    queryFn: () => fetchApi(`/worlds/${worldName}/entities`),
+    staleTime: 10_000,
+    enabled: !!worldName,
+  });
+}
+
+export function useWorldBlocks(worldName, params) {
+  return useQuery({
+    queryKey: ['worlds', worldName, 'blocks', params],
+    queryFn: () => {
+      const qs = new URLSearchParams(params).toString();
+      return fetchApi(`/worlds/${worldName}/blocks?${qs}`);
+    },
+    staleTime: 30_000,
+    enabled: !!worldName && !!params,
+  });
+}
+
+export function useEnchantments() {
+  return useQuery({
+    queryKey: ['enchantments'],
+    queryFn: () => fetchApi('/enchantments'),
+    staleTime: 300_000, // cache for 5 min, enchantments don't change
+  });
+}
+
+export function usePotionTypes() {
+  return useQuery({
+    queryKey: ['potion-types'],
+    queryFn: () => fetchApi('/potion-types'),
+    staleTime: 300_000,
+  });
+}
+
+export function useTemplates() {
+  return useQuery({
+    queryKey: ['templates'],
+    queryFn: () => fetchApi('/templates'),
+    staleTime: 60_000,
+  });
+}
+
+export function useTemplateDetail(name) {
+  return useQuery({
+    queryKey: ['templates', name],
+    queryFn: () => fetchApi(`/templates/${encodeURIComponent(name)}`),
+    staleTime: 60_000,
+    enabled: !!name,
+  });
+}
+
+export function useSearchBlocks(query) {
+  return useQuery({
+    queryKey: ['search', 'blocks', query],
+    queryFn: () => fetchApi(`/search/blocks?q=${encodeURIComponent(query)}`),
+    staleTime: 60_000,
+    enabled: query?.length >= 1,
+  });
+}
+
+export function useSearchEntities(query) {
+  return useQuery({
+    queryKey: ['search', 'entities', query],
+    queryFn: () => fetchApi(`/search/entities?q=${encodeURIComponent(query)}`),
+    staleTime: 60_000,
+    enabled: query?.length >= 2,
+  });
+}

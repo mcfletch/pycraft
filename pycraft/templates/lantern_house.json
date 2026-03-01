@@ -677,34 +677,34 @@
                 "minecraft:air"
             ],
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:blue_stained_glass",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:lime_stained_glass",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y]"
             ],
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:blue_stained_glass",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:lime_stained_glass",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y]"
             ],
             [
                 "minecraft:air",
@@ -829,34 +829,34 @@
                 "minecraft:air"
             ],
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:smooth_quartz_stairs[facing=east,half=top,shape=straight,waterlogged=false]",
                 "minecraft:smooth_quartz_stairs[facing=west,half=top,shape=straight,waterlogged=false]",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:smooth_quartz_stairs[facing=east,half=top,shape=straight,waterlogged=false]",
                 "minecraft:smooth_quartz_stairs[facing=west,half=top,shape=straight,waterlogged=false]",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y]"
             ],
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:smooth_quartz_stairs[facing=east,half=top,shape=straight,waterlogged=false]",
                 "minecraft:smooth_quartz_stairs[facing=west,half=top,shape=straight,waterlogged=false]",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:smooth_quartz_stairs[facing=east,half=top,shape=straight,waterlogged=false]",
                 "minecraft:smooth_quartz_stairs[facing=west,half=top,shape=straight,waterlogged=false]",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y]"
             ],
             [
                 "minecraft:air",
@@ -981,7 +981,7 @@
                 "minecraft:air"
             ],
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:acacia_log[axis=z]",
                 "minecraft:air",
@@ -993,10 +993,10 @@
                 "minecraft:air",
                 "minecraft:acacia_log[axis=z]",
                 "minecraft:smooth_quartz_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y]"
             ],
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:acacia_log[axis=z]",
                 "minecraft:air",
@@ -1008,7 +1008,7 @@
                 "minecraft:air",
                 "minecraft:acacia_log[axis=z]",
                 "minecraft:smooth_quartz_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y]"
             ],
             [
                 "minecraft:air",
@@ -1133,7 +1133,7 @@
                 "minecraft:air"
             ],
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:blue_stained_glass",
                 "minecraft:air",
@@ -1145,10 +1145,10 @@
                 "minecraft:air",
                 "minecraft:blue_stained_glass",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y]"
             ],
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:lime_stained_glass",
                 "minecraft:air",
@@ -1160,7 +1160,7 @@
                 "minecraft:air",
                 "minecraft:lime_stained_glass",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y]"
             ],
             [
                 "minecraft:air",
@@ -1285,7 +1285,7 @@
                 "minecraft:air"
             ],
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:lime_stained_glass",
                 "minecraft:air",
@@ -1297,10 +1297,10 @@
                 "minecraft:air",
                 "minecraft:yellow_stained_glass",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y]"
             ],
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:yellow_stained_glass",
                 "minecraft:air",
@@ -1312,7 +1312,7 @@
                 "minecraft:air",
                 "minecraft:blue_stained_glass",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y]"
             ],
             [
                 "minecraft:air",
@@ -1437,7 +1437,7 @@
                 "minecraft:air"
             ],
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:blue_stained_glass",
                 "minecraft:air",
@@ -1449,10 +1449,10 @@
                 "minecraft:air",
                 "minecraft:blue_stained_glass",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y]"
             ],
             [
-                "minecraft:chain[axis=y,waterlogged=false]",
+                "minecraft:iron_chain[axis=y]",
                 "minecraft:air",
                 "minecraft:lime_stained_glass",
                 "minecraft:air",
@@ -1464,7 +1464,7 @@
                 "minecraft:air",
                 "minecraft:lime_stained_glass",
                 "minecraft:air",
-                "minecraft:chain[axis=y,waterlogged=false]"
+                "minecraft:iron_chain[axis=y]"
             ],
             [
                 "minecraft:air",

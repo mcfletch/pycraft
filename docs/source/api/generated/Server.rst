@@ -47,6 +47,10 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: broadcast
 
+       .. py:method:: broadcast(self, _0:BaseComponent) -> None
+          :async:
+          :noindex:
+
        .. py:method:: broadcast(self, _0:BaseComponent[]) -> None
           :async:
           :noindex:
@@ -55,15 +59,11 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
           :async:
           :noindex:
 
-       .. py:method:: broadcast(self, _0:BaseComponent) -> None
+       .. py:method:: broadcast(self, _0:Component, _1:String) -> int
           :async:
           :noindex:
 
        .. py:method:: broadcast(self, _0:String, _1:String) -> int
-          :async:
-          :noindex:
-
-       .. py:method:: broadcast(self, _0:Component, _1:String) -> int
           :async:
           :noindex:
 
@@ -86,19 +86,19 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: createBlockData
 
-       .. py:method:: createBlockData(self, _0:String) -> :py:class:`BlockData`
-          :async:
-          :noindex:
-
        .. py:method:: createBlockData(self, _0:Material) -> :py:class:`BlockData`
           :async:
           :noindex:
 
-       .. py:method:: createBlockData(self, _0:Material, _1:String) -> :py:class:`BlockData`
+       .. py:method:: createBlockData(self, _0:String) -> :py:class:`BlockData`
           :async:
           :noindex:
 
        .. py:method:: createBlockData(self, _0:Material, _1:Consumer) -> :py:class:`BlockData`
+          :async:
+          :noindex:
+
+       .. py:method:: createBlockData(self, _0:Material, _1:String) -> :py:class:`BlockData`
           :async:
           :noindex:
 
@@ -143,7 +143,7 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
           :async:
           :noindex:
 
-       .. py:method:: createInventory(self, _0:InventoryHolder, _1:int, _2:Component) -> :py:class:`Inventory`
+       .. py:method:: createInventory(self, _0:InventoryHolder, _1:InventoryType, _2:Component) -> :py:class:`Inventory`
           :async:
           :noindex:
 
@@ -151,7 +151,7 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
           :async:
           :noindex:
 
-       .. py:method:: createInventory(self, _0:InventoryHolder, _1:InventoryType, _2:Component) -> :py:class:`Inventory`
+       .. py:method:: createInventory(self, _0:InventoryHolder, _1:int, _2:Component) -> :py:class:`Inventory`
           :async:
           :noindex:
 
@@ -192,11 +192,11 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: createProfile
 
-       .. py:method:: createProfile(self, _0:UUID) -> :py:class:`PlayerProfile`
+       .. py:method:: createProfile(self, _0:String) -> :py:class:`PlayerProfile`
           :async:
           :noindex:
 
-       .. py:method:: createProfile(self, _0:String) -> :py:class:`PlayerProfile`
+       .. py:method:: createProfile(self, _0:UUID) -> :py:class:`PlayerProfile`
           :async:
           :noindex:
 
@@ -223,11 +223,11 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: deleteMessage
 
-       .. py:method:: deleteMessage(self, _0:Signature) -> None
+       .. py:method:: deleteMessage(self, signature:Signature) -> None
           :async:
           :noindex:
 
-       .. py:method:: deleteMessage(self, _0:SignedMessage) -> None
+       .. py:method:: deleteMessage(self, signedMessage:SignedMessage) -> None
           :async:
           :noindex:
 
@@ -236,11 +236,11 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
       :async:
 
 
-   .. py:method:: filterAudience(self, _0:Predicate) -> :py:class:`Audience`
+   .. py:method:: filterAudience(self, filter:Predicate) -> :py:class:`Audience`
       :async:
 
 
-   .. py:method:: forEachAudience(self, _0:Consumer) -> None
+   .. py:method:: forEachAudience(self, action:Consumer) -> None
       :async:
 
 
@@ -250,7 +250,7 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
       Convert server-side structure to local object
 
 
-   .. py:method:: get(self, _0:Pointer) -> :py:class:`Optional`
+   .. py:method:: get(self, pointer:Pointer) -> :py:class:`Optional`
       :async:
 
 
@@ -449,11 +449,11 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
       :async:
 
 
-   .. py:method:: getOrDefault(self, _0:Pointer, _1:Object) -> :py:class:`Object`
+   .. py:method:: getOrDefault(self, pointer:Pointer, defaultValue:Object) -> :py:class:`Object`
       :async:
 
 
-   .. py:method:: getOrDefaultFrom(self, _0:Pointer, _1:Supplier) -> :py:class:`Object`
+   .. py:method:: getOrDefaultFrom(self, pointer:Pointer, defaultValue:Supplier) -> :py:class:`Object`
       :async:
 
 
@@ -650,7 +650,7 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: getWorld
 
-       .. py:method:: getWorld(self, _0:UUID) -> :py:class:`World`
+       .. py:method:: getWorld(self, _0:NamespacedKey) -> :py:class:`World`
           :async:
           :noindex:
 
@@ -658,7 +658,7 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
           :async:
           :noindex:
 
-       .. py:method:: getWorld(self, _0:NamespacedKey) -> :py:class:`World`
+       .. py:method:: getWorld(self, _0:UUID) -> :py:class:`World`
           :async:
           :noindex:
 
@@ -685,7 +685,7 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
       :async:
 
 
-   .. py:method:: hideBossBar(self, _0:BossBar) -> None
+   .. py:method:: hideBossBar(self, bar:BossBar) -> None
       :async:
 
 
@@ -725,11 +725,11 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: loadServerIcon
 
-       .. py:method:: loadServerIcon(self, _0:File) -> :py:class:`CachedServerIcon`
+       .. py:method:: loadServerIcon(self, _0:BufferedImage) -> :py:class:`CachedServerIcon`
           :async:
           :noindex:
 
-       .. py:method:: loadServerIcon(self, _0:BufferedImage) -> :py:class:`CachedServerIcon`
+       .. py:method:: loadServerIcon(self, _0:File) -> :py:class:`CachedServerIcon`
           :async:
           :noindex:
 
@@ -744,11 +744,11 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: openBook
 
-       .. py:method:: openBook(self, _0:Book) -> None
+       .. py:method:: openBook(self, book:Book) -> None
           :async:
           :noindex:
 
-       .. py:method:: openBook(self, _0:Builder) -> None
+       .. py:method:: openBook(self, book:Builder) -> None
           :async:
           :noindex:
 
@@ -759,15 +759,15 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: playSound
 
-       .. py:method:: playSound(self, _0:Sound) -> None
+       .. py:method:: playSound(self, sound:Sound) -> None
           :async:
           :noindex:
 
-       .. py:method:: playSound(self, _0:Sound, _1:Emitter) -> None
+       .. py:method:: playSound(self, sound:Sound, emitter:Emitter) -> None
           :async:
           :noindex:
 
-       .. py:method:: playSound(self, _0:Sound, _1:double, _2:double, _3:double) -> None
+       .. py:method:: playSound(self, sound:Sound, x:double, y:double, z:double) -> None
           :async:
           :noindex:
 
@@ -826,107 +826,107 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: sendActionBar
 
-       .. py:method:: sendActionBar(self, _0:Component) -> None
+       .. py:method:: sendActionBar(self, message:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendActionBar(self, _0:ComponentLike) -> None
+       .. py:method:: sendActionBar(self, message:ComponentLike) -> None
           :async:
           :noindex:
 
 
    .. py:method:: sendMessage
 
-       .. py:method:: sendMessage(self, _0:Component) -> None
+       .. py:method:: sendMessage(self, message:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:ComponentLike) -> None
+       .. py:method:: sendMessage(self, message:ComponentLike) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:SignedMessage, _1:Bound) -> None
+       .. py:method:: sendMessage(self, message:Component, boundChatType:Bound) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Component, _1:Bound) -> None
+       .. py:method:: sendMessage(self, message:Component, type:MessageType) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identity, _1:Component) -> None
+       .. py:method:: sendMessage(self, message:ComponentLike, boundChatType:Bound) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:ComponentLike, _1:Bound) -> None
+       .. py:method:: sendMessage(self, message:ComponentLike, type:MessageType) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Component, _1:MessageType) -> None
+       .. py:method:: sendMessage(self, source:Identified, message:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:ComponentLike, _1:MessageType) -> None
+       .. py:method:: sendMessage(self, source:Identified, message:ComponentLike) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identified, _1:Component) -> None
+       .. py:method:: sendMessage(self, source:Identity, message:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identity, _1:ComponentLike) -> None
+       .. py:method:: sendMessage(self, source:Identity, message:ComponentLike) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identified, _1:ComponentLike) -> None
+       .. py:method:: sendMessage(self, signedMessage:SignedMessage, boundChatType:Bound) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identity, _1:Component, _2:MessageType) -> None
+       .. py:method:: sendMessage(self, source:Identified, message:Component, type:MessageType) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identified, _1:Component, _2:MessageType) -> None
+       .. py:method:: sendMessage(self, source:Identified, message:ComponentLike, type:MessageType) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identity, _1:ComponentLike, _2:MessageType) -> None
+       .. py:method:: sendMessage(self, source:Identity, message:Component, type:MessageType) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identified, _1:ComponentLike, _2:MessageType) -> None
+       .. py:method:: sendMessage(self, source:Identity, message:ComponentLike, type:MessageType) -> None
           :async:
           :noindex:
 
 
    .. py:method:: sendPlayerListFooter
 
-       .. py:method:: sendPlayerListFooter(self, _0:Component) -> None
+       .. py:method:: sendPlayerListFooter(self, footer:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendPlayerListFooter(self, _0:ComponentLike) -> None
+       .. py:method:: sendPlayerListFooter(self, footer:ComponentLike) -> None
           :async:
           :noindex:
 
 
    .. py:method:: sendPlayerListHeader
 
-       .. py:method:: sendPlayerListHeader(self, _0:Component) -> None
+       .. py:method:: sendPlayerListHeader(self, header:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendPlayerListHeader(self, _0:ComponentLike) -> None
+       .. py:method:: sendPlayerListHeader(self, header:ComponentLike) -> None
           :async:
           :noindex:
 
 
    .. py:method:: sendPlayerListHeaderAndFooter
 
-       .. py:method:: sendPlayerListHeaderAndFooter(self, _0:Component, _1:Component) -> None
+       .. py:method:: sendPlayerListHeaderAndFooter(self, header:Component, footer:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendPlayerListHeaderAndFooter(self, _0:ComponentLike, _1:ComponentLike) -> None
+       .. py:method:: sendPlayerListHeaderAndFooter(self, header:ComponentLike, footer:ComponentLike) -> None
           :async:
           :noindex:
 
@@ -935,7 +935,7 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
       :async:
 
 
-   .. py:method:: sendTitlePart(self, _0:TitlePart, _1:Object) -> None
+   .. py:method:: sendTitlePart(self, part:TitlePart, value:Object) -> None
       :async:
 
 
@@ -967,11 +967,11 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
       :async:
 
 
-   .. py:method:: showBossBar(self, _0:BossBar) -> None
+   .. py:method:: showBossBar(self, bar:BossBar) -> None
       :async:
 
 
-   .. py:method:: showTitle(self, _0:Title) -> None
+   .. py:method:: showTitle(self, title:Title) -> None
       :async:
 
 
@@ -985,11 +985,11 @@ Python Proxy to `org.bukkit.Server <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: stopSound
 
-       .. py:method:: stopSound(self, _0:SoundStop) -> None
+       .. py:method:: stopSound(self, sound:Sound) -> None
           :async:
           :noindex:
 
-       .. py:method:: stopSound(self, _0:Sound) -> None
+       .. py:method:: stopSound(self, stop:SoundStop) -> None
           :async:
           :noindex:
 

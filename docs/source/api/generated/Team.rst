@@ -29,11 +29,11 @@ Python Proxy to `org.bukkit.scoreboard.Team <https://hub.spigotmc.org/javadocs/s
 
    .. py:method:: addEntities
 
-       .. py:method:: addEntities(self, _0:Entity[]) -> None
+       .. py:method:: addEntities(self, _0:Collection) -> None
           :async:
           :noindex:
 
-       .. py:method:: addEntities(self, _0:Collection) -> None
+       .. py:method:: addEntities(self, _0:Entity[]) -> None
           :async:
           :noindex:
 
@@ -176,11 +176,11 @@ Python Proxy to `org.bukkit.scoreboard.Team <https://hub.spigotmc.org/javadocs/s
 
    .. py:method:: removeEntities
 
-       .. py:method:: removeEntities(self, _0:Entity[]) -> bool
+       .. py:method:: removeEntities(self, _0:Collection) -> bool
           :async:
           :noindex:
 
-       .. py:method:: removeEntities(self, _0:Collection) -> bool
+       .. py:method:: removeEntities(self, _0:Entity[]) -> bool
           :async:
           :noindex:
 

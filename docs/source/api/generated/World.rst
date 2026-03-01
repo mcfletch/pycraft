@@ -80,23 +80,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: createExplosion(self, _0:Location, _1:float, _2:boolean) -> bool
-          :async:
-          :noindex:
-
        .. py:method:: createExplosion(self, _0:Entity, _1:float, _2:boolean) -> bool
           :async:
           :noindex:
 
-       .. py:method:: createExplosion(self, _0:double, _1:double, _2:double, _3:float) -> bool
-          :async:
-          :noindex:
-
-       .. py:method:: createExplosion(self, _0:Location, _1:float, _2:boolean, _3:boolean) -> bool
-          :async:
-          :noindex:
-
-       .. py:method:: createExplosion(self, _0:Entity, _1:float, _2:boolean, _3:boolean) -> bool
+       .. py:method:: createExplosion(self, _0:Location, _1:float, _2:boolean) -> bool
           :async:
           :noindex:
 
@@ -104,7 +92,19 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: createExplosion(self, _0:double, _1:double, _2:double, _3:float, _4:boolean) -> bool
+       .. py:method:: createExplosion(self, _0:Entity, _1:float, _2:boolean, _3:boolean) -> bool
+          :async:
+          :noindex:
+
+       .. py:method:: createExplosion(self, _0:Location, _1:float, _2:boolean, _3:boolean) -> bool
+          :async:
+          :noindex:
+
+       .. py:method:: createExplosion(self, _0:double, _1:double, _2:double, _3:float) -> bool
+          :async:
+          :noindex:
+
+       .. py:method:: createExplosion(self, _0:Entity, _1:Location, _2:float, _3:boolean, _4:boolean) -> bool
           :async:
           :noindex:
 
@@ -112,7 +112,7 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: createExplosion(self, _0:Entity, _1:Location, _2:float, _3:boolean, _4:boolean) -> bool
+       .. py:method:: createExplosion(self, _0:double, _1:double, _2:double, _3:float, _4:boolean) -> bool
           :async:
           :noindex:
 
@@ -127,11 +127,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
 
    .. py:method:: deleteMessage
 
-       .. py:method:: deleteMessage(self, _0:Signature) -> None
+       .. py:method:: deleteMessage(self, signature:Signature) -> None
           :async:
           :noindex:
 
-       .. py:method:: deleteMessage(self, _0:SignedMessage) -> None
+       .. py:method:: deleteMessage(self, signedMessage:SignedMessage) -> None
           :async:
           :noindex:
 
@@ -166,7 +166,7 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :noindex:
 
 
-   .. py:method:: filterAudience(self, _0:Predicate) -> :py:class:`Audience`
+   .. py:method:: filterAudience(self, filter:Predicate) -> :py:class:`Audience`
       :async:
 
 
@@ -178,7 +178,7 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
       :async:
 
 
-   .. py:method:: forEachAudience(self, _0:Consumer) -> None
+   .. py:method:: forEachAudience(self, action:Consumer) -> None
       :async:
 
 
@@ -194,15 +194,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: generateTree(self, _0:Location, _1:TreeType, _2:BlockChangeDelegate) -> bool
-          :async:
-          :noindex:
-
        .. py:method:: generateTree(self, _0:Location, _1:Random, _2:TreeType) -> bool
           :async:
           :noindex:
 
-       .. py:method:: generateTree(self, _0:Location, _1:Random, _2:TreeType, _3:Predicate) -> bool
+       .. py:method:: generateTree(self, _0:Location, _1:TreeType, _2:BlockChangeDelegate) -> bool
           :async:
           :noindex:
 
@@ -210,8 +206,12 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
+       .. py:method:: generateTree(self, _0:Location, _1:Random, _2:TreeType, _3:Predicate) -> bool
+          :async:
+          :noindex:
 
-   .. py:method:: get(self, _0:Pointer) -> :py:class:`Optional`
+
+   .. py:method:: get(self, pointer:Pointer) -> :py:class:`Optional`
       :async:
 
 
@@ -299,11 +299,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
 
    .. py:method:: getChunkAt
 
-       .. py:method:: getChunkAt(self, _0:Location) -> :py:class:`Chunk`
+       .. py:method:: getChunkAt(self, _0:Block) -> :py:class:`Chunk`
           :async:
           :noindex:
 
-       .. py:method:: getChunkAt(self, _0:Block) -> :py:class:`Chunk`
+       .. py:method:: getChunkAt(self, _0:Location) -> :py:class:`Chunk`
           :async:
           :noindex:
 
@@ -312,6 +312,10 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :noindex:
 
        .. py:method:: getChunkAt(self, _0:int, _1:int) -> :py:class:`Chunk`
+          :async:
+          :noindex:
+
+       .. py:method:: getChunkAt(self, _0:int, _1:int, _2:boolean) -> :py:class:`Chunk`
           :async:
           :noindex:
 
@@ -326,7 +330,7 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: getChunkAtAsync(self, _0:Location, _1:Consumer) -> None
+       .. py:method:: getChunkAtAsync(self, _0:Block, _1:ChunkLoadCallback) -> None
           :async:
           :noindex:
 
@@ -334,15 +338,7 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: getChunkAtAsync(self, _0:Block, _1:ChunkLoadCallback) -> None
-          :async:
-          :noindex:
-
        .. py:method:: getChunkAtAsync(self, _0:Block, _1:boolean) -> :py:class:`CompletableFuture`
-          :async:
-          :noindex:
-
-       .. py:method:: getChunkAtAsync(self, _0:int, _1:int) -> :py:class:`CompletableFuture`
           :async:
           :noindex:
 
@@ -350,15 +346,23 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
+       .. py:method:: getChunkAtAsync(self, _0:Location, _1:Consumer) -> None
+          :async:
+          :noindex:
+
        .. py:method:: getChunkAtAsync(self, _0:Location, _1:boolean) -> :py:class:`CompletableFuture`
           :async:
           :noindex:
 
-       .. py:method:: getChunkAtAsync(self, _0:Location, _1:boolean, _2:Consumer) -> None
+       .. py:method:: getChunkAtAsync(self, _0:int, _1:int) -> :py:class:`CompletableFuture`
           :async:
           :noindex:
 
        .. py:method:: getChunkAtAsync(self, _0:Block, _1:boolean, _2:Consumer) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: getChunkAtAsync(self, _0:Location, _1:boolean, _2:Consumer) -> None
           :async:
           :noindex:
 
@@ -374,11 +378,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: getChunkAtAsync(self, _0:int, _1:int, _2:boolean, _3:boolean) -> :py:class:`CompletableFuture`
+       .. py:method:: getChunkAtAsync(self, _0:int, _1:int, _2:boolean, _3:Consumer) -> None
           :async:
           :noindex:
 
-       .. py:method:: getChunkAtAsync(self, _0:int, _1:int, _2:boolean, _3:Consumer) -> None
+       .. py:method:: getChunkAtAsync(self, _0:int, _1:int, _2:boolean, _3:boolean) -> :py:class:`CompletableFuture`
           :async:
           :noindex:
 
@@ -393,11 +397,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: getChunkAtAsyncUrgently(self, _0:Location, _1:boolean) -> :py:class:`CompletableFuture`
+       .. py:method:: getChunkAtAsyncUrgently(self, _0:Block, _1:boolean) -> :py:class:`CompletableFuture`
           :async:
           :noindex:
 
-       .. py:method:: getChunkAtAsyncUrgently(self, _0:Block, _1:boolean) -> :py:class:`CompletableFuture`
+       .. py:method:: getChunkAtAsyncUrgently(self, _0:Location, _1:boolean) -> :py:class:`CompletableFuture`
           :async:
           :noindex:
 
@@ -440,11 +444,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
 
    .. py:method:: getEntitiesByClass
 
-       .. py:method:: getEntitiesByClass(self, _0:Class[]) -> typing.List[:py:class:`T`]
+       .. py:method:: getEntitiesByClass(self, _0:Class) -> typing.List[:py:class:`T`]
           :async:
           :noindex:
 
-       .. py:method:: getEntitiesByClass(self, _0:Class) -> typing.List[:py:class:`T`]
+       .. py:method:: getEntitiesByClass(self, _0:Class[]) -> typing.List[:py:class:`T`]
           :async:
           :noindex:
 
@@ -533,15 +537,15 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: getHighestBlockYAt(self, _0:int, _1:int) -> int
-          :async:
-          :noindex:
-
        .. py:method:: getHighestBlockYAt(self, _0:Location, _1:HeightMap) -> int
           :async:
           :noindex:
 
        .. py:method:: getHighestBlockYAt(self, _0:Location, _1:HeightmapType) -> int
+          :async:
+          :noindex:
+
+       .. py:method:: getHighestBlockYAt(self, _0:int, _1:int) -> int
           :async:
           :noindex:
 
@@ -646,19 +650,19 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: getNearbyEntitiesByType(self, _0:Class, _1:Location, _2:double, _3:double) -> typing.List[:py:class:`T`]
-          :async:
-          :noindex:
-
        .. py:method:: getNearbyEntitiesByType(self, _0:Class, _1:Location, _2:double, _3:Predicate) -> typing.List[:py:class:`T`]
           :async:
           :noindex:
 
-       .. py:method:: getNearbyEntitiesByType(self, _0:Class, _1:Location, _2:double, _3:double, _4:double) -> typing.List[:py:class:`T`]
+       .. py:method:: getNearbyEntitiesByType(self, _0:Class, _1:Location, _2:double, _3:double) -> typing.List[:py:class:`T`]
           :async:
           :noindex:
 
        .. py:method:: getNearbyEntitiesByType(self, _0:Class, _1:Location, _2:double, _3:double, _4:Predicate) -> typing.List[:py:class:`T`]
+          :async:
+          :noindex:
+
+       .. py:method:: getNearbyEntitiesByType(self, _0:Class, _1:Location, _2:double, _3:double, _4:double) -> typing.List[:py:class:`T`]
           :async:
           :noindex:
 
@@ -673,19 +677,19 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: getNearbyLivingEntities(self, _0:Location, _1:double, _2:double) -> typing.List[:py:class:`LivingEntity`]
-          :async:
-          :noindex:
-
        .. py:method:: getNearbyLivingEntities(self, _0:Location, _1:double, _2:Predicate) -> typing.List[:py:class:`LivingEntity`]
           :async:
           :noindex:
 
-       .. py:method:: getNearbyLivingEntities(self, _0:Location, _1:double, _2:double, _3:double) -> typing.List[:py:class:`LivingEntity`]
+       .. py:method:: getNearbyLivingEntities(self, _0:Location, _1:double, _2:double) -> typing.List[:py:class:`LivingEntity`]
           :async:
           :noindex:
 
        .. py:method:: getNearbyLivingEntities(self, _0:Location, _1:double, _2:double, _3:Predicate) -> typing.List[:py:class:`LivingEntity`]
+          :async:
+          :noindex:
+
+       .. py:method:: getNearbyLivingEntities(self, _0:Location, _1:double, _2:double, _3:double) -> typing.List[:py:class:`LivingEntity`]
           :async:
           :noindex:
 
@@ -700,19 +704,19 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: getNearbyPlayers(self, _0:Location, _1:double, _2:double) -> typing.List[:py:class:`Player`]
-          :async:
-          :noindex:
-
        .. py:method:: getNearbyPlayers(self, _0:Location, _1:double, _2:Predicate) -> typing.List[:py:class:`Player`]
           :async:
           :noindex:
 
-       .. py:method:: getNearbyPlayers(self, _0:Location, _1:double, _2:double, _3:double) -> typing.List[:py:class:`Player`]
+       .. py:method:: getNearbyPlayers(self, _0:Location, _1:double, _2:double) -> typing.List[:py:class:`Player`]
           :async:
           :noindex:
 
        .. py:method:: getNearbyPlayers(self, _0:Location, _1:double, _2:double, _3:Predicate) -> typing.List[:py:class:`Player`]
+          :async:
+          :noindex:
+
+       .. py:method:: getNearbyPlayers(self, _0:Location, _1:double, _2:double, _3:double) -> typing.List[:py:class:`Player`]
           :async:
           :noindex:
 
@@ -725,11 +729,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
       :async:
 
 
-   .. py:method:: getOrDefault(self, _0:Pointer, _1:Object) -> :py:class:`Object`
+   .. py:method:: getOrDefault(self, pointer:Pointer, defaultValue:Object) -> :py:class:`Object`
       :async:
 
 
-   .. py:method:: getOrDefaultFrom(self, _0:Pointer, _1:Supplier) -> :py:class:`Object`
+   .. py:method:: getOrDefaultFrom(self, pointer:Pointer, defaultValue:Supplier) -> :py:class:`Object`
       :async:
 
 
@@ -932,7 +936,7 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
       :async:
 
 
-   .. py:method:: hideBossBar(self, _0:BossBar) -> None
+   .. py:method:: hideBossBar(self, bar:BossBar) -> None
       :async:
 
 
@@ -1064,15 +1068,15 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
 
    .. py:method:: locateNearestStructure
 
+       .. py:method:: locateNearestStructure(self, _0:Location, _1:Structure, _2:int, _3:boolean) -> :py:class:`StructureSearchResult`
+          :async:
+          :noindex:
+
        .. py:method:: locateNearestStructure(self, _0:Location, _1:StructureType, _2:int, _3:boolean) -> :py:class:`StructureSearchResult`
           :async:
           :noindex:
 
        .. py:method:: locateNearestStructure(self, _0:Location, _1:StructureType, _2:int, _3:boolean) -> :py:class:`Location`
-          :async:
-          :noindex:
-
-       .. py:method:: locateNearestStructure(self, _0:Location, _1:Structure, _2:int, _3:boolean) -> :py:class:`StructureSearchResult`
           :async:
           :noindex:
 
@@ -1089,11 +1093,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
 
    .. py:method:: openBook
 
-       .. py:method:: openBook(self, _0:Book) -> None
+       .. py:method:: openBook(self, book:Book) -> None
           :async:
           :noindex:
 
-       .. py:method:: openBook(self, _0:Builder) -> None
+       .. py:method:: openBook(self, book:Builder) -> None
           :async:
           :noindex:
 
@@ -1119,19 +1123,19 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
 
    .. py:method:: playSound
 
-       .. py:method:: playSound(self, _0:Sound) -> None
+       .. py:method:: playSound(self, sound:Sound) -> None
           :async:
           :noindex:
 
-       .. py:method:: playSound(self, _0:Sound, _1:Emitter) -> None
-          :async:
-          :noindex:
-
-       .. py:method:: playSound(self, _0:Entity, _1:String, _2:float, _3:float) -> None
+       .. py:method:: playSound(self, sound:Sound, emitter:Emitter) -> None
           :async:
           :noindex:
 
        .. py:method:: playSound(self, _0:Entity, _1:Sound, _2:float, _3:float) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: playSound(self, _0:Entity, _1:String, _2:float, _3:float) -> None
           :async:
           :noindex:
 
@@ -1143,11 +1147,7 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: playSound(self, _0:Sound, _1:double, _2:double, _3:double) -> None
-          :async:
-          :noindex:
-
-       .. py:method:: playSound(self, _0:Location, _1:String, _2:SoundCategory, _3:float, _4:float) -> None
+       .. py:method:: playSound(self, sound:Sound, x:double, y:double, z:double) -> None
           :async:
           :noindex:
 
@@ -1160,6 +1160,10 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :noindex:
 
        .. py:method:: playSound(self, _0:Location, _1:Sound, _2:SoundCategory, _3:float, _4:float) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: playSound(self, _0:Location, _1:String, _2:SoundCategory, _3:float, _4:float) -> None
           :async:
           :noindex:
 
@@ -1193,11 +1197,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: rayTraceEntities(self, _0:Location, _1:Vector, _2:double, _3:double) -> :py:class:`RayTraceResult`
+       .. py:method:: rayTraceEntities(self, _0:Location, _1:Vector, _2:double, _3:Predicate) -> :py:class:`RayTraceResult`
           :async:
           :noindex:
 
-       .. py:method:: rayTraceEntities(self, _0:Location, _1:Vector, _2:double, _3:Predicate) -> :py:class:`RayTraceResult`
+       .. py:method:: rayTraceEntities(self, _0:Location, _1:Vector, _2:double, _3:double) -> :py:class:`RayTraceResult`
           :async:
           :noindex:
 
@@ -1236,11 +1240,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
 
    .. py:method:: sendActionBar
 
-       .. py:method:: sendActionBar(self, _0:Component) -> None
+       .. py:method:: sendActionBar(self, message:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendActionBar(self, _0:ComponentLike) -> None
+       .. py:method:: sendActionBar(self, message:ComponentLike) -> None
           :async:
           :noindex:
 
@@ -1251,96 +1255,96 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
 
    .. py:method:: sendMessage
 
-       .. py:method:: sendMessage(self, _0:Component) -> None
+       .. py:method:: sendMessage(self, message:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:ComponentLike) -> None
+       .. py:method:: sendMessage(self, message:ComponentLike) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:SignedMessage, _1:Bound) -> None
+       .. py:method:: sendMessage(self, message:Component, boundChatType:Bound) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Component, _1:Bound) -> None
+       .. py:method:: sendMessage(self, message:Component, type:MessageType) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identity, _1:Component) -> None
+       .. py:method:: sendMessage(self, message:ComponentLike, boundChatType:Bound) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:ComponentLike, _1:Bound) -> None
+       .. py:method:: sendMessage(self, message:ComponentLike, type:MessageType) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Component, _1:MessageType) -> None
+       .. py:method:: sendMessage(self, source:Identified, message:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:ComponentLike, _1:MessageType) -> None
+       .. py:method:: sendMessage(self, source:Identified, message:ComponentLike) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identified, _1:Component) -> None
+       .. py:method:: sendMessage(self, source:Identity, message:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identity, _1:ComponentLike) -> None
+       .. py:method:: sendMessage(self, source:Identity, message:ComponentLike) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identified, _1:ComponentLike) -> None
+       .. py:method:: sendMessage(self, signedMessage:SignedMessage, boundChatType:Bound) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identity, _1:Component, _2:MessageType) -> None
+       .. py:method:: sendMessage(self, source:Identified, message:Component, type:MessageType) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identified, _1:Component, _2:MessageType) -> None
+       .. py:method:: sendMessage(self, source:Identified, message:ComponentLike, type:MessageType) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identity, _1:ComponentLike, _2:MessageType) -> None
+       .. py:method:: sendMessage(self, source:Identity, message:Component, type:MessageType) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:Identified, _1:ComponentLike, _2:MessageType) -> None
+       .. py:method:: sendMessage(self, source:Identity, message:ComponentLike, type:MessageType) -> None
           :async:
           :noindex:
 
 
    .. py:method:: sendPlayerListFooter
 
-       .. py:method:: sendPlayerListFooter(self, _0:Component) -> None
+       .. py:method:: sendPlayerListFooter(self, footer:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendPlayerListFooter(self, _0:ComponentLike) -> None
+       .. py:method:: sendPlayerListFooter(self, footer:ComponentLike) -> None
           :async:
           :noindex:
 
 
    .. py:method:: sendPlayerListHeader
 
-       .. py:method:: sendPlayerListHeader(self, _0:Component) -> None
+       .. py:method:: sendPlayerListHeader(self, header:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendPlayerListHeader(self, _0:ComponentLike) -> None
+       .. py:method:: sendPlayerListHeader(self, header:ComponentLike) -> None
           :async:
           :noindex:
 
 
    .. py:method:: sendPlayerListHeaderAndFooter
 
-       .. py:method:: sendPlayerListHeaderAndFooter(self, _0:Component, _1:Component) -> None
+       .. py:method:: sendPlayerListHeaderAndFooter(self, header:Component, footer:Component) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendPlayerListHeaderAndFooter(self, _0:ComponentLike, _1:ComponentLike) -> None
+       .. py:method:: sendPlayerListHeaderAndFooter(self, header:ComponentLike, footer:ComponentLike) -> None
           :async:
           :noindex:
 
@@ -1349,7 +1353,7 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
       :async:
 
 
-   .. py:method:: sendTitlePart(self, _0:TitlePart, _1:Object) -> None
+   .. py:method:: sendTitlePart(self, part:TitlePart, value:Object) -> None
       :async:
 
 
@@ -1563,11 +1567,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
       :async:
 
 
-   .. py:method:: showBossBar(self, _0:BossBar) -> None
+   .. py:method:: showBossBar(self, bar:BossBar) -> None
       :async:
 
 
-   .. py:method:: showTitle(self, _0:Title) -> None
+   .. py:method:: showTitle(self, title:Title) -> None
       :async:
 
 
@@ -1577,19 +1581,19 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: spawn(self, _0:Location, _1:Class, _2:SpawnReason) -> :py:class:`Entity`
-          :async:
-          :noindex:
-
        .. py:method:: spawn(self, _0:Location, _1:Class, _2:Consumer) -> :py:class:`Entity`
           :async:
           :noindex:
 
-       .. py:method:: spawn(self, _0:Location, _1:Class, _2:SpawnReason, _3:Consumer) -> :py:class:`Entity`
+       .. py:method:: spawn(self, _0:Location, _1:Class, _2:SpawnReason) -> :py:class:`Entity`
           :async:
           :noindex:
 
        .. py:method:: spawn(self, _0:Location, _1:Class, _2:Consumer, _3:SpawnReason) -> :py:class:`Entity`
+          :async:
+          :noindex:
+
+       .. py:method:: spawn(self, _0:Location, _1:Class, _2:SpawnReason, _3:Consumer) -> :py:class:`Entity`
           :async:
           :noindex:
 
@@ -1630,11 +1634,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
 
    .. py:method:: spawnFallingBlock
 
-       .. py:method:: spawnFallingBlock(self, _0:Location, _1:MaterialData) -> :py:class:`FallingBlock`
+       .. py:method:: spawnFallingBlock(self, _0:Location, _1:BlockData) -> :py:class:`FallingBlock`
           :async:
           :noindex:
 
-       .. py:method:: spawnFallingBlock(self, _0:Location, _1:BlockData) -> :py:class:`FallingBlock`
+       .. py:method:: spawnFallingBlock(self, _0:Location, _1:MaterialData) -> :py:class:`FallingBlock`
           :async:
           :noindex:
 
@@ -1657,19 +1661,19 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: spawnParticle(self, _0:Particle, _1:double, _2:double, _3:double, _4:int, _5:Object) -> None
-          :async:
-          :noindex:
-
        .. py:method:: spawnParticle(self, _0:Particle, _1:Location, _2:int, _3:double, _4:double, _5:double) -> None
           :async:
           :noindex:
 
-       .. py:method:: spawnParticle(self, _0:Particle, _1:Location, _2:int, _3:double, _4:double, _5:double, _6:double) -> None
+       .. py:method:: spawnParticle(self, _0:Particle, _1:double, _2:double, _3:double, _4:int, _5:Object) -> None
           :async:
           :noindex:
 
        .. py:method:: spawnParticle(self, _0:Particle, _1:Location, _2:int, _3:double, _4:double, _5:double, _6:Object) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: spawnParticle(self, _0:Particle, _1:Location, _2:int, _3:double, _4:double, _5:double, _6:double) -> None
           :async:
           :noindex:
 
@@ -1681,15 +1685,15 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
           :async:
           :noindex:
 
-       .. py:method:: spawnParticle(self, _0:Particle, _1:double, _2:double, _3:double, _4:int, _5:double, _6:double, _7:double, _8:double) -> None
-          :async:
-          :noindex:
-
        .. py:method:: spawnParticle(self, _0:Particle, _1:Location, _2:int, _3:double, _4:double, _5:double, _6:double, _7:Object, _8:boolean) -> None
           :async:
           :noindex:
 
        .. py:method:: spawnParticle(self, _0:Particle, _1:double, _2:double, _3:double, _4:int, _5:double, _6:double, _7:double, _8:Object) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: spawnParticle(self, _0:Particle, _1:double, _2:double, _3:double, _4:int, _5:double, _6:double, _7:double, _8:double) -> None
           :async:
           :noindex:
 
@@ -1712,11 +1716,11 @@ Python Proxy to `org.bukkit.World <https://hub.spigotmc.org/javadocs/spigot/org/
 
    .. py:method:: stopSound
 
-       .. py:method:: stopSound(self, _0:SoundStop) -> None
+       .. py:method:: stopSound(self, sound:Sound) -> None
           :async:
           :noindex:
 
-       .. py:method:: stopSound(self, _0:Sound) -> None
+       .. py:method:: stopSound(self, stop:SoundStop) -> None
           :async:
           :noindex:
 

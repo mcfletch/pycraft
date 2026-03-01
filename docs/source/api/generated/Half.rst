@@ -36,11 +36,11 @@ Python Proxy to `org.bukkit.block.data.Bisected.Half <https://hub.spigotmc.org/j
 
    .. py:method:: compareTo
 
-       .. py:method:: compareTo(self, _0:Object) -> int
+       .. py:method:: compareTo(self, _0:Enum) -> int
           :async:
           :noindex:
 
-       .. py:method:: compareTo(self, _0:Enum) -> int
+       .. py:method:: compareTo(self, _0:Object) -> int
           :async:
           :noindex:
 

@@ -69,6 +69,10 @@ Python Proxy to `org.bukkit.inventory.InventoryView <https://hub.spigotmc.org/ja
       :async:
 
 
+   .. py:method:: getOriginalTitle(self) -> str
+      :async:
+
+
    .. py:method:: getPlayer(self) -> :py:class:`HumanEntity`
       :async:
 
@@ -116,6 +120,10 @@ Python Proxy to `org.bukkit.inventory.InventoryView <https://hub.spigotmc.org/ja
 
 
    .. py:method:: setProperty(self, _0:Property, _1:int) -> bool
+      :async:
+
+
+   .. py:method:: setTitle(self, _0:String) -> None
       :async:
 
 

@@ -85,7 +85,7 @@ Python Proxy to `org.bukkit.inventory.meta.BookMeta <https://hub.spigotmc.org/ja
       :async:
 
 
-   .. py:method:: examine(self, _0:Examiner) -> :py:class:`Object`
+   .. py:method:: examine(self, examiner:Examiner) -> :py:class:`Object`
       :async:
 
 
@@ -299,11 +299,11 @@ Python Proxy to `org.bukkit.inventory.meta.BookMeta <https://hub.spigotmc.org/ja
           :async:
           :noindex:
 
-       .. py:method:: pages(self, _0:List) -> :py:class:`Book`
+       .. py:method:: pages(self, pages:Component[]) -> :py:class:`Book`
           :async:
           :noindex:
 
-       .. py:method:: pages(self, _0:Component[]) -> :py:class:`Book`
+       .. py:method:: pages(self, pages:List) -> :py:class:`Book`
           :async:
           :noindex:
 
@@ -389,11 +389,11 @@ Python Proxy to `org.bukkit.inventory.meta.BookMeta <https://hub.spigotmc.org/ja
 
    .. py:method:: setPages
 
-       .. py:method:: setPages(self, _0:String[]) -> None
+       .. py:method:: setPages(self, _0:List) -> None
           :async:
           :noindex:
 
-       .. py:method:: setPages(self, _0:List) -> None
+       .. py:method:: setPages(self, _0:String[]) -> None
           :async:
           :noindex:
 

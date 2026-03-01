@@ -89,11 +89,11 @@ Python Proxy to `org.bukkit.inventory.Inventory <https://hub.spigotmc.org/javado
 
    .. py:method:: first
 
-       .. py:method:: first(self, _0:Material) -> int
+       .. py:method:: first(self, _0:ItemStack) -> int
           :async:
           :noindex:
 
-       .. py:method:: first(self, _0:ItemStack) -> int
+       .. py:method:: first(self, _0:Material) -> int
           :async:
           :noindex:
 

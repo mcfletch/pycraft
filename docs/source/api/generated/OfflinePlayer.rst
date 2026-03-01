@@ -68,11 +68,11 @@ Python Proxy to `org.bukkit.OfflinePlayer <https://hub.spigotmc.org/javadocs/spi
           :async:
           :noindex:
 
-       .. py:method:: banPlayer(self, _0:String, _1:String) -> :py:class:`BanEntry`
+       .. py:method:: banPlayer(self, _0:String, _1:Date) -> :py:class:`BanEntry`
           :async:
           :noindex:
 
-       .. py:method:: banPlayer(self, _0:String, _1:Date) -> :py:class:`BanEntry`
+       .. py:method:: banPlayer(self, _0:String, _1:String) -> :py:class:`BanEntry`
           :async:
           :noindex:
 
@@ -95,19 +95,19 @@ Python Proxy to `org.bukkit.OfflinePlayer <https://hub.spigotmc.org/javadocs/spi
           :async:
           :noindex:
 
-       .. py:method:: decrementStatistic(self, _0:Statistic, _1:int) -> None
-          :async:
-          :noindex:
-
        .. py:method:: decrementStatistic(self, _0:Statistic, _1:Material) -> None
           :async:
           :noindex:
 
-       .. py:method:: decrementStatistic(self, _0:Statistic, _1:Material, _2:int) -> None
+       .. py:method:: decrementStatistic(self, _0:Statistic, _1:int) -> None
           :async:
           :noindex:
 
        .. py:method:: decrementStatistic(self, _0:Statistic, _1:EntityType, _2:int) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: decrementStatistic(self, _0:Statistic, _1:Material, _2:int) -> None
           :async:
           :noindex:
 
@@ -160,11 +160,11 @@ Python Proxy to `org.bukkit.OfflinePlayer <https://hub.spigotmc.org/javadocs/spi
           :async:
           :noindex:
 
-       .. py:method:: getStatistic(self, _0:Statistic, _1:Material) -> int
+       .. py:method:: getStatistic(self, _0:Statistic, _1:EntityType) -> int
           :async:
           :noindex:
 
-       .. py:method:: getStatistic(self, _0:Statistic, _1:EntityType) -> int
+       .. py:method:: getStatistic(self, _0:Statistic, _1:Material) -> int
           :async:
           :noindex:
 
@@ -189,11 +189,11 @@ Python Proxy to `org.bukkit.OfflinePlayer <https://hub.spigotmc.org/javadocs/spi
           :async:
           :noindex:
 
-       .. py:method:: incrementStatistic(self, _0:Statistic, _1:Material) -> None
+       .. py:method:: incrementStatistic(self, _0:Statistic, _1:EntityType) -> None
           :async:
           :noindex:
 
-       .. py:method:: incrementStatistic(self, _0:Statistic, _1:EntityType) -> None
+       .. py:method:: incrementStatistic(self, _0:Statistic, _1:Material) -> None
           :async:
           :noindex:
 
@@ -201,11 +201,11 @@ Python Proxy to `org.bukkit.OfflinePlayer <https://hub.spigotmc.org/javadocs/spi
           :async:
           :noindex:
 
-       .. py:method:: incrementStatistic(self, _0:Statistic, _1:Material, _2:int) -> None
+       .. py:method:: incrementStatistic(self, _0:Statistic, _1:EntityType, _2:int) -> None
           :async:
           :noindex:
 
-       .. py:method:: incrementStatistic(self, _0:Statistic, _1:EntityType, _2:int) -> None
+       .. py:method:: incrementStatistic(self, _0:Statistic, _1:Material, _2:int) -> None
           :async:
           :noindex:
 

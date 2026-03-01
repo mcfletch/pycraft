@@ -113,6 +113,24 @@ Python Proxy to `org.bukkit.util.Vector <https://hub.spigotmc.org/javadocs/spigo
       :async:
 
 
+   .. py:method:: fromJOML
+
+       .. py:method:: fromJOML(cls, _0:Vector3d) -> :py:class:`Vector`
+          :async:
+          :classmethod:
+          :noindex:
+
+       .. py:method:: fromJOML(cls, _0:Vector3f) -> :py:class:`Vector`
+          :async:
+          :classmethod:
+          :noindex:
+
+       .. py:method:: fromJOML(cls, _0:Vector3i) -> :py:class:`Vector`
+          :async:
+          :classmethod:
+          :noindex:
+
+
    .. py:method:: from_server(record)
       
 
@@ -218,19 +236,19 @@ Python Proxy to `org.bukkit.util.Vector <https://hub.spigotmc.org/javadocs/spigo
 
    .. py:method:: multiply
 
-       .. py:method:: multiply(self, _0:float) -> :py:class:`Vector`
-          :async:
-          :noindex:
-
-       .. py:method:: multiply(self, _0:int) -> :py:class:`Vector`
-          :async:
-          :noindex:
-
        .. py:method:: multiply(self, _0:Vector) -> :py:class:`Vector`
           :async:
           :noindex:
 
        .. py:method:: multiply(self, _0:double) -> :py:class:`Vector`
+          :async:
+          :noindex:
+
+       .. py:method:: multiply(self, _0:float) -> :py:class:`Vector`
+          :async:
+          :noindex:
+
+       .. py:method:: multiply(self, _0:int) -> :py:class:`Vector`
           :async:
           :noindex:
 
@@ -273,6 +291,10 @@ Python Proxy to `org.bukkit.util.Vector <https://hub.spigotmc.org/javadocs/spigo
 
    .. py:method:: setX
 
+       .. py:method:: setX(self, _0:double) -> :py:class:`Vector`
+          :async:
+          :noindex:
+
        .. py:method:: setX(self, _0:float) -> :py:class:`Vector`
           :async:
           :noindex:
@@ -281,18 +303,14 @@ Python Proxy to `org.bukkit.util.Vector <https://hub.spigotmc.org/javadocs/spigo
           :async:
           :noindex:
 
-       .. py:method:: setX(self, _0:double) -> :py:class:`Vector`
-          :async:
-          :noindex:
-
 
    .. py:method:: setY
 
-       .. py:method:: setY(self, _0:float) -> :py:class:`Vector`
+       .. py:method:: setY(self, _0:double) -> :py:class:`Vector`
           :async:
           :noindex:
 
-       .. py:method:: setY(self, _0:double) -> :py:class:`Vector`
+       .. py:method:: setY(self, _0:float) -> :py:class:`Vector`
           :async:
           :noindex:
 
@@ -337,6 +355,25 @@ Python Proxy to `org.bukkit.util.Vector <https://hub.spigotmc.org/javadocs/spigo
 
    .. py:method:: toString(self) -> str
       :async:
+
+
+   .. py:method:: toVector3d(self) -> :py:class:`Vector3d`
+      :async:
+
+
+   .. py:method:: toVector3f(self) -> :py:class:`Vector3f`
+      :async:
+
+
+   .. py:method:: toVector3i
+
+       .. py:method:: toVector3i(self) -> :py:class:`Vector3i`
+          :async:
+          :noindex:
+
+       .. py:method:: toVector3i(self, _0:int) -> :py:class:`Vector3i`
+          :async:
+          :noindex:
 
 
    .. py:method:: zero(self) -> :py:class:`Vector`

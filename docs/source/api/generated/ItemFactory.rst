@@ -33,11 +33,11 @@ Python Proxy to `org.bukkit.inventory.ItemFactory <https://hub.spigotmc.org/java
 
    .. py:method:: asMetaFor
 
-       .. py:method:: asMetaFor(self, _0:ItemMeta, _1:Material) -> :py:class:`ItemMeta`
+       .. py:method:: asMetaFor(self, _0:ItemMeta, _1:ItemStack) -> :py:class:`ItemMeta`
           :async:
           :noindex:
 
-       .. py:method:: asMetaFor(self, _0:ItemMeta, _1:ItemStack) -> :py:class:`ItemMeta`
+       .. py:method:: asMetaFor(self, _0:ItemMeta, _1:Material) -> :py:class:`ItemMeta`
           :async:
           :noindex:
 
@@ -86,19 +86,19 @@ Python Proxy to `org.bukkit.inventory.ItemFactory <https://hub.spigotmc.org/java
 
    .. py:method:: hoverContentOf
 
-       .. py:method:: hoverContentOf(self, _0:ItemStack) -> :py:class:`Content`
-          :async:
-          :noindex:
-
        .. py:method:: hoverContentOf(self, _0:Entity) -> :py:class:`Content`
           :async:
           :noindex:
 
-       .. py:method:: hoverContentOf(self, _0:Entity, _1:BaseComponent[]) -> :py:class:`Content`
+       .. py:method:: hoverContentOf(self, _0:ItemStack) -> :py:class:`Content`
           :async:
           :noindex:
 
        .. py:method:: hoverContentOf(self, _0:Entity, _1:BaseComponent) -> :py:class:`Content`
+          :async:
+          :noindex:
+
+       .. py:method:: hoverContentOf(self, _0:Entity, _1:BaseComponent[]) -> :py:class:`Content`
           :async:
           :noindex:
 

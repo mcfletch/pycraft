@@ -69,10 +69,6 @@ Python Proxy to `org.bukkit.generator.ChunkGenerator.ChunkData <https://hub.spig
 
    .. py:method:: setBlock
 
-       .. py:method:: setBlock(self, _0:int, _1:int, _2:int, _3:MaterialData) -> None
-          :async:
-          :noindex:
-
        .. py:method:: setBlock(self, _0:int, _1:int, _2:int, _3:BlockData) -> None
           :async:
           :noindex:
@@ -81,18 +77,22 @@ Python Proxy to `org.bukkit.generator.ChunkGenerator.ChunkData <https://hub.spig
           :async:
           :noindex:
 
-
-   .. py:method:: setRegion
-
-       .. py:method:: setRegion(self, _0:int, _1:int, _2:int, _3:int, _4:int, _5:int, _6:MaterialData) -> None
+       .. py:method:: setBlock(self, _0:int, _1:int, _2:int, _3:MaterialData) -> None
           :async:
           :noindex:
+
+
+   .. py:method:: setRegion
 
        .. py:method:: setRegion(self, _0:int, _1:int, _2:int, _3:int, _4:int, _5:int, _6:BlockData) -> None
           :async:
           :noindex:
 
        .. py:method:: setRegion(self, _0:int, _1:int, _2:int, _3:int, _4:int, _5:int, _6:Material) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: setRegion(self, _0:int, _1:int, _2:int, _3:int, _4:int, _5:int, _6:MaterialData) -> None
           :async:
           :noindex:
 

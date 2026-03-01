@@ -80,11 +80,11 @@ Python Proxy to `org.bukkit.permissions.Permissible <https://hub.spigotmc.org/ja
 
    .. py:method:: isPermissionSet
 
-       .. py:method:: isPermissionSet(self, _0:String) -> bool
+       .. py:method:: isPermissionSet(self, _0:Permission) -> bool
           :async:
           :noindex:
 
-       .. py:method:: isPermissionSet(self, _0:Permission) -> bool
+       .. py:method:: isPermissionSet(self, _0:String) -> bool
           :async:
           :noindex:
 

@@ -6,19 +6,17 @@ Leaves
 Inheritance
 ------------
 * pycraft.server.final.Leaves
-* :py:class:`pycraft.server.world.Leaves`
-* :py:class:`pycraft.server.world.BlockData`
 * :py:class:`pycraft.server.proxyobjects.ServerObjectEnum`
 * :py:class:`pycraft.server.proxyobjects.ServerObjectProxy`
 
 Python Proxy to `org.bukkit.block.data.type.Bamboo.Leaves <https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/data/type/Bamboo/Leaves.html>`_ from :py:mod:`pycraft.server.final`
 
-.. py:class:: Leaves(self, string_value=None, **named)
+.. py:class:: Leaves(self, key)
    :canonical: pycraft.server.final.Leaves
 
-   Data describing a particular block (or a potential block)
+   Holder for an enumeration where the enumeration's key is used to lookup the value
 
-   .. py:method:: __init__(self, string_value=None, **named)
+   .. py:method:: __init__(self, key)
       
 
       Set each named key/value as an attribute on object
@@ -38,11 +36,11 @@ Python Proxy to `org.bukkit.block.data.type.Bamboo.Leaves <https://hub.spigotmc.
 
    .. py:method:: compareTo
 
-       .. py:method:: compareTo(self, _0:Object) -> int
+       .. py:method:: compareTo(self, _0:Enum) -> int
           :async:
           :noindex:
 
-       .. py:method:: compareTo(self, _0:Enum) -> int
+       .. py:method:: compareTo(self, _0:Object) -> int
           :async:
           :noindex:
 
@@ -55,7 +53,7 @@ Python Proxy to `org.bukkit.block.data.type.Bamboo.Leaves <https://hub.spigotmc.
       :async:
 
 
-   .. py:method:: from_server(named)
+   .. py:method:: from_server(key)
       
 
       Convert server-side structure to local object

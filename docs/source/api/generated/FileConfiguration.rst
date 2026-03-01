@@ -37,11 +37,11 @@ Python Proxy to `org.bukkit.configuration.file.FileConfiguration <https://hub.sp
 
    .. py:method:: addDefaults
 
-       .. py:method:: addDefaults(self, _0:Map) -> None
+       .. py:method:: addDefaults(self, _0:Configuration) -> None
           :async:
           :noindex:
 
-       .. py:method:: addDefaults(self, _0:Configuration) -> None
+       .. py:method:: addDefaults(self, _0:Map) -> None
           :async:
           :noindex:
 
@@ -397,11 +397,11 @@ Python Proxy to `org.bukkit.configuration.file.FileConfiguration <https://hub.sp
 
    .. py:method:: load
 
-       .. py:method:: load(self, _0:Reader) -> None
+       .. py:method:: load(self, _0:File) -> None
           :async:
           :noindex:
 
-       .. py:method:: load(self, _0:File) -> None
+       .. py:method:: load(self, _0:Reader) -> None
           :async:
           :noindex:
 

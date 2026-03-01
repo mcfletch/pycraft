@@ -99,15 +99,15 @@ Python Proxy to `org.bukkit.structure.StructureManager <https://hub.spigotmc.org
           :async:
           :noindex:
 
-       .. py:method:: saveStructure(self, _0:OutputStream, _1:Structure) -> None
-          :async:
-          :noindex:
-
        .. py:method:: saveStructure(self, _0:File, _1:Structure) -> None
           :async:
           :noindex:
 
        .. py:method:: saveStructure(self, _0:NamespacedKey, _1:Structure) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: saveStructure(self, _0:OutputStream, _1:Structure) -> None
           :async:
           :noindex:
 

@@ -29,11 +29,11 @@ Python Proxy to `org.bukkit.permissions.Permission <https://hub.spigotmc.org/jav
 
    .. py:method:: addParent
 
-       .. py:method:: addParent(self, _0:String, _1:boolean) -> :py:class:`Permission`
+       .. py:method:: addParent(self, _0:Permission, _1:boolean) -> None
           :async:
           :noindex:
 
-       .. py:method:: addParent(self, _0:Permission, _1:boolean) -> None
+       .. py:method:: addParent(self, _0:String, _1:boolean) -> :py:class:`Permission`
           :async:
           :noindex:
 

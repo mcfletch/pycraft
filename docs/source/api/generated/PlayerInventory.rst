@@ -90,11 +90,11 @@ Python Proxy to `org.bukkit.inventory.PlayerInventory <https://hub.spigotmc.org/
 
    .. py:method:: first
 
-       .. py:method:: first(self, _0:Material) -> int
+       .. py:method:: first(self, _0:ItemStack) -> int
           :async:
           :noindex:
 
-       .. py:method:: first(self, _0:ItemStack) -> int
+       .. py:method:: first(self, _0:Material) -> int
           :async:
           :noindex:
 
@@ -287,11 +287,11 @@ Python Proxy to `org.bukkit.inventory.PlayerInventory <https://hub.spigotmc.org/
 
    .. py:method:: setItem
 
-       .. py:method:: setItem(self, _0:int, _1:ItemStack) -> None
+       .. py:method:: setItem(self, _0:EquipmentSlot, _1:ItemStack) -> None
           :async:
           :noindex:
 
-       .. py:method:: setItem(self, _0:EquipmentSlot, _1:ItemStack) -> None
+       .. py:method:: setItem(self, _0:int, _1:ItemStack) -> None
           :async:
           :noindex:
 

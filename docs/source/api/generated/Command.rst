@@ -29,22 +29,22 @@ Python Proxy to `org.bukkit.command.Command <https://hub.spigotmc.org/javadocs/s
 
    .. py:method:: broadcastCommandMessage
 
-       .. py:method:: broadcastCommandMessage(cls, _0:CommandSender, _1:String) -> None
-          :async:
-          :classmethod:
-          :noindex:
-
        .. py:method:: broadcastCommandMessage(cls, _0:CommandSender, _1:Component) -> None
           :async:
           :classmethod:
           :noindex:
 
-       .. py:method:: broadcastCommandMessage(cls, _0:CommandSender, _1:String, _2:boolean) -> None
+       .. py:method:: broadcastCommandMessage(cls, _0:CommandSender, _1:String) -> None
           :async:
           :classmethod:
           :noindex:
 
        .. py:method:: broadcastCommandMessage(cls, _0:CommandSender, _1:Component, _2:boolean) -> None
+          :async:
+          :classmethod:
+          :noindex:
+
+       .. py:method:: broadcastCommandMessage(cls, _0:CommandSender, _1:String, _2:boolean) -> None
           :async:
           :classmethod:
           :noindex:

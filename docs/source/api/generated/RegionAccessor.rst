@@ -47,11 +47,11 @@ Python Proxy to `org.bukkit.RegionAccessor <https://hub.spigotmc.org/javadocs/sp
           :async:
           :noindex:
 
-       .. py:method:: generateTree(self, _0:Location, _1:Random, _2:TreeType, _3:Predicate) -> bool
+       .. py:method:: generateTree(self, _0:Location, _1:Random, _2:TreeType, _3:Consumer) -> bool
           :async:
           :noindex:
 
-       .. py:method:: generateTree(self, _0:Location, _1:Random, _2:TreeType, _3:Consumer) -> bool
+       .. py:method:: generateTree(self, _0:Location, _1:Random, _2:TreeType, _3:Predicate) -> bool
           :async:
           :noindex:
 
@@ -103,6 +103,25 @@ Python Proxy to `org.bukkit.RegionAccessor <https://hub.spigotmc.org/javadocs/sp
 
    .. py:method:: getEntitiesByClasses(self, _0:Class[]) -> typing.List[:py:class:`Entity`]
       :async:
+
+
+   .. py:method:: getHighestBlockYAt
+
+       .. py:method:: getHighestBlockYAt(self, _0:Location) -> int
+          :async:
+          :noindex:
+
+       .. py:method:: getHighestBlockYAt(self, _0:Location, _1:HeightMap) -> int
+          :async:
+          :noindex:
+
+       .. py:method:: getHighestBlockYAt(self, _0:int, _1:int) -> int
+          :async:
+          :noindex:
+
+       .. py:method:: getHighestBlockYAt(self, _0:int, _1:int, _2:HeightMap) -> int
+          :async:
+          :noindex:
 
 
    .. py:method:: getKey(self) -> :py:class:`NamespacedKey`
@@ -191,19 +210,19 @@ Python Proxy to `org.bukkit.RegionAccessor <https://hub.spigotmc.org/javadocs/sp
           :async:
           :noindex:
 
-       .. py:method:: spawn(self, _0:Location, _1:Class, _2:SpawnReason) -> :py:class:`Entity`
-          :async:
-          :noindex:
-
        .. py:method:: spawn(self, _0:Location, _1:Class, _2:Consumer) -> :py:class:`Entity`
           :async:
           :noindex:
 
-       .. py:method:: spawn(self, _0:Location, _1:Class, _2:SpawnReason, _3:Consumer) -> :py:class:`Entity`
+       .. py:method:: spawn(self, _0:Location, _1:Class, _2:SpawnReason) -> :py:class:`Entity`
           :async:
           :noindex:
 
        .. py:method:: spawn(self, _0:Location, _1:Class, _2:Consumer, _3:SpawnReason) -> :py:class:`Entity`
+          :async:
+          :noindex:
+
+       .. py:method:: spawn(self, _0:Location, _1:Class, _2:SpawnReason, _3:Consumer) -> :py:class:`Entity`
           :async:
           :noindex:
 

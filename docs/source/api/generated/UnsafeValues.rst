@@ -64,11 +64,11 @@ Python Proxy to `org.bukkit.UnsafeValues <https://hub.spigotmc.org/javadocs/spig
           :async:
           :noindex:
 
-       .. py:method:: fromLegacy(self, _0:MaterialData, _1:boolean) -> :py:class:`Material`
+       .. py:method:: fromLegacy(self, _0:Material, _1:byte) -> :py:class:`BlockData`
           :async:
           :noindex:
 
-       .. py:method:: fromLegacy(self, _0:Material, _1:byte) -> :py:class:`BlockData`
+       .. py:method:: fromLegacy(self, _0:MaterialData, _1:boolean) -> :py:class:`Material`
           :async:
           :noindex:
 

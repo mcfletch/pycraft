@@ -89,6 +89,10 @@ Python Proxy to `org.bukkit.Chunk <https://hub.spigotmc.org/javadocs/spigot/org/
       :async:
 
 
+   .. py:method:: getLoadLevel(self) -> :py:class:`LoadLevel`
+      :async:
+
+
    .. py:method:: getPersistentDataContainer(self) -> :py:class:`PersistentDataContainer`
       :async:
 
@@ -135,6 +139,10 @@ Python Proxy to `org.bukkit.Chunk <https://hub.spigotmc.org/javadocs/spigot/org/
 
 
    .. py:method:: isForceLoaded(self) -> bool
+      :async:
+
+
+   .. py:method:: isGenerated(self) -> bool
       :async:
 
 

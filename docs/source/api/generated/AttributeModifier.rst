@@ -6,6 +6,7 @@ AttributeModifier
 Inheritance
 ------------
 * pycraft.server.final.AttributeModifier
+* :py:class:`pycraft.server.world.AttributeModifier`
 * :py:class:`pycraft.server.final.ConfigurationSerializable`
 * :py:class:`pycraft.server.proxyobjects.ServerObjectProxy`
 

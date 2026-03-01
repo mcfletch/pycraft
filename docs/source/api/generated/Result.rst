@@ -36,11 +36,11 @@ Python Proxy to `org.bukkit.event.Event.Result <https://hub.spigotmc.org/javadoc
 
    .. py:method:: compareTo
 
-       .. py:method:: compareTo(self, _0:Object) -> int
+       .. py:method:: compareTo(self, _0:Enum) -> int
           :async:
           :noindex:
 
-       .. py:method:: compareTo(self, _0:Enum) -> int
+       .. py:method:: compareTo(self, _0:Object) -> int
           :async:
           :noindex:
 

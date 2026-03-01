@@ -48,10 +48,10 @@ Python Proxy to `org.bukkit.Location <https://hub.spigotmc.org/javadocs/spigot/o
    .. py:method:: __len__(self)
       
 
-   .. py:method:: __str__(self)
+   .. py:method:: __repr__(self)
       
 
-      Return str(self).
+      Return repr(self).
 
 
    .. py:method:: __sub__(self, other)
@@ -112,11 +112,11 @@ Python Proxy to `org.bukkit.Location <https://hub.spigotmc.org/javadocs/spigot/o
           :async:
           :noindex:
 
-       .. py:method:: createExplosion(self, _0:float, _1:boolean, _2:boolean) -> bool
+       .. py:method:: createExplosion(self, _0:Entity, _1:float, _2:boolean) -> bool
           :async:
           :noindex:
 
-       .. py:method:: createExplosion(self, _0:Entity, _1:float, _2:boolean) -> bool
+       .. py:method:: createExplosion(self, _0:float, _1:boolean, _2:boolean) -> bool
           :async:
           :noindex:
 
@@ -194,11 +194,11 @@ Python Proxy to `org.bukkit.Location <https://hub.spigotmc.org/javadocs/spigot/o
           :async:
           :noindex:
 
-       .. py:method:: getNearbyEntitiesByType(self, _0:Class, _1:double, _2:double, _3:double) -> typing.List[:py:class:`T`]
+       .. py:method:: getNearbyEntitiesByType(self, _0:Class, _1:double, _2:double, _3:Predicate) -> typing.List[:py:class:`T`]
           :async:
           :noindex:
 
-       .. py:method:: getNearbyEntitiesByType(self, _0:Class, _1:double, _2:double, _3:Predicate) -> typing.List[:py:class:`T`]
+       .. py:method:: getNearbyEntitiesByType(self, _0:Class, _1:double, _2:double, _3:double) -> typing.List[:py:class:`T`]
           :async:
           :noindex:
 
@@ -221,11 +221,11 @@ Python Proxy to `org.bukkit.Location <https://hub.spigotmc.org/javadocs/spigot/o
           :async:
           :noindex:
 
-       .. py:method:: getNearbyLivingEntities(self, _0:double, _1:double, _2:double) -> typing.List[:py:class:`LivingEntity`]
+       .. py:method:: getNearbyLivingEntities(self, _0:double, _1:double, _2:Predicate) -> typing.List[:py:class:`LivingEntity`]
           :async:
           :noindex:
 
-       .. py:method:: getNearbyLivingEntities(self, _0:double, _1:double, _2:Predicate) -> typing.List[:py:class:`LivingEntity`]
+       .. py:method:: getNearbyLivingEntities(self, _0:double, _1:double, _2:double) -> typing.List[:py:class:`LivingEntity`]
           :async:
           :noindex:
 
@@ -240,11 +240,11 @@ Python Proxy to `org.bukkit.Location <https://hub.spigotmc.org/javadocs/spigot/o
           :async:
           :noindex:
 
-       .. py:method:: getNearbyPlayers(self, _0:double, _1:double) -> typing.List[:py:class:`Player`]
+       .. py:method:: getNearbyPlayers(self, _0:double, _1:Predicate) -> typing.List[:py:class:`Player`]
           :async:
           :noindex:
 
-       .. py:method:: getNearbyPlayers(self, _0:double, _1:Predicate) -> typing.List[:py:class:`Player`]
+       .. py:method:: getNearbyPlayers(self, _0:double, _1:double) -> typing.List[:py:class:`Player`]
           :async:
           :noindex:
 
@@ -358,15 +358,15 @@ Python Proxy to `org.bukkit.Location <https://hub.spigotmc.org/javadocs/spigot/o
 
    .. py:method:: offset
 
+       .. py:method:: offset(self, _0:double, _1:double, _2:double) -> :py:class:`FinePosition`
+          :async:
+          :noindex:
+
        .. py:method:: offset(self, _0:int, _1:int, _2:int) -> :py:class:`FinePosition`
           :async:
           :noindex:
 
        .. py:method:: offset(self, _0:int, _1:int, _2:int) -> :py:class:`Position`
-          :async:
-          :noindex:
-
-       .. py:method:: offset(self, _0:double, _1:double, _2:double) -> :py:class:`FinePosition`
           :async:
           :noindex:
 
@@ -461,11 +461,11 @@ Python Proxy to `org.bukkit.Location <https://hub.spigotmc.org/javadocs/spigot/o
           :async:
           :noindex:
 
-       .. py:method:: toHighestLocation(self, _0:HeightmapType) -> :py:class:`Location`
+       .. py:method:: toHighestLocation(self, _0:HeightMap) -> :py:class:`Location`
           :async:
           :noindex:
 
-       .. py:method:: toHighestLocation(self, _0:HeightMap) -> :py:class:`Location`
+       .. py:method:: toHighestLocation(self, _0:HeightmapType) -> :py:class:`Location`
           :async:
           :noindex:
 

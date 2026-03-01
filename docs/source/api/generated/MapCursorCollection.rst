@@ -45,11 +45,11 @@ Python Proxy to `org.bukkit.map.MapCursorCollection <https://hub.spigotmc.org/ja
           :async:
           :noindex:
 
-       .. py:method:: addCursor(self, _0:int, _1:int, _2:byte, _3:byte, _4:boolean, _5:String) -> :py:class:`MapCursor`
+       .. py:method:: addCursor(self, _0:int, _1:int, _2:byte, _3:byte, _4:boolean, _5:Component) -> :py:class:`MapCursor`
           :async:
           :noindex:
 
-       .. py:method:: addCursor(self, _0:int, _1:int, _2:byte, _3:byte, _4:boolean, _5:Component) -> :py:class:`MapCursor`
+       .. py:method:: addCursor(self, _0:int, _1:int, _2:byte, _3:byte, _4:boolean, _5:String) -> :py:class:`MapCursor`
           :async:
           :noindex:
 

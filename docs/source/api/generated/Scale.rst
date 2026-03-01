@@ -36,11 +36,11 @@ Python Proxy to `org.bukkit.map.MapView.Scale <https://hub.spigotmc.org/javadocs
 
    .. py:method:: compareTo
 
-       .. py:method:: compareTo(self, _0:Object) -> int
+       .. py:method:: compareTo(self, _0:Enum) -> int
           :async:
           :noindex:
 
-       .. py:method:: compareTo(self, _0:Enum) -> int
+       .. py:method:: compareTo(self, _0:Object) -> int
           :async:
           :noindex:
 
@@ -109,12 +109,12 @@ Python Proxy to `org.bukkit.map.MapView.Scale <https://hub.spigotmc.org/javadocs
 
    .. py:method:: valueOf
 
-       .. py:method:: valueOf(cls, _0:byte) -> :py:class:`Scale`
+       .. py:method:: valueOf(cls, _0:String) -> :py:class:`Scale`
           :async:
           :classmethod:
           :noindex:
 
-       .. py:method:: valueOf(cls, _0:String) -> :py:class:`Scale`
+       .. py:method:: valueOf(cls, _0:byte) -> :py:class:`Scale`
           :async:
           :classmethod:
           :noindex:

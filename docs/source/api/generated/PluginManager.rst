@@ -101,11 +101,11 @@ Python Proxy to `org.bukkit.plugin.PluginManager <https://hub.spigotmc.org/javad
 
    .. py:method:: isPluginEnabled
 
-       .. py:method:: isPluginEnabled(self, _0:String) -> bool
+       .. py:method:: isPluginEnabled(self, _0:Plugin) -> bool
           :async:
           :noindex:
 
-       .. py:method:: isPluginEnabled(self, _0:Plugin) -> bool
+       .. py:method:: isPluginEnabled(self, _0:String) -> bool
           :async:
           :noindex:
 

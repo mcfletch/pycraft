@@ -38,11 +38,11 @@ Python Proxy to `org.bukkit.Art <https://hub.spigotmc.org/javadocs/spigot/org/bu
 
    .. py:method:: compareTo
 
-       .. py:method:: compareTo(self, _0:Object) -> int
+       .. py:method:: compareTo(self, _0:Enum) -> int
           :async:
           :noindex:
 
-       .. py:method:: compareTo(self, _0:Enum) -> int
+       .. py:method:: compareTo(self, _0:Object) -> int
           :async:
           :noindex:
 

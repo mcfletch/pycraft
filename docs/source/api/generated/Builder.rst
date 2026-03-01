@@ -81,10 +81,6 @@ Python Proxy to `org.bukkit.FireworkEffect.Builder <https://hub.spigotmc.org/jav
 
    .. py:method:: withColor
 
-       .. py:method:: withColor(self, _0:Iterable) -> :py:class:`Builder`
-          :async:
-          :noindex:
-
        .. py:method:: withColor(self, _0:Color) -> :py:class:`Builder`
           :async:
           :noindex:
@@ -93,18 +89,22 @@ Python Proxy to `org.bukkit.FireworkEffect.Builder <https://hub.spigotmc.org/jav
           :async:
           :noindex:
 
-
-   .. py:method:: withFade
-
-       .. py:method:: withFade(self, _0:Iterable) -> :py:class:`Builder`
+       .. py:method:: withColor(self, _0:Iterable) -> :py:class:`Builder`
           :async:
           :noindex:
+
+
+   .. py:method:: withFade
 
        .. py:method:: withFade(self, _0:Color) -> :py:class:`Builder`
           :async:
           :noindex:
 
        .. py:method:: withFade(self, _0:Color[]) -> :py:class:`Builder`
+          :async:
+          :noindex:
+
+       .. py:method:: withFade(self, _0:Iterable) -> :py:class:`Builder`
           :async:
           :noindex:
 

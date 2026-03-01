@@ -73,15 +73,15 @@ Python Proxy to `org.bukkit.scheduler.BukkitScheduler <https://hub.spigotmc.org/
 
    .. py:method:: runTask
 
+       .. py:method:: runTask(self, _0:Plugin, _1:BukkitRunnable) -> :py:class:`BukkitTask`
+          :async:
+          :noindex:
+
        .. py:method:: runTask(self, _0:Plugin, _1:Consumer) -> None
           :async:
           :noindex:
 
        .. py:method:: runTask(self, _0:Plugin, _1:Runnable) -> :py:class:`BukkitTask`
-          :async:
-          :noindex:
-
-       .. py:method:: runTask(self, _0:Plugin, _1:BukkitRunnable) -> :py:class:`BukkitTask`
           :async:
           :noindex:
 
@@ -103,15 +103,15 @@ Python Proxy to `org.bukkit.scheduler.BukkitScheduler <https://hub.spigotmc.org/
 
    .. py:method:: runTaskLater
 
+       .. py:method:: runTaskLater(self, _0:Plugin, _1:BukkitRunnable, _2:long) -> :py:class:`BukkitTask`
+          :async:
+          :noindex:
+
        .. py:method:: runTaskLater(self, _0:Plugin, _1:Consumer, _2:long) -> None
           :async:
           :noindex:
 
        .. py:method:: runTaskLater(self, _0:Plugin, _1:Runnable, _2:long) -> :py:class:`BukkitTask`
-          :async:
-          :noindex:
-
-       .. py:method:: runTaskLater(self, _0:Plugin, _1:BukkitRunnable, _2:long) -> :py:class:`BukkitTask`
           :async:
           :noindex:
 
@@ -122,18 +122,18 @@ Python Proxy to `org.bukkit.scheduler.BukkitScheduler <https://hub.spigotmc.org/
           :async:
           :noindex:
 
-       .. py:method:: runTaskLaterAsynchronously(self, _0:Plugin, _1:Runnable, _2:long) -> :py:class:`BukkitTask`
+       .. py:method:: runTaskLaterAsynchronously(self, _0:Plugin, _1:Consumer, _2:long) -> None
           :async:
           :noindex:
 
-       .. py:method:: runTaskLaterAsynchronously(self, _0:Plugin, _1:Consumer, _2:long) -> None
+       .. py:method:: runTaskLaterAsynchronously(self, _0:Plugin, _1:Runnable, _2:long) -> :py:class:`BukkitTask`
           :async:
           :noindex:
 
 
    .. py:method:: runTaskTimer
 
-       .. py:method:: runTaskTimer(self, _0:Plugin, _1:Runnable, _2:long, _3:long) -> :py:class:`BukkitTask`
+       .. py:method:: runTaskTimer(self, _0:Plugin, _1:BukkitRunnable, _2:long, _3:long) -> :py:class:`BukkitTask`
           :async:
           :noindex:
 
@@ -141,22 +141,22 @@ Python Proxy to `org.bukkit.scheduler.BukkitScheduler <https://hub.spigotmc.org/
           :async:
           :noindex:
 
-       .. py:method:: runTaskTimer(self, _0:Plugin, _1:BukkitRunnable, _2:long, _3:long) -> :py:class:`BukkitTask`
+       .. py:method:: runTaskTimer(self, _0:Plugin, _1:Runnable, _2:long, _3:long) -> :py:class:`BukkitTask`
           :async:
           :noindex:
 
 
    .. py:method:: runTaskTimerAsynchronously
 
-       .. py:method:: runTaskTimerAsynchronously(self, _0:Plugin, _1:Runnable, _2:long, _3:long) -> :py:class:`BukkitTask`
-          :async:
-          :noindex:
-
        .. py:method:: runTaskTimerAsynchronously(self, _0:Plugin, _1:BukkitRunnable, _2:long, _3:long) -> :py:class:`BukkitTask`
           :async:
           :noindex:
 
        .. py:method:: runTaskTimerAsynchronously(self, _0:Plugin, _1:Consumer, _2:long, _3:long) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: runTaskTimerAsynchronously(self, _0:Plugin, _1:Runnable, _2:long, _3:long) -> :py:class:`BukkitTask`
           :async:
           :noindex:
 
@@ -186,22 +186,22 @@ Python Proxy to `org.bukkit.scheduler.BukkitScheduler <https://hub.spigotmc.org/
           :async:
           :noindex:
 
-       .. py:method:: scheduleSyncDelayedTask(self, _0:Plugin, _1:Runnable, _2:long) -> int
+       .. py:method:: scheduleSyncDelayedTask(self, _0:Plugin, _1:BukkitRunnable, _2:long) -> int
           :async:
           :noindex:
 
-       .. py:method:: scheduleSyncDelayedTask(self, _0:Plugin, _1:BukkitRunnable, _2:long) -> int
+       .. py:method:: scheduleSyncDelayedTask(self, _0:Plugin, _1:Runnable, _2:long) -> int
           :async:
           :noindex:
 
 
    .. py:method:: scheduleSyncRepeatingTask
 
-       .. py:method:: scheduleSyncRepeatingTask(self, _0:Plugin, _1:Runnable, _2:long, _3:long) -> int
+       .. py:method:: scheduleSyncRepeatingTask(self, _0:Plugin, _1:BukkitRunnable, _2:long, _3:long) -> int
           :async:
           :noindex:
 
-       .. py:method:: scheduleSyncRepeatingTask(self, _0:Plugin, _1:BukkitRunnable, _2:long, _3:long) -> int
+       .. py:method:: scheduleSyncRepeatingTask(self, _0:Plugin, _1:Runnable, _2:long, _3:long) -> int
           :async:
           :noindex:
 

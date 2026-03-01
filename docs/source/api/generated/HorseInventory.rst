@@ -92,11 +92,11 @@ Python Proxy to `org.bukkit.inventory.HorseInventory <https://hub.spigotmc.org/j
 
    .. py:method:: first
 
-       .. py:method:: first(self, _0:Material) -> int
+       .. py:method:: first(self, _0:ItemStack) -> int
           :async:
           :noindex:
 
-       .. py:method:: first(self, _0:ItemStack) -> int
+       .. py:method:: first(self, _0:Material) -> int
           :async:
           :noindex:
 

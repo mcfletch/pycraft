@@ -29,11 +29,11 @@ Python Proxy to `org.bukkit.plugin.RegisteredServiceProvider <https://hub.spigot
 
    .. py:method:: compareTo
 
-       .. py:method:: compareTo(self, _0:RegisteredServiceProvider) -> int
+       .. py:method:: compareTo(self, _0:Object) -> int
           :async:
           :noindex:
 
-       .. py:method:: compareTo(self, _0:Object) -> int
+       .. py:method:: compareTo(self, _0:RegisteredServiceProvider) -> int
           :async:
           :noindex:
 

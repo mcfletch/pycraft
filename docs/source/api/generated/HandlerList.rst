@@ -99,7 +99,7 @@ Python Proxy to `org.bukkit.event.HandlerList <https://hub.spigotmc.org/javadocs
 
    .. py:method:: unregister
 
-       .. py:method:: unregister(self, _0:RegisteredListener) -> None
+       .. py:method:: unregister(self, _0:Listener) -> None
           :async:
           :noindex:
 
@@ -107,7 +107,7 @@ Python Proxy to `org.bukkit.event.HandlerList <https://hub.spigotmc.org/javadocs
           :async:
           :noindex:
 
-       .. py:method:: unregister(self, _0:Listener) -> None
+       .. py:method:: unregister(self, _0:RegisteredListener) -> None
           :async:
           :noindex:
 
@@ -119,12 +119,12 @@ Python Proxy to `org.bukkit.event.HandlerList <https://hub.spigotmc.org/javadocs
           :classmethod:
           :noindex:
 
-       .. py:method:: unregisterAll(cls, _0:Plugin) -> None
+       .. py:method:: unregisterAll(cls, _0:Listener) -> None
           :async:
           :classmethod:
           :noindex:
 
-       .. py:method:: unregisterAll(cls, _0:Listener) -> None
+       .. py:method:: unregisterAll(cls, _0:Plugin) -> None
           :async:
           :classmethod:
           :noindex:

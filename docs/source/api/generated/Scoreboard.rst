@@ -51,11 +51,11 @@ Python Proxy to `org.bukkit.scoreboard.Scoreboard <https://hub.spigotmc.org/java
 
    .. py:method:: getObjective
 
-       .. py:method:: getObjective(self, _0:String) -> :py:class:`Objective`
+       .. py:method:: getObjective(self, _0:DisplaySlot) -> :py:class:`Objective`
           :async:
           :noindex:
 
-       .. py:method:: getObjective(self, _0:DisplaySlot) -> :py:class:`Objective`
+       .. py:method:: getObjective(self, _0:String) -> :py:class:`Objective`
           :async:
           :noindex:
 
@@ -122,11 +122,11 @@ Python Proxy to `org.bukkit.scoreboard.Scoreboard <https://hub.spigotmc.org/java
           :async:
           :noindex:
 
-       .. py:method:: registerNewObjective(self, _0:String, _1:String, _2:Component) -> :py:class:`Objective`
+       .. py:method:: registerNewObjective(self, _0:String, _1:Criteria, _2:String) -> :py:class:`Objective`
           :async:
           :noindex:
 
-       .. py:method:: registerNewObjective(self, _0:String, _1:Criteria, _2:String) -> :py:class:`Objective`
+       .. py:method:: registerNewObjective(self, _0:String, _1:String, _2:Component) -> :py:class:`Objective`
           :async:
           :noindex:
 
@@ -138,11 +138,11 @@ Python Proxy to `org.bukkit.scoreboard.Scoreboard <https://hub.spigotmc.org/java
           :async:
           :noindex:
 
-       .. py:method:: registerNewObjective(self, _0:String, _1:String, _2:Component, _3:RenderType) -> :py:class:`Objective`
+       .. py:method:: registerNewObjective(self, _0:String, _1:Criteria, _2:String, _3:RenderType) -> :py:class:`Objective`
           :async:
           :noindex:
 
-       .. py:method:: registerNewObjective(self, _0:String, _1:Criteria, _2:String, _3:RenderType) -> :py:class:`Objective`
+       .. py:method:: registerNewObjective(self, _0:String, _1:String, _2:Component, _3:RenderType) -> :py:class:`Objective`
           :async:
           :noindex:
 
@@ -157,11 +157,11 @@ Python Proxy to `org.bukkit.scoreboard.Scoreboard <https://hub.spigotmc.org/java
 
    .. py:method:: resetScores
 
-       .. py:method:: resetScores(self, _0:String) -> None
+       .. py:method:: resetScores(self, _0:OfflinePlayer) -> None
           :async:
           :noindex:
 
-       .. py:method:: resetScores(self, _0:OfflinePlayer) -> None
+       .. py:method:: resetScores(self, _0:String) -> None
           :async:
           :noindex:
 

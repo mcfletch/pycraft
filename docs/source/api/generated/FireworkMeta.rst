@@ -41,11 +41,11 @@ Python Proxy to `org.bukkit.inventory.meta.FireworkMeta <https://hub.spigotmc.or
 
    .. py:method:: addEffects
 
-       .. py:method:: addEffects(self, _0:Iterable) -> None
+       .. py:method:: addEffects(self, _0:FireworkEffect[]) -> None
           :async:
           :noindex:
 
-       .. py:method:: addEffects(self, _0:FireworkEffect[]) -> None
+       .. py:method:: addEffects(self, _0:Iterable) -> None
           :async:
           :noindex:
 

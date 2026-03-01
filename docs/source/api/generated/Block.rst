@@ -39,19 +39,19 @@ Python Proxy to `org.bukkit.block.Block <https://hub.spigotmc.org/javadocs/spigo
           :async:
           :noindex:
 
-       .. py:method:: breakNaturally(self, _0:boolean) -> bool
-          :async:
-          :noindex:
-
        .. py:method:: breakNaturally(self, _0:ItemStack) -> bool
           :async:
           :noindex:
 
-       .. py:method:: breakNaturally(self, _0:boolean, _1:boolean) -> bool
+       .. py:method:: breakNaturally(self, _0:boolean) -> bool
           :async:
           :noindex:
 
        .. py:method:: breakNaturally(self, _0:ItemStack, _1:boolean) -> bool
+          :async:
+          :noindex:
+
+       .. py:method:: breakNaturally(self, _0:boolean, _1:boolean) -> bool
           :async:
           :noindex:
 

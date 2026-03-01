@@ -49,12 +49,12 @@ Python Proxy to `org.bukkit.Bukkit <https://hub.spigotmc.org/javadocs/spigot/org
           :classmethod:
           :noindex:
 
-       .. py:method:: broadcast(cls, _0:Component) -> int
+       .. py:method:: broadcast(cls, _0:BaseComponent[]) -> None
           :async:
           :classmethod:
           :noindex:
 
-       .. py:method:: broadcast(cls, _0:BaseComponent[]) -> None
+       .. py:method:: broadcast(cls, _0:Component) -> int
           :async:
           :classmethod:
           :noindex:
@@ -87,22 +87,22 @@ Python Proxy to `org.bukkit.Bukkit <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: createBlockData
 
-       .. py:method:: createBlockData(cls, _0:String) -> :py:class:`BlockData`
-          :async:
-          :classmethod:
-          :noindex:
-
        .. py:method:: createBlockData(cls, _0:Material) -> :py:class:`BlockData`
           :async:
           :classmethod:
           :noindex:
 
-       .. py:method:: createBlockData(cls, _0:Material, _1:String) -> :py:class:`BlockData`
+       .. py:method:: createBlockData(cls, _0:String) -> :py:class:`BlockData`
           :async:
           :classmethod:
           :noindex:
 
        .. py:method:: createBlockData(cls, _0:Material, _1:Consumer) -> :py:class:`BlockData`
+          :async:
+          :classmethod:
+          :noindex:
+
+       .. py:method:: createBlockData(cls, _0:Material, _1:String) -> :py:class:`BlockData`
           :async:
           :classmethod:
           :noindex:
@@ -156,12 +156,12 @@ Python Proxy to `org.bukkit.Bukkit <https://hub.spigotmc.org/javadocs/spigot/org
           :classmethod:
           :noindex:
 
-       .. py:method:: createInventory(cls, _0:InventoryHolder, _1:int, _2:String) -> :py:class:`Inventory`
+       .. py:method:: createInventory(cls, _0:InventoryHolder, _1:InventoryType, _2:Component) -> :py:class:`Inventory`
           :async:
           :classmethod:
           :noindex:
 
-       .. py:method:: createInventory(cls, _0:InventoryHolder, _1:InventoryType, _2:Component) -> :py:class:`Inventory`
+       .. py:method:: createInventory(cls, _0:InventoryHolder, _1:InventoryType, _2:String) -> :py:class:`Inventory`
           :async:
           :classmethod:
           :noindex:
@@ -171,7 +171,7 @@ Python Proxy to `org.bukkit.Bukkit <https://hub.spigotmc.org/javadocs/spigot/org
           :classmethod:
           :noindex:
 
-       .. py:method:: createInventory(cls, _0:InventoryHolder, _1:InventoryType, _2:String) -> :py:class:`Inventory`
+       .. py:method:: createInventory(cls, _0:InventoryHolder, _1:int, _2:String) -> :py:class:`Inventory`
           :async:
           :classmethod:
           :noindex:
@@ -215,12 +215,12 @@ Python Proxy to `org.bukkit.Bukkit <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: createProfile
 
-       .. py:method:: createProfile(cls, _0:UUID) -> :py:class:`PlayerProfile`
+       .. py:method:: createProfile(cls, _0:String) -> :py:class:`PlayerProfile`
           :async:
           :classmethod:
           :noindex:
 
-       .. py:method:: createProfile(cls, _0:String) -> :py:class:`PlayerProfile`
+       .. py:method:: createProfile(cls, _0:UUID) -> :py:class:`PlayerProfile`
           :async:
           :classmethod:
           :noindex:
@@ -472,12 +472,12 @@ Python Proxy to `org.bukkit.Bukkit <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: getOfflinePlayer
 
-       .. py:method:: getOfflinePlayer(cls, _0:UUID) -> :py:class:`OfflinePlayer`
+       .. py:method:: getOfflinePlayer(cls, _0:String) -> :py:class:`OfflinePlayer`
           :async:
           :classmethod:
           :noindex:
 
-       .. py:method:: getOfflinePlayer(cls, _0:String) -> :py:class:`OfflinePlayer`
+       .. py:method:: getOfflinePlayer(cls, _0:UUID) -> :py:class:`OfflinePlayer`
           :async:
           :classmethod:
           :noindex:
@@ -515,12 +515,12 @@ Python Proxy to `org.bukkit.Bukkit <https://hub.spigotmc.org/javadocs/spigot/org
 
    .. py:method:: getPlayer
 
-       .. py:method:: getPlayer(cls, _0:UUID) -> :py:class:`Player`
+       .. py:method:: getPlayer(cls, _0:String) -> :py:class:`Player`
           :async:
           :classmethod:
           :noindex:
 
-       .. py:method:: getPlayer(cls, _0:String) -> :py:class:`Player`
+       .. py:method:: getPlayer(cls, _0:UUID) -> :py:class:`Player`
           :async:
           :classmethod:
           :noindex:

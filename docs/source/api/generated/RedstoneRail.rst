@@ -123,7 +123,15 @@ Python Proxy to `org.bukkit.block.data.type.RedstoneRail <https://hub.spigotmc.o
       :async:
 
 
+   .. py:method:: mirror(self, _0:Mirror) -> None
+      :async:
+
+
    .. py:method:: requiresCorrectToolForDrops(self) -> bool
+      :async:
+
+
+   .. py:method:: rotate(self, _0:StructureRotation) -> None
       :async:
 
 

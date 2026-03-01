@@ -36,11 +36,11 @@ Python Proxy to `org.bukkit.configuration.MemoryConfiguration <https://hub.spigo
 
    .. py:method:: addDefaults
 
-       .. py:method:: addDefaults(self, _0:Map) -> None
+       .. py:method:: addDefaults(self, _0:Configuration) -> None
           :async:
           :noindex:
 
-       .. py:method:: addDefaults(self, _0:Configuration) -> None
+       .. py:method:: addDefaults(self, _0:Map) -> None
           :async:
           :noindex:
 

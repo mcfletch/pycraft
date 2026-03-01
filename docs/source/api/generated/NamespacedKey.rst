@@ -33,11 +33,11 @@ Python Proxy to `org.bukkit.NamespacedKey <https://hub.spigotmc.org/javadocs/spi
 
    .. py:method:: compareTo
 
-       .. py:method:: compareTo(self, _0:Key) -> int
+       .. py:method:: compareTo(self, that:Key) -> int
           :async:
           :noindex:
 
-       .. py:method:: compareTo(self, _0:Object) -> int
+       .. py:method:: compareTo(self, that:Object) -> int
           :async:
           :noindex:
 
@@ -54,7 +54,7 @@ Python Proxy to `org.bukkit.NamespacedKey <https://hub.spigotmc.org/javadocs/spi
       :async:
 
 
-   .. py:method:: examine(self, _0:Examiner) -> :py:class:`Object`
+   .. py:method:: examine(self, examiner:Examiner) -> :py:class:`Object`
       :async:
 
 

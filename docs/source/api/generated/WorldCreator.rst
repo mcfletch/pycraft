@@ -33,11 +33,11 @@ Python Proxy to `org.bukkit.WorldCreator <https://hub.spigotmc.org/javadocs/spig
           :async:
           :noindex:
 
-       .. py:method:: biomeProvider(self, _0:String) -> :py:class:`WorldCreator`
+       .. py:method:: biomeProvider(self, _0:BiomeProvider) -> :py:class:`WorldCreator`
           :async:
           :noindex:
 
-       .. py:method:: biomeProvider(self, _0:BiomeProvider) -> :py:class:`WorldCreator`
+       .. py:method:: biomeProvider(self, _0:String) -> :py:class:`WorldCreator`
           :async:
           :noindex:
 
@@ -48,11 +48,11 @@ Python Proxy to `org.bukkit.WorldCreator <https://hub.spigotmc.org/javadocs/spig
 
    .. py:method:: copy
 
-       .. py:method:: copy(self, _0:WorldCreator) -> :py:class:`WorldCreator`
+       .. py:method:: copy(self, _0:World) -> :py:class:`WorldCreator`
           :async:
           :noindex:
 
-       .. py:method:: copy(self, _0:World) -> :py:class:`WorldCreator`
+       .. py:method:: copy(self, _0:WorldCreator) -> :py:class:`WorldCreator`
           :async:
           :noindex:
 
@@ -99,11 +99,11 @@ Python Proxy to `org.bukkit.WorldCreator <https://hub.spigotmc.org/javadocs/spig
           :async:
           :noindex:
 
-       .. py:method:: generator(self, _0:String) -> :py:class:`WorldCreator`
+       .. py:method:: generator(self, _0:ChunkGenerator) -> :py:class:`WorldCreator`
           :async:
           :noindex:
 
-       .. py:method:: generator(self, _0:ChunkGenerator) -> :py:class:`WorldCreator`
+       .. py:method:: generator(self, _0:String) -> :py:class:`WorldCreator`
           :async:
           :noindex:
 

@@ -40,11 +40,11 @@ Python Proxy to `org.bukkit.ChatColor <https://hub.spigotmc.org/javadocs/spigot/
 
    .. py:method:: compareTo
 
-       .. py:method:: compareTo(self, _0:Object) -> int
+       .. py:method:: compareTo(self, _0:Enum) -> int
           :async:
           :noindex:
 
-       .. py:method:: compareTo(self, _0:Enum) -> int
+       .. py:method:: compareTo(self, _0:Object) -> int
           :async:
           :noindex:
 
@@ -65,12 +65,12 @@ Python Proxy to `org.bukkit.ChatColor <https://hub.spigotmc.org/javadocs/spigot/
 
    .. py:method:: getByChar
 
-       .. py:method:: getByChar(cls, _0:char) -> :py:class:`ChatColor`
+       .. py:method:: getByChar(cls, _0:String) -> :py:class:`ChatColor`
           :async:
           :classmethod:
           :noindex:
 
-       .. py:method:: getByChar(cls, _0:String) -> :py:class:`ChatColor`
+       .. py:method:: getByChar(cls, _0:char) -> :py:class:`ChatColor`
           :async:
           :classmethod:
           :noindex:

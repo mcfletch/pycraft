@@ -61,19 +61,19 @@ Python Proxy to `org.bukkit.command.CommandSender.Spigot <https://hub.spigotmc.o
 
    .. py:method:: sendMessage
 
-       .. py:method:: sendMessage(self, _0:BaseComponent[]) -> None
-          :async:
-          :noindex:
-
        .. py:method:: sendMessage(self, _0:BaseComponent) -> None
           :async:
           :noindex:
 
-       .. py:method:: sendMessage(self, _0:UUID, _1:BaseComponent[]) -> None
+       .. py:method:: sendMessage(self, _0:BaseComponent[]) -> None
           :async:
           :noindex:
 
        .. py:method:: sendMessage(self, _0:UUID, _1:BaseComponent) -> None
+          :async:
+          :noindex:
+
+       .. py:method:: sendMessage(self, _0:UUID, _1:BaseComponent[]) -> None
           :async:
           :noindex:
 

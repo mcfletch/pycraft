@@ -30,11 +30,11 @@ Python Proxy to `org.bukkit.util.BoundingBox <https://hub.spigotmc.org/javadocs/
 
    .. py:method:: contains
 
-       .. py:method:: contains(self, _0:Vector) -> bool
+       .. py:method:: contains(self, _0:BoundingBox) -> bool
           :async:
           :noindex:
 
-       .. py:method:: contains(self, _0:BoundingBox) -> bool
+       .. py:method:: contains(self, _0:Vector) -> bool
           :async:
           :noindex:
 
@@ -62,19 +62,19 @@ Python Proxy to `org.bukkit.util.BoundingBox <https://hub.spigotmc.org/javadocs/
 
    .. py:method:: expand
 
-       .. py:method:: expand(self, _0:double) -> :py:class:`BoundingBox`
-          :async:
-          :noindex:
-
        .. py:method:: expand(self, _0:Vector) -> :py:class:`BoundingBox`
           :async:
           :noindex:
 
-       .. py:method:: expand(self, _0:Vector, _1:double) -> :py:class:`BoundingBox`
+       .. py:method:: expand(self, _0:double) -> :py:class:`BoundingBox`
           :async:
           :noindex:
 
        .. py:method:: expand(self, _0:BlockFace, _1:double) -> :py:class:`BoundingBox`
+          :async:
+          :noindex:
+
+       .. py:method:: expand(self, _0:Vector, _1:double) -> :py:class:`BoundingBox`
           :async:
           :noindex:
 
@@ -205,7 +205,7 @@ Python Proxy to `org.bukkit.util.BoundingBox <https://hub.spigotmc.org/javadocs/
           :classmethod:
           :noindex:
 
-       .. py:method:: of(cls, _0:Vector, _1:Vector) -> :py:class:`BoundingBox`
+       .. py:method:: of(cls, _0:Block, _1:Block) -> :py:class:`BoundingBox`
           :async:
           :classmethod:
           :noindex:
@@ -215,7 +215,7 @@ Python Proxy to `org.bukkit.util.BoundingBox <https://hub.spigotmc.org/javadocs/
           :classmethod:
           :noindex:
 
-       .. py:method:: of(cls, _0:Block, _1:Block) -> :py:class:`BoundingBox`
+       .. py:method:: of(cls, _0:Vector, _1:Vector) -> :py:class:`BoundingBox`
           :async:
           :classmethod:
           :noindex:
@@ -275,7 +275,7 @@ Python Proxy to `org.bukkit.util.BoundingBox <https://hub.spigotmc.org/javadocs/
 
    .. py:method:: union
 
-       .. py:method:: union(self, _0:Vector) -> :py:class:`BoundingBox`
+       .. py:method:: union(self, _0:BoundingBox) -> :py:class:`BoundingBox`
           :async:
           :noindex:
 
@@ -283,7 +283,7 @@ Python Proxy to `org.bukkit.util.BoundingBox <https://hub.spigotmc.org/javadocs/
           :async:
           :noindex:
 
-       .. py:method:: union(self, _0:BoundingBox) -> :py:class:`BoundingBox`
+       .. py:method:: union(self, _0:Vector) -> :py:class:`BoundingBox`
           :async:
           :noindex:
 

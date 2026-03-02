@@ -1,5 +1,12 @@
-import { Box, Tooltip, Typography, IconButton } from '@mui/material';
+import { useState, useEffect } from 'react';
+import {
+  Box, Tooltip, Typography, Menu, MenuItem, ListItemIcon, ListItemText,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, CircularProgress,
+} from '@mui/material';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { useApplicableEnchantments } from '../../api/queries';
+import { EnchantmentSelector, PotionOptionsPanel, isPotion } from './EnchantmentSelector';
 
 function shortName(material) {
   if (!material) return '';
@@ -24,7 +31,7 @@ function formatEnchantments(enchantments) {
 
 const ARMOR_LABELS = ['Boots', 'Leggings', 'Chestplate', 'Helmet'];
 
-function SlotBox({ slot, index, label, onEnchant }) {
+function SlotBox({ slot, index, label, onClick }) {
   const enchStr = slot ? formatEnchantments(slot.enchantments) : '';
   const tipText = slot
     ? `${label ? label + ': ' : ''}${shortName(slot.material)} x${slot.amount}${enchStr ? `\n${enchStr}` : ''}`
@@ -32,6 +39,7 @@ function SlotBox({ slot, index, label, onEnchant }) {
   return (
     <Tooltip title={<span style={{ whiteSpace: 'pre-line' }}>{tipText}</span>}>
       <Box
+        onClick={slot ? (e) => onClick(index, e.currentTarget) : undefined}
         sx={{
           width: 48,
           height: 48,
@@ -43,7 +51,6 @@ function SlotBox({ slot, index, label, onEnchant }) {
           justifyContent: 'center',
           cursor: slot ? 'pointer' : 'default',
           position: 'relative',
-          '&:hover .enchant-btn': { opacity: 1 },
         }}
       >
         {slot && (
@@ -70,22 +77,6 @@ function SlotBox({ slot, index, label, onEnchant }) {
             {enchStr && (
               <AutoFixHighIcon sx={{ position: 'absolute', top: 0, right: 0, fontSize: 10, color: '#ab47bc' }} />
             )}
-            {onEnchant && (
-              <IconButton
-                className="enchant-btn"
-                size="small"
-                onClick={(e) => { e.stopPropagation(); onEnchant(index); }}
-                sx={{
-                  position: 'absolute', top: -4, left: -4,
-                  opacity: 0, transition: 'opacity 0.15s',
-                  bgcolor: 'rgba(0,0,0,0.7)', color: '#ab47bc',
-                  width: 18, height: 18,
-                  '&:hover': { bgcolor: 'rgba(0,0,0,0.9)' },
-                }}
-              >
-                <AutoFixHighIcon sx={{ fontSize: 12 }} />
-              </IconButton>
-            )}
           </>
         )}
         {!slot && label && (
@@ -98,18 +89,112 @@ function SlotBox({ slot, index, label, onEnchant }) {
   );
 }
 
-export default function InventoryView({ inventory, onEnchant }) {
-  if (!inventory) return null;
-  const contents = inventory.contents || [];
+export default function InventoryView({
+  inventory, onEnchant, onDrop,
+  enchantDialogSlot, onCloseEnchantDialog,
+  uuid, enchantMutation, potionData,
+}) {
+  const [menuAnchor, setMenuAnchor] = useState(null);
+  const [menuSlot, setMenuSlot] = useState(null);
 
-  // Bukkit PlayerInventory layout:
-  // 0-8: hotbar, 9-35: main inventory, 36-39: armor (boots,legs,chest,helm), 40: offhand
-  const mainSlots = contents.slice(9, 36);   // 27 main slots (3 rows of 9)
-  const hotbar = contents.slice(0, 9);        // 9 hotbar slots
-  const armor = contents.slice(36, 40);       // 4 armor slots
-  const offhand = contents[40] || null;        // offhand slot
+  // Enchant dialog state
+  const [dialogEnchSelections, setDialogEnchSelections] = useState({});
+  const [dialogPotionType, setDialogPotionType] = useState('');
+  const [dialogPotionName, setDialogPotionName] = useState('');
+  const [dialogPotionEffects, setDialogPotionEffects] = useState([]);
+
+  // Fetch applicable enchantments when the dialog is open
+  const { data: applicableData, isLoading: enchLoading } = useApplicableEnchantments(uuid, enchantDialogSlot);
+  const applicableEnchantments = applicableData?.enchantments || [];
+
+  // Dialog item and potion detection
+  const contents = inventory?.contents || [];
+  const dialogItem = enchantDialogSlot != null ? contents[enchantDialogSlot] : null;
+  const potionMaterials = potionData?.potion_materials || [];
+  const showPotionOptions = dialogItem && isPotion(dialogItem.material, potionMaterials);
+
+  // Initialize dialog state when slot changes
+  useEffect(() => {
+    if (enchantDialogSlot != null && contents.length > 0) {
+      const item = contents[enchantDialogSlot];
+      if (item?.enchantments && typeof item.enchantments === 'object') {
+        const existing = {};
+        for (const [key, level] of Object.entries(item.enchantments)) {
+          existing[key] = level;
+        }
+        setDialogEnchSelections(existing);
+      } else {
+        setDialogEnchSelections({});
+      }
+      setDialogPotionType('');
+      setDialogPotionName('');
+      setDialogPotionEffects([]);
+    }
+  }, [enchantDialogSlot]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Dialog enchantment helpers
+  const toggleDialogEnch = (key, maxLevel) => {
+    setDialogEnchSelections((prev) => {
+      if (key in prev) {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      }
+      return { ...prev, [key]: maxLevel };
+    });
+  };
+  const setDialogEnchLevel = (key, level) => {
+    setDialogEnchSelections((prev) => ({ ...prev, [key]: level }));
+  };
+
+  // Dialog potion helpers
+  const effectTypes = potionData?.effect_types || [];
+  const addDialogPotionEffect = () => {
+    setDialogPotionEffects((prev) => [...prev, { type: effectTypes[0] || 'SPEED', duration: '480', amplifier: '0' }]);
+  };
+  const removeDialogPotionEffect = (idx) => {
+    setDialogPotionEffects((prev) => prev.filter((_, i) => i !== idx));
+  };
+  const updateDialogPotionEffect = (idx, field, value) => {
+    setDialogPotionEffects((prev) => prev.map((pe, i) => i === idx ? { ...pe, [field]: value } : pe));
+  };
+
+  const handleApply = () => {
+    const enchantments = Object.entries(dialogEnchSelections).map(([key, level]) => ({ key, level }));
+    const params = { uuid, slot: enchantDialogSlot, enchantments };
+    if (showPotionOptions) {
+      if (dialogPotionType) params.potion_type = dialogPotionType;
+      if (dialogPotionName) params.potion_name = dialogPotionName;
+      if (dialogPotionEffects.length > 0) {
+        params.potion_effects = dialogPotionEffects.map((pe) => ({
+          type: pe.type,
+          duration_seconds: parseFloat(pe.duration) || 60,
+          amplifier: parseInt(pe.amplifier, 10) || 0,
+        }));
+      }
+    }
+    enchantMutation.mutate(params);
+    onCloseEnchantDialog();
+  };
+
+  if (!inventory) return null;
+
+  const mainSlots = contents.slice(9, 36);
+  const hotbar = contents.slice(0, 9);
+  const armor = contents.slice(36, 40);
+  const offhand = contents[40] || null;
 
   const usedCount = contents.filter((s) => s).length;
+
+  const handleSlotClick = (index, anchorEl) => {
+    setMenuSlot(index);
+    setMenuAnchor(anchorEl);
+  };
+
+  const closeMenu = () => {
+    setMenuAnchor(null);
+    setMenuSlot(null);
+  };
 
   return (
     <Box>
@@ -123,10 +208,10 @@ export default function InventoryView({ inventory, onEnchant }) {
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10 }}>Equipment</Typography>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             {[3, 2, 1, 0].map((ai) => (
-              <SlotBox key={36 + ai} slot={armor[ai]} index={36 + ai} label={ARMOR_LABELS[ai]} onEnchant={onEnchant} />
+              <SlotBox key={36 + ai} slot={armor[ai]} index={36 + ai} label={ARMOR_LABELS[ai]} onClick={handleSlotClick} />
             ))}
             <Box sx={{ mx: 0.5, borderLeft: '1px solid rgba(255,255,255,0.15)', height: 48 }} />
-            <SlotBox slot={offhand} index={40} label="Offhand" onEnchant={onEnchant} />
+            <SlotBox slot={offhand} index={40} label="Offhand" onClick={handleSlotClick} />
           </Box>
         </Box>
       </Box>
@@ -134,7 +219,7 @@ export default function InventoryView({ inventory, onEnchant }) {
       {/* Main inventory (3 rows of 9) */}
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(9, 48px)', gap: 0.5, mb: 1 }}>
         {mainSlots.map((slot, i) => (
-          <SlotBox key={9 + i} slot={slot} index={9 + i} onEnchant={onEnchant} />
+          <SlotBox key={9 + i} slot={slot} index={9 + i} onClick={handleSlotClick} />
         ))}
       </Box>
 
@@ -143,10 +228,78 @@ export default function InventoryView({ inventory, onEnchant }) {
         <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10 }}>Hotbar</Typography>
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(9, 48px)', gap: 0.5, borderTop: '2px solid rgba(255,255,255,0.2)', pt: 0.5 }}>
           {hotbar.map((slot, i) => (
-            <SlotBox key={i} slot={slot} index={i} onEnchant={onEnchant} />
+            <SlotBox key={i} slot={slot} index={i} onClick={handleSlotClick} />
           ))}
         </Box>
       </Box>
+
+      {/* Context menu */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={!!menuAnchor}
+        onClose={closeMenu}
+      >
+        <MenuItem onClick={() => { if (onEnchant) onEnchant(menuSlot); closeMenu(); }}>
+          <ListItemIcon><AutoFixHighIcon fontSize="small" color="secondary" /></ListItemIcon>
+          <ListItemText>Enchant</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => { if (onDrop) onDrop(menuSlot); closeMenu(); }}>
+          <ListItemIcon><DeleteIcon fontSize="small" color="error" /></ListItemIcon>
+          <ListItemText>Drop</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Enchant dialog */}
+      <Dialog
+        open={enchantDialogSlot != null}
+        onClose={onCloseEnchantDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Enchant: {dialogItem ? shortName(dialogItem.material) : ''} (slot {enchantDialogSlot})
+        </DialogTitle>
+        <DialogContent>
+          {enchLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : applicableEnchantments.length > 0 ? (
+            <EnchantmentSelector
+              allEnchantments={applicableEnchantments}
+              selections={dialogEnchSelections}
+              onToggle={toggleDialogEnch}
+              onSetLevel={setDialogEnchLevel}
+            />
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
+              No applicable enchantments for this item.
+            </Typography>
+          )}
+          {showPotionOptions && (
+            <Box sx={{ mt: 1.5 }}>
+              <PotionOptionsPanel
+                potionTypes={potionData?.potion_types || []}
+                effectTypes={effectTypes}
+                potionType={dialogPotionType}
+                onPotionTypeChange={setDialogPotionType}
+                potionName={dialogPotionName}
+                onPotionNameChange={setDialogPotionName}
+                potionEffects={dialogPotionEffects}
+                onAddEffect={addDialogPotionEffect}
+                onRemoveEffect={removeDialogPotionEffect}
+                onUpdateEffect={updateDialogPotionEffect}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onCloseEnchantDialog}>Cancel</Button>
+          <Button variant="contained" onClick={handleApply} disabled={enchantMutation?.isPending}>
+            Apply
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

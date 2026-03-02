@@ -595,13 +595,13 @@ class Reference(ServerObjectProxy):
 
     @classmethod
     def from_server(cls, struct):
-        return cls(struct)
+        return cls(**struct)
 
     def get_key(self):
         return self.__reference__
 
-    def __init__(self, struct):
-        for key, value in struct.items():
+    def __init__(self, **named):
+        for key, value in named.items():
             setattr(self, key, value)
         ProxyMethod.channel.dereference_on_delete(self)
 

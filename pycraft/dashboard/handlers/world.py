@@ -46,7 +46,7 @@ async def spawn_entity(request):
         return web.json_response({'error': str(err)}, status=500)
 
 
-Y_RANGE = 30  # scan this many blocks above and below center Y
+Y_RANGE = 16  # scan this many blocks above and below center Y
 CHUNK_SIZE = 32  # max blocks per RPC call in x and z
 
 AIR_BLOCKS = frozenset({

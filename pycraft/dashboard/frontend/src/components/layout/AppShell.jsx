@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
   Box,
@@ -21,31 +22,40 @@ import MapIcon from '@mui/icons-material/Map';
 import CodeIcon from '@mui/icons-material/Code';
 import SearchIcon from '@mui/icons-material/Search';
 import PetsIcon from '@mui/icons-material/Pets';
+import { useServerInfo } from '../../api/queries';
 
 const DRAWER_WIDTH = 240;
 
 const NAV_ITEMS = [
-  { label: 'Server', icon: <DnsIcon />, id: 'server' },
-  { label: 'Players', icon: <PeopleIcon />, id: 'players' },
-  { label: 'Events', icon: <ListAltIcon />, id: 'events' },
-  { label: 'Map', icon: <MapIcon />, id: 'map' },
-  { label: 'Editor', icon: <CodeIcon />, id: 'editor' },
-  { label: 'Search', icon: <SearchIcon />, id: 'search' },
-  { label: 'Entities', icon: <PetsIcon />, id: 'entities' },
+  { label: 'Map', icon: <MapIcon />, path: '/' },
+  { label: 'Players', icon: <PeopleIcon />, path: '/players' },
+  { label: 'Events', icon: <ListAltIcon />, path: '/events' },
+  { label: 'Editor', icon: <CodeIcon />, path: '/editor' },
+  { label: 'Search', icon: <SearchIcon />, path: '/search' },
+  { label: 'Entities', icon: <PetsIcon />, path: '/entities' },
+  { label: 'Server', icon: <DnsIcon />, path: '/server' },
 ];
 
-export default function AppShell({ children, activeTab, onTabChange, sseConnected }) {
+function isActive(itemPath, currentPath) {
+  if (itemPath === '/') return currentPath === '/' || currentPath === '/map';
+  return currentPath.startsWith(itemPath);
+}
+
+export default function AppShell({ children, sseConnected }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { data: serverInfo } = useServerInfo();
 
   const drawer = (
     <Box sx={{ mt: 8 }}>
       <List>
         {NAV_ITEMS.map((item) => (
-          <ListItem key={item.id} disablePadding>
+          <ListItem key={item.path} disablePadding>
             <ListItemButton
-              selected={activeTab === item.id}
+              selected={isActive(item.path, location.pathname)}
               onClick={() => {
-                onTabChange(item.id);
+                navigate(item.path);
                 setDrawerOpen(false);
               }}
             >
@@ -73,6 +83,11 @@ export default function AppShell({ children, activeTab, onTabChange, sseConnecte
           <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
             Pycraft Dashboard
           </Typography>
+          {serverInfo?.mc_server && (
+            <Typography variant="body2" sx={{ mr: 2, opacity: 0.8 }}>
+              {serverInfo.mc_server}
+            </Typography>
+          )}
           <Chip
             label={sseConnected ? 'Live' : 'Disconnected'}
             color={sseConnected ? 'success' : 'error'}

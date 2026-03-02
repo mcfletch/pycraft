@@ -55,9 +55,11 @@ def get_options():
     return parser
 
 
-async def connect_to_server(app):
-    """Startup hook: connect to Minecraft server and start SSE subscriptions"""
-    services = app['services']
+async def _do_connect(services):
+    """Attempt a single connection to the Minecraft server.
+
+    Returns True on success, False on failure.
+    """
     ch = services.channel
     try:
         await ch.open()
@@ -65,20 +67,78 @@ async def connect_to_server(app):
         log.info("Connected to Minecraft server, introspection loaded")
         await services.sse_manager.start(ch)
         log.info("SSE event subscriptions active")
-    except ConnectionRefusedError:
-        log.error(
-            "Cannot connect to Minecraft server at %s:%s — is it running?",
-            ch.host,
-            ch.port,
+        services.connected = True
+        return True
+    except Exception as err:
+        log.warning("MC server connection failed: %s", err)
+        services.connected = False
+        return False
+
+
+async def _reconnect_loop(app):
+    """Background task that maintains the MC server connection.
+
+    On startup and after disconnects, retries with exponential backoff
+    (1s, 2s, 4s, 8s, ... up to 30s).
+    """
+    services = app['services']
+    delay = 1
+
+    # Initial connection attempt
+    if await _do_connect(services):
+        delay = 1
+    else:
+        log.info(
+            "MC server at %s not available yet — will keep retrying",
+            services.channel.address,
         )
-        raise
-    except Exception:
-        log.exception("Failed to connect to Minecraft server")
-        raise
+
+    while True:
+        try:
+            if services.connected:
+                # Monitor: check if the channel is still alive
+                if services.channel.writer is None or services.channel.writer.is_closing():
+                    log.warning("MC server connection lost — reconnecting")
+                    services.connected = False
+                    await services.sse_manager.stop()
+                    try:
+                        await services.channel.close()
+                    except Exception:
+                        pass
+                    delay = 1
+                else:
+                    await asyncio.sleep(5)
+                    continue
+
+            # Not connected — wait then retry
+            await asyncio.sleep(delay)
+            if await _do_connect(services):
+                log.info("Reconnected to MC server")
+                delay = 1
+            else:
+                delay = min(delay * 2, 30)
+        except asyncio.CancelledError:
+            return
+        except Exception:
+            log.exception("Error in reconnect loop")
+            delay = min(delay * 2, 30)
+            await asyncio.sleep(delay)
+
+
+async def connect_to_server(app):
+    """Startup hook: start the background reconnect loop"""
+    app['reconnect_task'] = asyncio.create_task(_reconnect_loop(app))
 
 
 async def cleanup(app):
-    """Shutdown hook: close SSE and channel"""
+    """Shutdown hook: cancel reconnect loop, close SSE and channel"""
+    task = app.get('reconnect_task')
+    if task:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
     services = app['services']
     await services.sse_manager.stop()
     await services.channel.close()

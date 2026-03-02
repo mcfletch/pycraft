@@ -110,6 +110,8 @@ async def spawn(
     returns :py:class:`pycraft.server.final.Entity` subclass
     """
     if position is None:
+        if not player:
+            return 'No player selected (needed for default position)'
         position = player.position + player.direction
     if not ':' in type_name:
         type_name = 'minecraft:%s' % (type_name,)
@@ -615,6 +617,8 @@ async def join(player_name, *, player=None, server=None, interpreter=None):
 @expose()
 async def back_to_bed(*, player=None):
     """Send the player back to their bed spawn location (last place they slept)"""
+    if not player:
+        return 'No player selected'
     location = await player.getBedSpawnLocation()
     if location:
         await player.set_location(location)

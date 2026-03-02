@@ -50,11 +50,11 @@ async def search_entities(request):
 SEARCH_RADIUS = 1000  # blocks
 
 
-async def _search_players(query):
+async def _search_players(query, channel):
     """Search online players by name"""
     results = []
     try:
-        players = await final.ProxyMethod.channel.server.getOnlinePlayers()
+        players = await channel.server.getOnlinePlayers()
         for p in players:
             name = getattr(p, 'name', '')
             if query in name.lower():
@@ -65,7 +65,7 @@ async def _search_players(query):
                     'location': serialize(loc) if loc else None,
                 })
     except Exception:
-        log.debug("Player search failed", exc_info=True)
+        log.exception("Player search failed")
     return results
 
 
@@ -104,7 +104,7 @@ async def _search_structures(query, world_name, origin_x, origin_z):
             if result:
                 results.append(result)
     except Exception:
-        log.debug("Structure search failed", exc_info=True)
+        log.exception("Structure search failed")
     return results
 
 
@@ -143,7 +143,7 @@ async def _search_biomes(query, world_name, origin_x, origin_z):
             if result:
                 results.append(result)
     except Exception:
-        log.debug("Biome search failed", exc_info=True)
+        log.exception("Biome search failed")
     return results
 
 
@@ -192,7 +192,9 @@ async def search_map(request):
         origin_x, origin_z = 0.0, 0.0
 
     # Run all search categories concurrently
-    player_task = _search_players(query)
+    services = request.app['services']
+    channel = services.channel
+    player_task = _search_players(query, channel)
     structure_task = _search_structures(query, world_name, origin_x, origin_z)
     biome_task = _search_biomes(query, world_name, origin_x, origin_z)
     entity_task = _search_entities_on_map(query, world_name)

@@ -357,9 +357,84 @@ async def enchant_item(request):
         stack = inventory.get_stack(slot)
         if stack is None:
             return web.json_response({'error': f'Slot {slot} is empty'}, status=400)
+        result = {'status': 'ok'}
         enchantments = data.get('enchantments')  # optional list of specific enchantment keys
         applied = await _enchant_stack(stack, enchantments)
-        return web.json_response({'status': 'ok', 'applied': applied})
+        result['applied'] = applied
+        # Apply potion metadata if provided
+        potion_type = data.get('potion_type')
+        potion_effects = data.get('potion_effects')
+        potion_name = data.get('potion_name')
+        if potion_type or potion_effects or potion_name:
+            applied_effects = await _apply_potion_meta(
+                stack, potion_type, potion_effects, potion_name
+            )
+            result['potion_effects_applied'] = applied_effects
+        return web.json_response(result)
+    except Exception as err:
+        return web.json_response({'error': str(err)}, status=500)
+
+
+async def drop_item(request):
+    """POST /api/players/{uuid}/inventory/drop — delete item from slot"""
+    services = request.app['services']
+    channel = services.channel
+    uuid_str = request.match_info['uuid']
+    try:
+        data = await request.json()
+    except Exception:
+        return web.json_response({'error': 'Invalid JSON body'}, status=400)
+    if 'slot' not in data:
+        return web.json_response({'error': 'Missing field: slot'}, status=400)
+    try:
+        player = await _find_player(channel, uuid_str)
+        if not player:
+            return web.json_response({'error': 'Player not found'}, status=404)
+        inventory = await player.getInventory()
+        slot = int(data['slot'])
+        await inventory.clear(slot)
+        return web.json_response({'status': 'ok', 'slot': slot})
+    except Exception as err:
+        return web.json_response({'error': str(err)}, status=500)
+
+
+async def applicable_enchantments(request):
+    """GET /api/players/{uuid}/inventory/{slot}/applicable-enchantments
+
+    Returns enchantments that can be applied to the item in the given slot.
+    Same shape as list_enchantments but filtered by canEnchantItem.
+    """
+    services = request.app['services']
+    channel = services.channel
+    uuid_str = request.match_info['uuid']
+    slot = int(request.match_info['slot'])
+    try:
+        player = await _find_player(channel, uuid_str)
+        if not player:
+            return web.json_response({'error': 'Player not found'}, status=404)
+        inventory = await player.getInventory()
+        stack = inventory.get_stack(slot)
+        if stack is None:
+            return web.json_response({'error': f'Slot {slot} is empty'}, status=400)
+        all_enchants = await final.Enchantment.cached_values()
+        result = []
+        for ench in all_enchants:
+            key = ench.get_key()
+            try:
+                if await ench.canEnchantItem(stack):
+                    try:
+                        max_level = int(await ench.getMaxLevel())
+                    except Exception:
+                        max_level = 1
+                    result.append({
+                        'key': key,
+                        'max_level': max_level,
+                        'desirable': key in DESIRABLE_SET,
+                    })
+            except Exception:
+                log.debug("Failed to check canEnchantItem for %s", key, exc_info=True)
+        result.sort(key=lambda x: (not x['desirable'], x['key']))
+        return web.json_response({'enchantments': result})
     except Exception as err:
         return web.json_response({'error': str(err)}, status=500)
 

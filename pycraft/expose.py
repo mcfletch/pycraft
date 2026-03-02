@@ -70,23 +70,23 @@ def command_details(name_or_instance):
         if not function:
             names = sorted(
                 fuzzymatch.similar_names(
-                    name,
+                    name_or_instance,
                     DEFAULT_COMMANDS,
                 )
             )
             if names:
                 return [
-                    f'Do not know any function named {name}, did you mean: {", ".join(names)}',
+                    f'Do not know any function named {name_or_instance}, did you mean: {", ".join(names)}',
                 ]
             return [
-                f'Do not know any function named {name}',
+                f'Do not know any function named {name_or_instance}',
             ]
     else:
         function = name_or_instance
     docs = inspect.getdoc(function) or 'Undocumented'
     if isinstance(function, (types.FunctionType, types.MethodType)):
         return [
-            f'{function.__name__}{inspect.formatargspec(*inspect.getfullargspec(function))}',
+            f'{function.__name__}{inspect.signature(function)}',
         ] + [f'    {line}' for line in docs.splitlines()]
     else:
         return docs.splitlines()

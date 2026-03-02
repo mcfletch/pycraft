@@ -31,12 +31,15 @@ import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import RotateRightIcon from '@mui/icons-material/RotateRight';
 import CloseIcon from '@mui/icons-material/Close';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import InputAdornment from '@mui/material/InputAdornment';
 import Popper from '@mui/material/Popper';
 import Paper from '@mui/material/Paper';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import { useWorldBlocks, useOnlinePlayers, useTemplates, useTemplateDetail, useMapSearch } from '../../api/queries';
-import { useTeleportPlayer, usePasteTemplate } from '../../api/mutations';
+import { useTeleportPlayer, usePasteTemplate, useEvalCode } from '../../api/mutations';
+import PlayerDetail from '../players/PlayerDetail';
 import { fetchApi } from '../../api/client';
 
 /* ── Fallback colors for blocks without a loaded texture ── */
@@ -162,6 +165,9 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
   const [zoom, setZoom] = useState(4);
   const [texturesReady, setTexturesReady] = useState(0);
   const [followPlayer, setFollowPlayer] = useState(null);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [examinePlayer, setExaminePlayer] = useState(null);
+  const examineAnchorRef = useRef(null);
   const [hoverInfo, setHoverInfo] = useState(null);
 
   /* Interaction modes: 'normal' | 'teleport-pick-player' | 'teleport-pick-dest' | 'paste-preview' */
@@ -174,6 +180,12 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
   const [pastePosition, setPastePosition] = useState(null); // { x, y, z } world coords
   const [pasteRotation, setPasteRotation] = useState(0); // 0-3
   const [pasteMousePos, setPasteMousePos] = useState(null); // { x, z } world coords for hover preview
+
+  /* Inline code editor state */
+  const [evalCode, setEvalCode] = useState('');
+  const [evalHistory, setEvalHistory] = useState([]);
+  const [evalHistoryIdx, setEvalHistoryIdx] = useState(-1);
+  const evalMutation = useEvalCode();
 
   /* Search state */
   const [searchText, setSearchText] = useState('');
@@ -259,12 +271,16 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
     if (p?.location && p.location.world === worldName) {
       const nx = Math.round(p.location.x);
       const nz = Math.round(p.location.z);
+      const ny = Math.round(p.location.y);
       if (Math.abs(nx - centerX) > 2 || Math.abs(nz - centerZ) > 2) {
         setCenterXStr(String(nx));
         setCenterZStr(String(nz));
       }
+      if (Math.abs(ny - yLevel) > 2) {
+        setYLevelStr(String(ny));
+      }
     }
-  }, [followPlayer, players, worldName]); // deliberately omit centerX/centerZ
+  }, [followPlayer, players, worldName]); // deliberately omit centerX/centerZ/yLevel
 
   // Sync yLevelStr → yLevel
   useEffect(() => {
@@ -435,14 +451,15 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
         const r = Math.max(3, bpx * 0.4);
 
         const isFollowed = p.uuid === followPlayer;
+        const isSelected = p.uuid === selectedPlayer;
         const isTeleportTarget = teleportTarget?.uuid === p.uuid;
-        const color = isTeleportTarget ? '#FF00FF' : isFollowed ? '#00FF00' : '#FF0000';
+        const color = isTeleportTarget ? '#FF00FF' : isFollowed ? '#00FF00' : isSelected ? '#FFFFFF' : '#FF0000';
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.arc(cx, cz, r, 0, Math.PI * 2);
         ctx.fill();
 
-        if (isFollowed || isTeleportTarget) {
+        if (isFollowed || isSelected || isTeleportTarget) {
           ctx.strokeStyle = color;
           ctx.lineWidth = 2;
           ctx.beginPath();
@@ -529,27 +546,18 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
     }
 
     if (mode === 'teleport-pick-dest') {
-      // Teleport the target player to this location
-      fetchApi(`/worlds/${worldName}/surface?x=${coords.x}&z=${coords.z}`)
-        .then((data) => {
-          teleportPlayer.mutate({
-            uuid: teleportTarget.uuid,
-            world: worldName,
-            x: coords.x,
-            y: data.y + 1,
-            z: coords.z,
-          });
-        })
-        .catch(() => {
-          // Fallback: use current Y level
-          teleportPlayer.mutate({
-            uuid: teleportTarget.uuid,
-            world: worldName,
-            x: coords.x,
-            y: yLevel + 1,
-            z: coords.z,
-          });
-        });
+      // Teleport the target player to the clicked position using map height data
+      const bd = blockDataRef.current;
+      const bx = coords.x - (bd?.x1 || 0);
+      const bz = coords.z - (bd?.z1 || 0);
+      const clickY = (bd?.heights?.[bx]?.[bz] ?? yLevel) + 1;
+      teleportPlayer.mutate({
+        uuid: teleportTarget.uuid,
+        world: worldName,
+        x: coords.x,
+        y: clickY,
+        z: coords.z,
+      });
       setInteractionMode('normal');
       setTeleportTarget(null);
       return;
@@ -671,10 +679,19 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
     if (interactionMode === 'teleport-pick-player' || interactionMode === 'teleport-pick-dest') {
       setInteractionMode('normal');
       setTeleportTarget(null);
+    } else if ((selectedPlayer || followPlayer) && players) {
+      // If a player is already selected/followed, skip to pick-destination
+      const p = players.find((pl) => pl.uuid === (selectedPlayer || followPlayer));
+      if (p) {
+        setTeleportTarget({ uuid: p.uuid, name: p.name });
+        setInteractionMode('teleport-pick-dest');
+      } else {
+        setInteractionMode('teleport-pick-player');
+        setTeleportTarget(null);
+      }
     } else {
       setInteractionMode('teleport-pick-player');
       setTeleportTarget(null);
-      setFollowPlayer(null);
     }
   };
 
@@ -716,6 +733,10 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
   const followedName = followPlayer && players
     ? players.find((p) => p.uuid === followPlayer)?.name
     : null;
+  const contextPlayer = selectedPlayer || followPlayer;
+  const contextName = contextPlayer && players
+    ? players.find((p) => p.uuid === contextPlayer)?.name
+    : null;
 
   const worldList = worlds || [];
 
@@ -746,20 +767,23 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
             </Select>
           </FormControl>
           <TextField
-            size="small" label="Center X" value={centerXStr}
+            size="small" label="X" value={centerXStr}
             onChange={(e) => { setFollowPlayer(null); setCenterXStr(e.target.value); }}
-            sx={{ width: 100 }}
+            onWheel={(e) => { e.preventDefault(); setFollowPlayer(null); setCenterXStr((v) => String(Math.round(parseFloat(v) || 0) + (e.deltaY < 0 ? 5 : -5))); }}
+            sx={{ width: 80 }}
             inputProps={{ inputMode: 'numeric', pattern: '-?[0-9]*' }}
           />
           <TextField
-            size="small" label="Center Z" value={centerZStr}
-            onChange={(e) => { setFollowPlayer(null); setCenterZStr(e.target.value); }}
-            sx={{ width: 100 }}
-            inputProps={{ inputMode: 'numeric', pattern: '-?[0-9]*' }}
-          />
-          <TextField
-            size="small" label="Y Level" value={yLevelStr}
+            size="small" label="Y" value={yLevelStr}
             onChange={(e) => setYLevelStr(e.target.value)}
+            onWheel={(e) => { e.preventDefault(); setYLevelStr((v) => String(Math.round(parseFloat(v) || 0) + (e.deltaY < 0 ? 5 : -5))); }}
+            sx={{ width: 80 }}
+            inputProps={{ inputMode: 'numeric', pattern: '-?[0-9]*' }}
+          />
+          <TextField
+            size="small" label="Z" value={centerZStr}
+            onChange={(e) => { setFollowPlayer(null); setCenterZStr(e.target.value); }}
+            onWheel={(e) => { e.preventDefault(); setFollowPlayer(null); setCenterZStr((v) => String(Math.round(parseFloat(v) || 0) + (e.deltaY < 0 ? 5 : -5))); }}
             sx={{ width: 80 }}
             inputProps={{ inputMode: 'numeric', pattern: '-?[0-9]*' }}
           />
@@ -969,39 +993,163 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
         {/* Player sidebar */}
         {players?.length > 0 && (
           <Box sx={{
-            width: 130,
+            width: 200,
             flexShrink: 0,
             overflow: 'auto',
             borderLeft: '1px solid rgba(255,255,255,0.1)',
             pl: 0.5,
           }}>
             <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>Players</Typography>
-            <Stack spacing={0.5}>
+            <Stack spacing={0.25}>
               {players.filter((p) => p.location?.world === worldName).map((p) => (
-                <Chip
-                  key={p.uuid}
-                  label={p.name}
-                  size="small"
-                  variant={followPlayer === p.uuid ? 'filled' : interactionMode === 'teleport-pick-player' ? 'filled' : 'outlined'}
-                  color={followPlayer === p.uuid ? 'success' : interactionMode === 'teleport-pick-player' ? 'secondary' : 'default'}
-                  onClick={() => {
-                    if (interactionMode === 'teleport-pick-player') {
-                      setTeleportTarget({ uuid: p.uuid, name: p.name });
-                      setInteractionMode('teleport-pick-dest');
-                    } else {
-                      setFollowPlayer((prev) => prev === p.uuid ? null : p.uuid);
-                      setCenterXStr(String(Math.round(p.location.x)));
-                      setCenterZStr(String(Math.round(p.location.z)));
-                      setYLevelStr(String(Math.round(p.location.y)));
-                    }
-                  }}
-                  sx={{ justifyContent: 'flex-start' }}
-                />
+                <Box key={p.uuid} sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                  <Typography
+                    variant="body2"
+                    noWrap
+                    sx={{
+                      flex: 1,
+                      cursor: 'pointer',
+                      fontWeight: selectedPlayer === p.uuid ? 'bold' : 'normal',
+                      color: interactionMode === 'teleport-pick-player' ? 'secondary.main' : 'text.primary',
+                      '&:hover': { textDecoration: 'underline' },
+                      fontSize: 13,
+                    }}
+                    onClick={() => {
+                      if (interactionMode === 'teleport-pick-player') {
+                        setTeleportTarget({ uuid: p.uuid, name: p.name });
+                        setInteractionMode('teleport-pick-dest');
+                      } else {
+                        setSelectedPlayer((prev) => prev === p.uuid ? null : p.uuid);
+                        setCenterXStr(String(Math.round(p.location.x)));
+                        setCenterZStr(String(Math.round(p.location.z)));
+                        setYLevelStr(String(Math.round(p.location.y)));
+                      }
+                    }}
+                  >
+                    {p.name}
+                  </Typography>
+                  <Tooltip title={followPlayer === p.uuid ? 'Stop following' : 'Follow'}>
+                    <IconButton
+                      size="small"
+                      color={followPlayer === p.uuid ? 'success' : 'default'}
+                      onClick={() => setFollowPlayer((prev) => prev === p.uuid ? null : p.uuid)}
+                      sx={{ p: 0.25 }}
+                    >
+                      <VisibilityIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Details">
+                    <IconButton
+                      size="small"
+                      color={examinePlayer === p.uuid ? 'info' : 'default'}
+                      onClick={(e) => {
+                        examineAnchorRef.current = e.currentTarget;
+                        setExaminePlayer((prev) => prev === p.uuid ? null : p.uuid);
+                      }}
+                      sx={{ p: 0.25 }}
+                    >
+                      <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               ))}
             </Stack>
           </Box>
         )}
+        {/* Player detail popover */}
+        <Popper
+          open={!!examinePlayer}
+          anchorEl={examineAnchorRef.current}
+          placement="left-start"
+          sx={{ zIndex: 1300 }}
+        >
+          <ClickAwayListener onClickAway={() => setExaminePlayer(null)}>
+            <Paper sx={{ width: 450, maxHeight: '70vh', overflow: 'auto', p: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: -1 }}>
+                <IconButton size="small" onClick={() => setExaminePlayer(null)}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+              {examinePlayer && (
+                <PlayerDetail uuid={examinePlayer} />
+              )}
+            </Paper>
+          </ClickAwayListener>
+        </Popper>
         </Box>
+        {/* Inline code editor */}
+        <Box sx={{ mt: 0.5, display: 'flex', gap: 0.5, alignItems: 'center' }}>
+          <Typography variant="caption" sx={{ opacity: 0.6, whiteSpace: 'nowrap', minWidth: 'fit-content' }}>
+            {contextName ? `[${contextName}]` : '[server]'}
+          </Typography>
+          <TextField
+            fullWidth
+            size="small"
+            value={evalCode}
+            onChange={(e) => setEvalCode(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (!evalCode.trim()) return;
+                const entry = { code: evalCode.trim(), timestamp: Date.now() };
+                evalMutation.mutate(
+                  { code: evalCode.trim(), player_uuid: contextPlayer || undefined },
+                  {
+                    onSuccess: (data) => {
+                      setEvalHistory((prev) => [{ ...entry, result: data.result, output: data.output, error: data.error }, ...prev]);
+                    },
+                    onError: (err) => {
+                      setEvalHistory((prev) => [{ ...entry, error: err.message }, ...prev]);
+                    },
+                  }
+                );
+                setEvalCode('');
+                setEvalHistoryIdx(-1);
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (evalHistory.length > 0) {
+                  const newIdx = Math.min(evalHistoryIdx + 1, evalHistory.length - 1);
+                  setEvalHistoryIdx(newIdx);
+                  setEvalCode(evalHistory[newIdx].code);
+                }
+              } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (evalHistoryIdx > 0) {
+                  const newIdx = evalHistoryIdx - 1;
+                  setEvalHistoryIdx(newIdx);
+                  setEvalCode(evalHistory[newIdx].code);
+                } else if (evalHistoryIdx === 0) {
+                  setEvalHistoryIdx(-1);
+                  setEvalCode('');
+                }
+              }
+            }}
+            placeholder="Python expression... Enter to run"
+            sx={{
+              '& .MuiInputBase-input': { fontFamily: 'monospace', fontSize: 13, py: 0.5 },
+              '& .MuiInputBase-root': { py: 0 },
+            }}
+          />
+        </Box>
+        {evalHistory.length > 0 && (
+          <Box sx={{ maxHeight: 120, overflow: 'auto', mt: 0.5 }}>
+            {evalHistory.slice(0, 5).map((entry, i) => (
+              <Box key={i} sx={{ fontFamily: 'monospace', fontSize: 11, lineHeight: 1.4, px: 0.5 }}>
+                <span style={{ color: '#90caf9' }}>&gt;&gt;&gt; {entry.code}</span>
+                {entry.error ? (
+                  <span style={{ color: '#f44336', marginLeft: 8 }}>{String(entry.error)}</span>
+                ) : (
+                  <>
+                    {entry.output && <span style={{ color: '#aaa', marginLeft: 8 }}>{entry.output}</span>}
+                    <span style={{ color: '#a5d6a7', marginLeft: 8 }}>
+                      {entry.result != null ? JSON.stringify(entry.result) : 'None'}
+                    </span>
+                  </>
+                )}
+              </Box>
+            ))}
+          </Box>
+        )}
         {blockData && (
           <Typography variant="caption" component="div" sx={{ mt: 0.5, opacity: 0.7, fontFamily: 'monospace', fontSize: 11 }}>
             Y={blockData.y} region=[{blockData.x1},{blockData.z1}]-[{blockData.x2},{blockData.z2}]

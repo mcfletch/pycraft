@@ -32,8 +32,22 @@ export function useGiveItem() {
 export function useEnchantItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ uuid, slot }) =>
+    mutationFn: ({ uuid, slot, enchantments, potion_type, potion_effects, potion_name }) =>
       fetchApi(`/players/${uuid}/inventory/enchant`, {
+        method: 'POST',
+        body: JSON.stringify({ slot, enchantments, potion_type, potion_effects, potion_name }),
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['players', variables.uuid, 'inventory'] });
+    },
+  });
+}
+
+export function useDropItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ uuid, slot }) =>
+      fetchApi(`/players/${uuid}/inventory/drop`, {
         method: 'POST',
         body: JSON.stringify({ slot }),
       }),

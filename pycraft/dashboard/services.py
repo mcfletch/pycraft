@@ -7,3 +7,4 @@ class DashboardServices:
     def __init__(self, channel, sse_manager):
         self.channel = channel
         self.sse_manager = sse_manager
+        self.connected = False

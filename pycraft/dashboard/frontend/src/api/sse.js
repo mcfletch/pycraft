@@ -34,8 +34,12 @@ export function createSSEConnection(url = '/api/events', onEvent, onError) {
       onEvent('entity_death', JSON.parse(e.data));
     });
     source.addEventListener('heartbeat', () => {
-      // Connection alive — no action needed
+      onEvent('heartbeat', {});
     });
+
+    source.onopen = () => {
+      onEvent('heartbeat', {});
+    };
 
     source.onerror = () => {
       if (onError) onError();

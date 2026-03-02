@@ -24,6 +24,7 @@ export function useSSE() {
       '/api/events',
       (type, data) => {
         setConnected(true);
+        if (type === 'heartbeat') return;
         addLogEntry(type, data);
 
         // Update TanStack Query cache based on event type

@@ -17,11 +17,13 @@ CACHE_DIR = pathlib.Path(os.environ.get("PYCRAFT_CACHE", pathlib.Path.home() / "
 ZIP_PATH = CACHE_DIR / "faithful-32x-1.21.11.zip"
 BLOCK_PREFIX = "assets/minecraft/textures/block/"
 ITEM_PREFIX = "assets/minecraft/textures/item/"
+SLOT_PREFIX = "assets/minecraft/textures/gui/sprites/container/slot/"
 
 # Singleton — opened once on first request
 _zip_file: zipfile.ZipFile | None = None
 _block_index: dict[str, str] | None = None  # bare name → zip entry path
 _item_index: dict[str, str] | None = None   # bare name → zip entry path
+_slot_index: dict[str, str] | None = None  # bare name → zip entry path (GUI slot icons)
 _tinted_cache: dict[str, bytes] = {}  # material → tinted PNG bytes
 PROCESSED_DIR = CACHE_DIR / "textures_processed"
 
@@ -50,6 +52,32 @@ for _name in ('ice', 'packed_ice', 'blue_ice', 'frosted_ice_0', 'frosted_ice_1',
 for _name in ('leaf_litter',):
     TINT_MAP[_name] = LEAF_LITTER_TINT
 
+# Suffixes stripped to find the base material texture (e.g. oak_slab → oak → oak_planks)
+_VARIANT_SUFFIXES = (
+    '_slab', '_stairs', '_fence', '_fence_gate', '_wall',
+    '_button', '_pressure_plate', '_sign', '_wall_sign',
+    '_hanging_sign', '_wall_hanging_sign',
+    '_door', '_trapdoor',
+)
+
+# Explicit block → texture name overrides
+_TEXTURE_ALIASES = {
+    'farmland': 'dirt',
+    'grass_path': 'dirt',
+    'dirt_path': 'dirt',
+    'podzol': 'podzol_top',
+    'mycelium': 'mycelium_top',
+    'snow': 'snow',
+    'snow_block': 'snow',
+}
+
+# Wood type bases: stripping a variant suffix yields e.g. "oak" but the
+# texture file is "oak_planks"
+_PLANKS_BASES = {
+    'oak', 'birch', 'spruce', 'jungle', 'acacia', 'dark_oak',
+    'mangrove', 'cherry', 'bamboo', 'crimson', 'warped', 'pale_oak',
+}
+
 
 def _ensure_downloaded():
     """Download the texture pack ZIP if not already cached."""
@@ -68,13 +96,14 @@ def _ensure_downloaded():
 
 def _open_zip():
     """Open the ZIP file and build name → path indexes for block and item textures."""
-    global _zip_file, _block_index, _item_index
+    global _zip_file, _block_index, _item_index, _slot_index
     if _zip_file is not None:
         return
     _ensure_downloaded()
     _zip_file = zipfile.ZipFile(ZIP_PATH, "r")
     _block_index = {}
     _item_index = {}
+    _slot_index = {}
     for entry in _zip_file.namelist():
         if entry.endswith(".png"):
             if entry.startswith(BLOCK_PREFIX):
@@ -83,34 +112,76 @@ def _open_zip():
             elif entry.startswith(ITEM_PREFIX):
                 bare = entry[len(ITEM_PREFIX):-4]  # e.g. "diamond_sword"
                 _item_index[bare] = entry
+            elif entry.startswith(SLOT_PREFIX):
+                bare = entry[len(SLOT_PREFIX):-4]  # e.g. "shield"
+                _slot_index[bare] = entry
 
 
 def _resolve_top_texture(material: str) -> str | None:
     """Given a material like 'minecraft:grass_block', return the ZIP entry path
-    for the best top-face texture, or None if not found."""
+    for the best top-face texture, or None if not found.
+
+    Tries, in order:
+    1. Direct name + '_top' (e.g. grass_block_top)
+    2. Water/lava '_still' variant
+    3. Direct name match
+    4. Explicit alias (e.g. farmland → dirt)
+    5. Variant suffix stripping (e.g. oak_slab → oak_planks, stone_slab → stone)
+    """
     _open_zip()
     assert _block_index is not None
     name = material.split(":")[-1] if ":" in material else material
+    # 1. top-face variant
     if name + "_top" in _block_index:
         return _block_index[name + "_top"]
+    # 2. water/lava still
     if name in ("water", "lava") and name + "_still" in _block_index:
         return _block_index[name + "_still"]
+    # 3. direct match
     if name in _block_index:
         return _block_index[name]
+    # 4. explicit alias
+    alias = _TEXTURE_ALIASES.get(name)
+    if alias:
+        if alias + "_top" in _block_index:
+            return _block_index[alias + "_top"]
+        if alias in _block_index:
+            return _block_index[alias]
+    # 5. strip variant suffix and resolve base material
+    for suffix in _VARIANT_SUFFIXES:
+        if name.endswith(suffix):
+            base = name[:-len(suffix)]
+            # Wood types: oak_slab → oak → oak_planks
+            if base in _PLANKS_BASES:
+                planks = base + '_planks'
+                if planks in _block_index:
+                    return _block_index[planks]
+            # General: stone_slab → stone, cobblestone_wall → cobblestone
+            if base + "_top" in _block_index:
+                return _block_index[base + "_top"]
+            if base in _block_index:
+                return _block_index[base]
+            break
     return None
 
 
 def _resolve_item_texture(material: str) -> str | None:
     """Given a material like 'minecraft:diamond_sword', return the ZIP entry path
-    for the item texture.  Falls back to block texture for placeable items."""
+    for the item texture.  Falls back to block texture, then GUI slot icons."""
     _open_zip()
-    assert _item_index is not None and _block_index is not None
+    assert _item_index is not None and _block_index is not None and _slot_index is not None
     name = material.split(":")[-1] if ":" in material else material
     # Direct item match
     if name in _item_index:
         return _item_index[name]
     # Many blocks don't have item textures — fall back to block top-face
-    return _resolve_top_texture(material)
+    block = _resolve_top_texture(material)
+    if block:
+        return block
+    # Entity-rendered items (shield, etc.) — fall back to GUI slot icons
+    if name in _slot_index:
+        return _slot_index[name]
+    return None
 
 
 def _texture_name_from_path(entry_path: str) -> str:

@@ -59,21 +59,37 @@ class Channel(object):
         self.referents_awaiting_release = []
 
     async def open(self):
+        # Cancel any stale tasks from a previous connection
+        for task in getattr(self, '_tasks', []):
+            if not task.done():
+                task.cancel()
+        self._tasks = []
+        # Drain stale queues
+        while not self.outgoing_queue.empty():
+            try:
+                self.outgoing_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+        while not self.incoming_queue.empty():
+            try:
+                self.incoming_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
         self.wanted = True
         self.reader, self.writer = await asyncio.open_connection(
             *self.address, limit=1024 * 1024 * 20
         )
         if self.debug:
             log.info("Opening channel to server: %s", self.address)
-        asyncio.ensure_future(self.write_to_socket(self.outgoing_queue, self.writer))
-        asyncio.ensure_future(self.read_from_socket(self.incoming_queue, self.reader))
-        asyncio.ensure_future(self.process_incoming_queue(self.incoming_queue))
+        self._tasks.append(asyncio.ensure_future(self.write_to_socket(self.outgoing_queue, self.writer)))
+        self._tasks.append(asyncio.ensure_future(self.read_from_socket(self.incoming_queue, self.reader)))
+        self._tasks.append(asyncio.ensure_future(self.process_incoming_queue(self.incoming_queue)))
         proxyobjects.ProxyMethod.set_channel(self)
 
     async def close(self):
         if self.debug:
             log.info("Closing channel to server: %s", self.address)
-        if proxyobjects.ProxyMethod.channel is self:
+        if getattr(proxyobjects.ProxyMethod, 'channel', None) is self:
             proxyobjects.ProxyMethod.set_channel(None)
         self.wanted = False
         writer, self.writer = self.writer, None
@@ -81,21 +97,46 @@ class Channel(object):
             writer.close()
         await self.outgoing_queue.put(None)
         await self.incoming_queue.put(None)
-
+        # Cancel all background tasks
+        for task in getattr(self, '_tasks', []):
+            if not task.done():
+                task.cancel()
+        self._tasks = []
+        # Resolve all pending futures so callers don't hang
+        pending, self.pending = self.pending, {}
+        for future in pending.values():
+            if not future.done():
+                future.set_exception(ConnectionError("Channel closed"))
+        # Signal subscription queues so consumers can exit
+        for queue, event_type in self.subscriptions.values():
+            try:
+                queue.put_nowait(None)
+            except Exception:
+                pass
         if writer:
-            await writer.wait_closed()
+            try:
+                await writer.wait_closed()
+            except Exception:
+                pass
 
     async def write_to_socket(self, queue, writer):
-        while self.wanted:
-            message = await queue.get()
-            if message is None:
-                break
-            if isinstance(message, str):
-                message = message.encode('utf-8')
-            if self.debug:
-                log.debug("Writing message: %r", message)
-            self.writer.write(message)
-            self.writer.write(b"\n")
+        try:
+            while self.wanted:
+                message = await queue.get()
+                if message is None:
+                    break
+                if isinstance(message, str):
+                    message = message.encode('utf-8')
+                if self.debug:
+                    log.debug("Writing message: %r", message)
+                writer.write(message)
+                writer.write(b"\n")
+        except (ConnectionResetError, BrokenPipeError, OSError) as err:
+            log.warning("Write to MC server failed: %s", err)
+        except asyncio.CancelledError:
+            pass
+        except Exception:
+            log.exception("Unexpected error in write_to_socket")
 
     async def read_from_socket(self, queue, reader):
         while self.wanted:
@@ -116,6 +157,7 @@ class Channel(object):
                     )
                 except Exception as err:
                     log.exception("Error reading from socket with %r", line)
+                    continue
                 if self.debug:
                     log.debug("Read message: %r,%r,%r", message_id, error_flag, payload)
                 await queue.put((message_id, error_flag, payload))

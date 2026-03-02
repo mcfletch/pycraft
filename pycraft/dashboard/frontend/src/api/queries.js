@@ -80,6 +80,15 @@ export function useEnchantments() {
   });
 }
 
+export function useApplicableEnchantments(uuid, slot) {
+  return useQuery({
+    queryKey: ['players', uuid, 'inventory', slot, 'applicable-enchantments'],
+    queryFn: () => fetchApi(`/players/${uuid}/inventory/${slot}/applicable-enchantments`),
+    staleTime: 30_000,
+    enabled: !!uuid && slot != null,
+  });
+}
+
 export function usePotionTypes() {
   return useQuery({
     queryKey: ['potion-types'],

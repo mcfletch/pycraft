@@ -5,12 +5,12 @@
 | Project / Task | Status | Summary |
 |---|---|---|
 | **Bugs & Fixes** | | |
-| elevators() sign text | ✅ | `BlockData.get_key()` overrode `Reference.get_key()` in dynamic class MRO; fixed by falling back to `super().get_key()` when `string_value` is None |
 | getBlocks typing.List subtype | TODO | `WARNING: No sub-type on typing.List; dispatching on dict-types` from proxyobjects on getBlocks calls |
-| Map re-renders on interpreter resize | TODO | Map re-displays on almost every command execution (interpreter panel resize changes), including site load |
-| Dashboard traceback display | TODO | When a command raises an exception, show traceback in dashboard; click red error line to expand/copy full traceback |
-| Map center not persisted across tabs | TODO | Navigating away and back loses map center position; should persist across tab switches |
 | Live pytest timeout | TODO | Async event loop mismatch causes RPC calls to never receive responses |
+| Map re-renders on interpreter resize | ✅ | ResizeObserver debounced 300 ms; prevents map refetch on every interpreter panel resize |
+| Map center not persisted across tabs | ✅ | `worldName`, center, y-level, zoom stored in `sessionStorage`; restored on tab return |
+| elevators() sign text | ✅ | `BlockData.get_key()` overrode `Reference.get_key()` in dynamic class MRO; fixed by falling back to `super().get_key()` when `string_value` is None |
+| Dashboard traceback display | ✅ | Backend sends `traceback` field on errors; clicking red error line opens a modal dialog with full traceback and copy button (CodeEditor + map interpreter) |
 | No-player guards | ✅ | `@requires_player` decorator raises `RuntimeError('No player selected')` for absent or fake players |
 | elevators() height bug | ✅ | `column_up` returns string on failure; `assert height` passes for non-empty string, string passed as slice index |
 | help() & expose.py bugs | ✅ | Fixed `formatargspec` removal and undefined `name` variable |
@@ -31,14 +31,16 @@
 | Missing Bukkit APIs | TODO | Audit spigot javadocs for unimplemented APIs |
 | Separate API Introspections | TODO | Split 20+ MB introspection into lazy-loaded subsets with version-keyed client cache |
 | Introspection Zip Cache | TODO | Replace monolithic `.introspection.json` with a per-class zip cache in `~/.cache`; lazy-load class definitions on first use; optionally fetch missing classes live from server |
+| Chunk-Aware Block I/O | TODO | Batch get/set block calls by chunk; buffer writes within a single tick for atomic multi-block updates |
 | Standard RPC Protocol | TODO | Replace custom TCP/RPC with a standard protocol (JSON-RPC, gRPC, WebSockets, etc.) |
 | Particle Effects | TODO | Expose particle API and create demos |
 | **Potions & Crafting** | | |
-| Potion Python API | ✅ | `potion_of()` and `mikes_potion()` fixed: uppercase effect types, strip `minecraft:` prefix, explicit field extraction matching dashboard `_apply_potion_meta`; docstrings updated |
+| Persistent Scripts | TODO | Named scripts/modules loadable from dashboard; persist on server, handle events, create long-running player-triggered operations |
 | Command Handlers | TODO | Register custom `/commands` from Python with tab completion |
 | Clean Event Handlers | TODO | Documented handlers for craft/break/place/interact events |
 | Item Crafting Hooks | TODO | Expose and modify crafting recipes from Python |
 | Potion Crafting | Partial | Custom potions via Give/Enchant done; brewing stand & recipe APIs TODO |
+| Potion Python API | ✅ | `potion_of()` and `mikes_potion()` fixed: effect types namespaced to `minecraft:`, old Bukkit names updated, docstrings updated |
 | **World Generation** | | |
 | Python-to-Redstone | TODO | Translate Python logic into in-world redstone circuits |
 | Procedural City Generation | TODO | Auto-generate cities with configurable layouts |
@@ -224,6 +226,33 @@ Replace the monolithic `pycraft/server/.introspection.json` (~20 MB, checked int
 - Startup time drops dramatically — only the index is fetched/parsed up front
 - Memory footprint is proportional to the classes actually used in a session
 
+### Chunk-Aware Block I/O
+
+Minecraft organises the world into 16×16 column chunks. Block reads and writes that cross chunk boundaries currently generate one RPC call per block, which is slow and wasteful. This feature makes the Python layer chunk-aware.
+
+**Chunk-batched reads (`getBlocks` / `get_blocks`)**
+- Group the requested coordinates by chunk `(cx, cz) = (x // 16, z // 16)`
+- Issue one server call per chunk (`getChunkBlocks(cx, cz, y_min, y_max)`) rather than one call per block
+- Cache the returned chunk slice for the duration of the operation so repeated reads from the same chunk are free
+- Fall back to individual `getBlock` for single-block reads outside a bulk call
+
+**Tick-buffered writes (`setBlock` / `set_block` / `fill`)**
+- Accumulate `setBlock` calls into a per-chunk write buffer instead of sending immediately
+- Flush all buffered changes in a single `setChunkBlocks(cx, cz, changes)` call per chunk at the end of the tick (or when the buffer is explicitly flushed)
+- The server side applies all changes atomically within one game tick, avoiding inter-tick lighting/physics glitches during large fills
+- Expose `async with mc.block_batch():` context manager that opens and auto-flushes the buffer
+
+**Single-tick atomicity**
+- All writes submitted inside one `block_batch()` context are queued and sent to the Java plugin as a single batched message
+- The plugin defers the actual `world.setBlock()` calls to the next server tick using `Bukkit.getScheduler().runTask(...)`, so all placements happen in one tick regardless of Python async timing
+- Eliminates the "flickering fill" effect where partially-placed structures are visible mid-operation
+
+**Scope**
+- `pycraft/acommands.py`: `block()`, `get_blocks()` updated to use chunk I/O
+- `pycraft/buildings.py`, `pycraft/copypaste.py`, `pycraft/bulldozer.py`: opt-in to `block_batch()` for their fill loops
+- Java plugin: new `getChunkBlocks` and `setChunkBlocks` message handlers
+- Python channel: `block_batch()` context manager on `Channel`
+
 ### Separate API Introspections
 
 - [ ] Currently the introspection payload is *far* too large (~20 MB) — causes a slow startup download
@@ -248,6 +277,32 @@ Replace the monolithic `pycraft/server/.introspection.json` (~20 MB, checked int
 - [x] `potion_of(type, name, *extra)` and `mikes_potion(name)` are `@expose()`-decorated commands available in the code editor and chat interpreter
 - [x] Fixed: effect types uppercased, `minecraft:` prefix stripped, explicit field extraction — matches dashboard `_apply_potion_meta` logic
 - [x] Docstrings document parameter types and effect dict schema
+
+### Persistent Scripts / Event Handlers
+
+Allow the dashboard code window to define named **scripts** (Python modules) that are loaded into the running server and persist across interpreter sessions.
+
+**Dashboard UI**
+- A "Scripts" tab or panel alongside the code editor: list of named scripts, each with a name, enabled/disabled toggle, and "Edit" button
+- Editing opens the full multi-line code editor (not just the single-line REPL)
+- "Load" sends the script to the server, registering any event handlers or background tasks it defines
+- "Unload" removes the script and de-registers its handlers
+
+**Python API**
+- Scripts can use `@on_event('block_break')`, `@on_event('player_join')`, etc. to subscribe to Minecraft events
+- Handlers receive a live event proxy object (same as existing event system)
+- Scripts can define persistent background coroutines (e.g. a timer that fires every N seconds)
+- Scripts share a persistent namespace that survives individual REPL evaluations; changes made in the REPL (e.g. `player_storage`) can be accessed by scripts
+
+**Server side**
+- A `ScriptManager` holds loaded script modules and their registered handlers
+- On script load, execute the module body in a clean namespace with the full pycraft namespace available
+- Handlers registered by the module are registered with the existing event dispatcher
+- On unload, de-register all handlers from that script
+
+**Storage**
+- Scripts are stored in a `scripts/` directory (configurable) so they survive dashboard restarts
+- Metadata (enabled/disabled, load order) stored alongside
 
 ### Command Handlers
 

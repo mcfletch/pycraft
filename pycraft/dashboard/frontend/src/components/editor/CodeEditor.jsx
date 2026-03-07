@@ -12,10 +12,102 @@ import {
   FormControl,
   InputLabel,
   Paper,
+  Tooltip,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useEvalCode } from '../../api/mutations';
 import { useOnlinePlayers } from '../../api/queries';
+
+/** Parse a serialized Location into {world, x, y, z}.
+ *  Handles three formats the server may send:
+ *   - array  [world, x, y, z, yaw, pitch]
+ *   - object {world, vector: [x, y, z, yaw, pitch]}
+ *   - object {world, x, y, z}
+ */
+export function parseLocation(loc) {
+  if (!loc) return null;
+  if (Array.isArray(loc)) return { world: loc[0], x: loc[1], y: loc[2], z: loc[3] };
+  if (loc.vector) return { world: loc.world, x: loc.vector[0], y: loc.vector[1], z: loc.vector[2] };
+  return { world: loc.world, x: loc.x, y: loc.y, z: loc.z };
+}
+
+export function TracebackDialog({ open, onClose, error, traceback, code, context }) {
+  const [copied, setCopied] = useState(false);
+
+  const fullText = [
+    code ? `>>> ${code}` : null,
+    context ? `# ${context}` : null,
+    '',
+    traceback || String(error),
+  ].filter(s => s !== null).join('\n');
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(fullText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ color: 'error.main', fontFamily: 'monospace', fontSize: 14 }}>
+        {String(error)}
+      </DialogTitle>
+      <DialogContent dividers sx={{ p: 0 }}>
+        <Box
+          component="pre"
+          sx={{
+            m: 0,
+            p: 2,
+            bgcolor: '#0d0d0d',
+            color: '#ff8a80',
+            fontFamily: 'monospace',
+            fontSize: 12,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-all',
+            maxHeight: 480,
+            overflowY: 'auto',
+          }}
+        >
+          {code && <Box component="span" sx={{ color: '#90caf9' }}>{`>>> ${code}\n`}</Box>}
+          {context && <Box component="span" sx={{ color: '#aaa' }}>{`# ${context}\n`}</Box>}
+          {(code || context) && '\n'}
+          {traceback || String(error)}
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Tooltip title={copied ? 'Copied!' : 'Copy to clipboard'}>
+          <Button onClick={handleCopy} startIcon={<ContentCopyIcon />} size="small">
+            {copied ? 'Copied!' : 'Copy'}
+          </Button>
+        </Tooltip>
+        <Button onClick={onClose} size="small">Close</Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function ErrorEntry({ error, traceback, code, context }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Alert
+        severity="error"
+        sx={{ py: 0, cursor: traceback ? 'pointer' : 'default' }}
+        onClick={() => traceback && setOpen(true)}
+      >
+        {String(error)}
+        {traceback && <Box component="span" sx={{ ml: 1, fontSize: 11, opacity: 0.7 }}>(click for traceback)</Box>}
+      </Alert>
+      <TracebackDialog open={open} onClose={() => setOpen(false)} error={error} traceback={traceback} code={code} context={context} />
+    </>
+  );
+}
 
 export default function CodeEditor() {
   const [code, setCode] = useState('');
@@ -27,12 +119,19 @@ export default function CodeEditor() {
 
   const handleRun = () => {
     if (!code.trim()) return;
-    const entry = { code: code.trim(), timestamp: Date.now() };
+    const player = players?.find((p) => p.uuid === playerUuid);
+    let context = 'Server context (no player)';
+    if (player) {
+      const parsed = parseLocation(player.location);
+      const pos = parsed ? ` at (${Math.round(parsed.x)}, ${Math.round(parsed.y)}, ${Math.round(parsed.z)}) in ${parsed.world}` : '';
+      context = `Player: ${player.display_name || player.name}${pos}`;
+    }
+    const entry = { code: code.trim(), timestamp: Date.now(), context };
     evalMutation.mutate(
       { code: code.trim(), player_uuid: playerUuid || undefined },
       {
         onSuccess: (data) => {
-          setHistory((prev) => [{ ...entry, result: data.result, output: data.output, error: data.error }, ...prev]);
+          setHistory((prev) => [{ ...entry, result: data.result, output: data.output, error: data.error, traceback: data.traceback }, ...prev]);
         },
         onError: (err) => {
           setHistory((prev) => [{ ...entry, error: err.message }, ...prev]);
@@ -126,7 +225,7 @@ export default function CodeEditor() {
                   &gt;&gt;&gt; {entry.code}
                 </Typography>
                 {entry.error ? (
-                  <Alert severity="error" sx={{ py: 0 }}>{String(entry.error)}</Alert>
+                  <ErrorEntry error={entry.error} traceback={entry.traceback} code={entry.code} context={entry.context} />
                 ) : (
                   <>
                     {entry.output && (

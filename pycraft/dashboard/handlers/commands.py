@@ -3,6 +3,7 @@ import ast
 import io
 import logging
 import sys
+import traceback as tb_module
 from typing import Coroutine
 
 from aiohttp import web
@@ -256,4 +257,4 @@ async def eval_code(request):
             })
     except Exception as err:
         log.exception("Error evaluating code: %s", code)
-        return web.json_response({'error': str(err)})
+        return web.json_response({'error': str(err), 'traceback': tb_module.format_exc()})

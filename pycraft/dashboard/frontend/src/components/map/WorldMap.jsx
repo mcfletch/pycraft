@@ -19,6 +19,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
   List,
   ListItem,
   ListItemButton,
@@ -40,6 +41,7 @@ import ClickAwayListener from '@mui/material/ClickAwayListener';
 import { useWorldBlocks, useOnlinePlayers, useTemplates, useTemplateDetail, useMapSearch } from '../../api/queries';
 import { useTeleportPlayer, usePasteTemplate, useEvalCode } from '../../api/mutations';
 import PlayerDetail from '../players/PlayerDetail';
+import { TracebackDialog, parseLocation } from '../editor/CodeEditor';
 import { fetchApi } from '../../api/client';
 
 /* ── Fallback colors for blocks without a loaded texture ── */
@@ -158,11 +160,11 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const [containerSize, setContainerSize] = useState({ w: 800, h: 500 });
-  const [worldName, setWorldName] = useState('');
-  const [centerXStr, setCenterXStr] = useState('0');
-  const [centerZStr, setCenterZStr] = useState('0');
-  const [yLevel, setYLevel] = useState(64);
-  const [zoom, setZoom] = useState(4);
+  const [worldName, setWorldName] = useState(() => sessionStorage.getItem('map_worldName') || '');
+  const [centerXStr, setCenterXStr] = useState(() => sessionStorage.getItem('map_centerX') || '0');
+  const [centerZStr, setCenterZStr] = useState(() => sessionStorage.getItem('map_centerZ') || '0');
+  const [yLevel, setYLevel] = useState(() => parseInt(sessionStorage.getItem('map_yLevel') || '64', 10));
+  const [zoom, setZoom] = useState(() => parseInt(sessionStorage.getItem('map_zoom') || '4', 10));
   const [texturesReady, setTexturesReady] = useState(0);
   const [followPlayer, setFollowPlayer] = useState(null);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -185,6 +187,7 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
   const [evalCode, setEvalCode] = useState('');
   const [evalHistory, setEvalHistory] = useState([]);
   const [evalHistoryIdx, setEvalHistoryIdx] = useState(-1);
+  const [tracebackEntry, setTracebackEntry] = useState(null); // { error, traceback }
   const evalMutation = useEvalCode();
 
   /* Search state */
@@ -195,7 +198,7 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
 
   /* Zoom popover */
   const [zoomAnchorEl, setZoomAnchorEl] = useState(null);
-  const [yLevelStr, setYLevelStr] = useState('64');
+  const [yLevelStr, setYLevelStr] = useState(() => sessionStorage.getItem('map_yLevel') || '64');
 
   /*
    * Drag-to-pan state:
@@ -214,6 +217,13 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
   const pasteTemplate = usePasteTemplate();
   const { data: templates } = useTemplates();
   const { data: templateDetail } = useTemplateDetail(selectedTemplateName);
+
+  // Persist map position/zoom/world across tab switches
+  useEffect(() => { sessionStorage.setItem('map_centerX', centerXStr); }, [centerXStr]);
+  useEffect(() => { sessionStorage.setItem('map_centerZ', centerZStr); }, [centerZStr]);
+  useEffect(() => { sessionStorage.setItem('map_yLevel', yLevelStr); }, [yLevelStr]);
+  useEffect(() => { sessionStorage.setItem('map_zoom', String(zoom)); }, [zoom]);
+  useEffect(() => { if (worldName) sessionStorage.setItem('map_worldName', worldName); }, [worldName]);
 
   // Debounce search input
   useEffect(() => {
@@ -236,18 +246,23 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
     }
   }, [templateDetail]);
 
-  /* Measure container with ResizeObserver */
+  /* Measure container with ResizeObserver — debounced so interpreter panel
+     height changes don't immediately trigger a map refetch */
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    let timer;
     const ro = new ResizeObserver((entries) => {
       const { width, height } = entries[0].contentRect;
       if (width > 0 && height > 0) {
-        setContainerSize({ w: Math.floor(width), h: Math.floor(height) });
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          setContainerSize({ w: Math.floor(width), h: Math.floor(height) });
+        }, 300);
       }
     });
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => { ro.disconnect(); clearTimeout(timer); };
   }, []);
 
   // Auto-select first world
@@ -1091,7 +1106,16 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
               if (e.key === 'Enter') {
                 e.preventDefault();
                 if (!evalCode.trim()) return;
-                const entry = { code: evalCode.trim(), timestamp: Date.now() };
+                let context;
+                if (contextPlayer && contextName) {
+                  const cp = players?.find((p) => p.uuid === contextPlayer);
+                  const parsed = parseLocation(cp?.location);
+                  const pos = parsed ? ` at (${Math.round(parsed.x)}, ${Math.round(parsed.y)}, ${Math.round(parsed.z)}) in ${parsed.world}` : '';
+                  context = `Player: ${cp?.display_name || contextName}${pos}`;
+                } else {
+                  context = `Map center: (${Math.round(centerX)}, ${yLevel}, ${Math.round(centerZ)}) in ${worldName}`;
+                }
+                const entry = { code: evalCode.trim(), timestamp: Date.now(), context };
                 evalMutation.mutate(
                   {
                     code: evalCode.trim(),
@@ -1100,7 +1124,7 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
                   },
                   {
                     onSuccess: (data) => {
-                      setEvalHistory((prev) => [{ ...entry, result: data.result, output: data.output, error: data.error }, ...prev]);
+                      setEvalHistory((prev) => [{ ...entry, result: data.result, output: data.output, error: data.error, traceback: data.traceback }, ...prev]);
                     },
                     onError: (err) => {
                       setEvalHistory((prev) => [{ ...entry, error: err.message }, ...prev]);
@@ -1141,7 +1165,13 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
               <Box key={i} sx={{ fontFamily: 'monospace', fontSize: 11, lineHeight: 1.4, px: 0.5 }}>
                 <span style={{ color: '#90caf9' }}>&gt;&gt;&gt; {entry.code}</span>
                 {entry.error ? (
-                  <span style={{ color: '#f44336', marginLeft: 8 }}>{String(entry.error)}</span>
+                  <span
+                    style={{ color: '#f44336', marginLeft: 8, cursor: entry.traceback ? 'pointer' : 'default' }}
+                    onClick={() => entry.traceback && setTracebackEntry({ error: entry.error, traceback: entry.traceback, code: entry.code, context: entry.context })}
+                    title={entry.traceback ? 'Click for traceback' : undefined}
+                  >
+                    {String(entry.error)}{entry.traceback && ' ↗'}
+                  </span>
                 ) : (
                   <>
                     {entry.output && <span style={{ color: '#aaa', marginLeft: 8 }}>{entry.output}</span>}
@@ -1212,6 +1242,14 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
           </List>
         </DialogContent>
       </Dialog>
+      <TracebackDialog
+        open={!!tracebackEntry}
+        onClose={() => setTracebackEntry(null)}
+        error={tracebackEntry?.error}
+        traceback={tracebackEntry?.traceback}
+        code={tracebackEntry?.code}
+        context={tracebackEntry?.context}
+      />
     </Card>
   );
 }

@@ -422,6 +422,58 @@ async def drop_item(request):
         return web.json_response({'error': str(err)}, status=500)
 
 
+async def move_item(request):
+    """POST /api/players/{uuid}/inventory/move — swap items between two slots
+
+    Swaps the items at from_slot and to_slot. If to_slot is empty, moves the
+    item there and clears from_slot. Preserves material, amount, and enchantments.
+    """
+    services = request.app['services']
+    channel = services.channel
+    uuid_str = request.match_info['uuid']
+    try:
+        data = await request.json()
+    except Exception:
+        return web.json_response({'error': 'Invalid JSON body'}, status=400)
+    if 'from_slot' not in data or 'to_slot' not in data:
+        return web.json_response({'error': 'Missing fields: from_slot, to_slot'}, status=400)
+    try:
+        player = await _find_player(channel, uuid_str)
+        if not player:
+            return web.json_response({'error': 'Player not found'}, status=404)
+        inventory = await player.getInventory()
+        from_slot = int(data['from_slot'])
+        to_slot = int(data['to_slot'])
+
+        if from_slot == to_slot:
+            return web.json_response({'status': 'ok'})
+
+        stack_from = inventory.contents[from_slot]
+        if stack_from is None:
+            return web.json_response({'error': f'Slot {from_slot} is empty'}, status=400)
+        stack_to = inventory.contents[to_slot]
+
+        # Place from_slot's item into to_slot
+        await inventory.setItem(to_slot, [stack_from.material, stack_from.amount])
+        if stack_from.enchantments:
+            ench_list = [{'key': k, 'level': v} for k, v in stack_from.enchantments.items()]
+            await _enchant_stack(inventory.get_stack(to_slot), ench_list)
+
+        # Place to_slot's original item into from_slot (or clear it)
+        if stack_to is not None:
+            await inventory.setItem(from_slot, [stack_to.material, stack_to.amount])
+            if stack_to.enchantments:
+                ench_list = [{'key': k, 'level': v} for k, v in stack_to.enchantments.items()]
+                await _enchant_stack(inventory.get_stack(from_slot), ench_list)
+        else:
+            await inventory.clear(from_slot)
+
+        return web.json_response({'status': 'ok'})
+    except Exception as err:
+        log.exception("Failed to move item for %s", uuid_str)
+        return web.json_response({'error': str(err)}, status=500)
+
+
 async def applicable_enchantments(request):
     """GET /api/players/{uuid}/inventory/{slot}/applicable-enchantments
 

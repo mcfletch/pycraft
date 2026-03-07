@@ -18,7 +18,7 @@ import {
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import { usePlayerDetail, usePlayerInventory, useSearchBlocks, useEnchantments, usePotionTypes } from '../../api/queries';
-import { useGiveItem, useEnchantItem, useDropItem } from '../../api/mutations';
+import { useGiveItem, useEnchantItem, useDropItem, useMoveItem } from '../../api/mutations';
 import { EnchantmentSelector, PotionOptionsPanel, isPotion } from './EnchantmentSelector';
 import InventoryView from './InventoryView';
 
@@ -37,6 +37,7 @@ export default function PlayerDetail({ uuid }) {
   const giveMutation = useGiveItem();
   const enchantMutation = useEnchantItem();
   const dropMutation = useDropItem();
+  const moveMutation = useMoveItem();
 
   const [giveForm, setGiveForm] = useState({ material: '', count: '1' });
   const [enchantOnGive, setEnchantOnGive] = useState(false);
@@ -125,6 +126,9 @@ export default function PlayerDetail({ uuid }) {
   const handleDropSlot = (slot) => {
     dropMutation.mutate({ uuid, slot });
   };
+  const handleMoveSlot = (from_slot, to_slot) => {
+    moveMutation.mutate({ uuid, from_slot, to_slot });
+  };
 
   // Potion effect helpers for the Give form
   const addPotionEffect = () => {
@@ -175,6 +179,7 @@ export default function PlayerDetail({ uuid }) {
               inventory={inventory}
               onEnchant={handleEnchantSlot}
               onDrop={handleDropSlot}
+              onMove={handleMoveSlot}
               enchantDialogSlot={enchantDialogSlot}
               onCloseEnchantDialog={() => setEnchantDialogSlot(null)}
               uuid={uuid}
@@ -191,6 +196,9 @@ export default function PlayerDetail({ uuid }) {
             )}
             {dropMutation.isError && (
               <Alert severity="error" sx={{ mt: 1 }}>{dropMutation.error.message}</Alert>
+            )}
+            {moveMutation.isError && (
+              <Alert severity="error" sx={{ mt: 1 }}>{moveMutation.error.message}</Alert>
             )}
           </CardContent>
         </Card>

@@ -57,6 +57,20 @@ export function useDropItem() {
   });
 }
 
+export function useMoveItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ uuid, from_slot, to_slot }) =>
+      fetchApi(`/players/${uuid}/inventory/move`, {
+        method: 'POST',
+        body: JSON.stringify({ from_slot, to_slot }),
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['players', variables.uuid, 'inventory'] });
+    },
+  });
+}
+
 export function useSpawnEntity() {
   return useMutation({
     mutationFn: ({ worldName, type, x, y, z }) =>

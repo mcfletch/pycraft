@@ -17,6 +17,7 @@ def setup_routes(app):
     app.router.add_post('/api/players/{uuid}/inventory/give', players.give_item)
     app.router.add_post('/api/players/{uuid}/inventory/enchant', players.enchant_item)
     app.router.add_post('/api/players/{uuid}/inventory/drop', players.drop_item)
+    app.router.add_post('/api/players/{uuid}/inventory/move', players.move_item)
     app.router.add_get('/api/players/{uuid}/inventory/{slot}/applicable-enchantments', players.applicable_enchantments)
 
     # World

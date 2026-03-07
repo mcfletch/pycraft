@@ -29,7 +29,7 @@ function formatEventData(type, data) {
       return `${data.player?.name || data.name || 'Unknown'} left`;
     case 'player_move': {
       const loc = data.location;
-      return `${data.name || data.uuid?.slice(0, 8)} moved to (${Math.round(loc?.x || 0)}, ${Math.round(loc?.y || 0)}, ${Math.round(loc?.z || 0)})`;
+      return `${data.name || data.uuid?.slice(0, 8)} moved to (${(loc?.x || 0).toFixed(1)}, ${(loc?.y || 0).toFixed(1)}, ${(loc?.z || 0).toFixed(1)})`;
     }
     case 'chat':
       return `<${data.player?.name || data.player || 'Unknown'}> ${data.message}`;

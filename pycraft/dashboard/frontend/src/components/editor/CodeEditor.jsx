@@ -123,7 +123,7 @@ export default function CodeEditor() {
     let context = 'Server context (no player)';
     if (player) {
       const parsed = parseLocation(player.location);
-      const pos = parsed ? ` at (${Math.round(parsed.x)}, ${Math.round(parsed.y)}, ${Math.round(parsed.z)}) in ${parsed.world}` : '';
+      const pos = parsed ? ` at (${parsed.x.toFixed(1)}, ${parsed.y.toFixed(1)}, ${parsed.z.toFixed(1)}) in ${parsed.world}` : '';
       context = `Player: ${player.display_name || player.name}${pos}`;
     }
     const entry = { code: code.trim(), timestamp: Date.now(), context };
@@ -214,13 +214,13 @@ export default function CodeEditor() {
           <Box sx={{ mt: 2 }}>
             <Typography variant="h6" gutterBottom>Output</Typography>
             {history.map((entry, i) => (
-              <Paper key={i} sx={{ p: 1.5, mb: 1, bgcolor: 'background.default' }}>
+              <Paper key={i} sx={{ p: 1.5, mb: 1, bgcolor: 'background.default', overflow: 'hidden' }}>
                 <Typography variant="caption" color="text.secondary">
                   {new Date(entry.timestamp).toLocaleTimeString()}
                 </Typography>
                 <Typography
                   variant="body2"
-                  sx={{ fontFamily: 'monospace', color: 'primary.main', mb: 0.5 }}
+                  sx={{ fontFamily: 'monospace', color: 'primary.main', mb: 0.5, wordBreak: 'break-all' }}
                 >
                   &gt;&gt;&gt; {entry.code}
                 </Typography>
@@ -229,11 +229,11 @@ export default function CodeEditor() {
                 ) : (
                   <>
                     {entry.output && (
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', color: 'text.secondary' }}>
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all', color: 'text.secondary' }}>
                         {entry.output}
                       </Typography>
                     )}
-                    <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                       {entry.result != null ? JSON.stringify(entry.result, null, 2) : 'None'}
                     </Typography>
                   </>

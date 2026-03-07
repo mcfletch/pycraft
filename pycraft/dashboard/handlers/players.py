@@ -202,6 +202,21 @@ async def get_player_inventory(request):
         return web.json_response({'error': str(err)}, status=500)
 
 
+async def _safe_teleport_y(world_name, x, y, z, max_scan=200):
+    """Scan upward from y to find the first position with two passable blocks (safe to stand)."""
+    world_obj = final.World(name=world_name)
+    x_int = int(x)
+    z_int = int(z)
+    y_int = int(y)
+    for dy in range(max_scan):
+        check_y = y_int + dy
+        b_feet = await world_obj.getBlockAt(x_int, check_y, z_int)
+        b_head = await world_obj.getBlockAt(x_int, check_y + 1, z_int)
+        if await b_feet.isPassable() and await b_head.isPassable():
+            return check_y
+    return y_int  # fallback: couldn't find safe position
+
+
 async def teleport_player(request):
     """POST /api/players/{uuid}/teleport — teleport player to location"""
     services = request.app['services']
@@ -218,7 +233,13 @@ async def teleport_player(request):
         player = await _find_player(channel, uuid_str)
         if not player:
             return web.json_response({'error': 'Player not found'}, status=404)
-        loc = Location([data['world'], float(data['x']), float(data['y']), float(data['z'])])
+        world_name = data['world']
+        x = float(data['x'])
+        y = float(data['y'])
+        z = float(data['z'])
+        if data.get('safe', True):
+            y = await _safe_teleport_y(world_name, x, y, z)
+        loc = Location([world_name, x, y, z])
         await player.teleport(loc)
         return web.json_response({'status': 'ok'})
     except Exception as err:

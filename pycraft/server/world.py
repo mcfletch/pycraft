@@ -304,6 +304,26 @@ class Location(ServerObjectProxy):
         """Get the block location (block address) for this location"""
         return self.__class__([self.world, np.floor(self.vector[:3])])
 
+    async def safe_above(self, max_scan=200):
+        """Return a copy of this location adjusted upward to the first safe standing position.
+
+        Scans from the current y upward until two consecutive passable blocks
+        are found (feet and head positions), preventing teleporting into solid terrain.
+        """
+        world_obj = final.World(name=self.world)
+        x = int(self.x)
+        z = int(self.z)
+        y = int(np.floor(self.y))
+        for dy in range(max_scan):
+            check_y = y + dy
+            b_feet = await world_obj.getBlockAt(x, check_y, z)
+            b_head = await world_obj.getBlockAt(x, check_y + 1, z)
+            if await b_feet.isPassable() and await b_head.isPassable():
+                new_vec = self.vector.copy()
+                new_vec[1] = float(check_y)
+                return self.__class__([self.world, new_vec])
+        return self  # fallback: couldn't find safe position
+
     @property
     def direction(self):
         """Get the direction faced by this location"""
@@ -355,10 +375,16 @@ class Entity(ServerObjectProxy):
     def position(self):
         return self.location
 
-    async def set_location(self, location):
-        """Set the user's position to the given location or vector"""
+    async def set_location(self, location, safe=True):
+        """Set the user's position to the given location or vector.
+
+        safe -- if True, scan upward from the target y until two passable
+                blocks are found (prevents teleporting inside solid terrain).
+        """
         if not isinstance(location, Location):
             location = Location(location)
+        if safe:
+            location = await location.safe_above()
         await self.teleport(location)
 
     @property

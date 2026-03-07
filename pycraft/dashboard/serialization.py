@@ -79,14 +79,19 @@ def serialize(obj):
         }
     if isinstance(obj, world.Event):
         result = {'type': getattr(obj, 'type', None)}
-        if hasattr(obj, 'player') and obj.player is not None:
-            result['player'] = serialize(obj.player)
+        player = getattr(obj, 'player', None)
+        entity = getattr(obj, 'entity', None)
+        # PlayerDeathEvent: entity IS the player (entity events don't set player field)
+        if player is None and isinstance(entity, world.Player):
+            player = entity
+        if player is not None:
+            result['player'] = serialize(player)
         if hasattr(obj, 'message') and obj.message is not None:
             result['message'] = obj.message
         if hasattr(obj, 'block') and obj.block is not None:
             result['block'] = serialize(obj.block)
-        if hasattr(obj, 'entity') and obj.entity is not None:
-            result['entity'] = serialize(obj.entity)
+        if entity is not None:
+            result['entity'] = serialize(entity)
         return result
     if isinstance(obj, world.Block):
         return {

@@ -73,7 +73,7 @@ export default function EntityPanel({ worlds }) {
                       primary={entity.display_name || entity.name || entity.type}
                       secondary={
                         entity.location
-                          ? `(${Math.round(entity.location.x)}, ${Math.round(entity.location.y)}, ${Math.round(entity.location.z)})`
+                          ? `(${entity.location.x.toFixed(1)}, ${entity.location.y.toFixed(1)}, ${entity.location.z.toFixed(1)})`
                           : ''
                       }
                     />

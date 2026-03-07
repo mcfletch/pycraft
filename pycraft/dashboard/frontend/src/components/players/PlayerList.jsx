@@ -20,7 +20,7 @@ import { usePlayers } from '../../api/queries';
 
 function formatLocation(loc) {
   if (!loc) return 'Unknown';
-  return `${loc.world} (${Math.round(loc.x)}, ${Math.round(loc.y)}, ${Math.round(loc.z)})`;
+  return `${loc.world} (${loc.x.toFixed(1)}, ${loc.y.toFixed(1)}, ${loc.z.toFixed(1)})`;
 }
 
 function PlayerEntry({ player, onSelect, offline }) {

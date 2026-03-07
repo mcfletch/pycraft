@@ -263,7 +263,7 @@ def _type_coerce(value, typ):
             sub_type = typ.__args__[0]  # YUCK!
             return [type_coerce(item, sub_type) for item in value]
         else:
-            log.warning("No sub-type on %s; dispatching on dict-types", typ)
+            log.debug("No sub-type on %s; dispatching on dict-types", typ)
             return [
                 (type_coerce(item, _dict_typ(item)) if _dict_typ(item) else item)
                 for item in value

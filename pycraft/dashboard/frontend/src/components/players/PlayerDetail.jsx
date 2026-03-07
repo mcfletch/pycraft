@@ -161,7 +161,7 @@ export default function PlayerDetail({ uuid }) {
           </Typography>
           {player.location && (
             <Typography variant="body2" color="text.secondary">
-              Location: {player.location.world} ({Math.round(player.location.x)}, {Math.round(player.location.y)}, {Math.round(player.location.z)})
+              Location: {player.location.world} ({player.location.x.toFixed(1)}, {player.location.y.toFixed(1)}, {player.location.z.toFixed(1)})
             </Typography>
           )}
         </CardContent>

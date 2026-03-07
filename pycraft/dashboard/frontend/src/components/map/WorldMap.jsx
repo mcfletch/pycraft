@@ -341,7 +341,14 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
       }
     : null;
 
-  const { data: blockData, isLoading } = useWorldBlocks(worldName, params);
+  // Debounce params so rapid scroll-wheel events don't flood the server
+  const [debouncedParams, setDebouncedParams] = useState(params);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedParams(params), 250);
+    return () => clearTimeout(timer);
+  }, [params?.x1, params?.z1, params?.x2, params?.z2, params?.y, worldName]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { data: blockData, isLoading } = useWorldBlocks(worldName, debouncedParams);
 
   // When new blockData arrives, clear visual offset
   const lastRenderedCenterRef = useRef({ x: centerX, z: centerZ });
@@ -403,12 +410,12 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
     if (blockData.entities) {
       for (const e of blockData.entities) {
         if (!e.location || e.type === 'minecraft:player') continue;
-        const ex = Math.round(e.location.x) - ox;
-        const ez = Math.round(e.location.z) - oz;
-        if (ex < 0 || ex >= w || ez < 0 || ez >= h) continue;
+        const ex = e.location.x - ox;
+        const ez = e.location.z - oz;
+        if (ex < -0.5 || ex >= w + 0.5 || ez < -0.5 || ez >= h + 0.5) continue;
         const sz = Math.max(2, bpx * 0.6);
         ctx.fillStyle = getEntityColor(e.type);
-        ctx.fillRect(ex * bpx + (bpx - sz) / 2, ez * bpz + (bpz - sz) / 2, sz, sz);
+        ctx.fillRect(ex * bpx - sz / 2, ez * bpz - sz / 2, sz, sz);
       }
     }
 
@@ -458,11 +465,11 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
     if (players) {
       for (const p of players) {
         if (!p.location || p.location.world !== worldName) continue;
-        const px = Math.round(p.location.x) - ox;
-        const pz = Math.round(p.location.z) - oz;
-        if (px < 0 || px >= w || pz < 0 || pz >= h) continue;
-        const cx = px * bpx + bpx / 2;
-        const cz = pz * bpz + bpz / 2;
+        const px = p.location.x - ox;
+        const pz = p.location.z - oz;
+        if (px < -0.5 || px >= w + 0.5 || pz < -0.5 || pz >= h + 0.5) continue;
+        const cx = px * bpx;
+        const cz = pz * bpz;
         const r = Math.max(3, bpx * 0.4);
 
         const isFollowed = p.uuid === followPlayer;
@@ -539,8 +546,8 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
     if (!players) return null;
     for (const p of players) {
       if (!p.location || p.location.world !== worldName) continue;
-      const dx = Math.round(p.location.x) - worldX;
-      const dz = Math.round(p.location.z) - worldZ;
+      const dx = Math.floor(p.location.x) - worldX;
+      const dz = Math.floor(p.location.z) - worldZ;
       if (Math.abs(dx) <= 2 && Math.abs(dz) <= 2) return p;
     }
     return null;
@@ -659,8 +666,8 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
       if (bd.entities) {
         for (const ent of bd.entities) {
           if (!ent.location) continue;
-          const ex = Math.round(ent.location.x);
-          const ez2 = Math.round(ent.location.z);
+          const ex = Math.floor(ent.location.x);
+          const ez2 = Math.floor(ent.location.z);
           if (ex === worldX && ez2 === worldZ) {
             entityName = (ent.name || ent.type || '').replace('minecraft:', '');
             break;
@@ -1110,10 +1117,10 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
                 if (contextPlayer && contextName) {
                   const cp = players?.find((p) => p.uuid === contextPlayer);
                   const parsed = parseLocation(cp?.location);
-                  const pos = parsed ? ` at (${Math.round(parsed.x)}, ${Math.round(parsed.y)}, ${Math.round(parsed.z)}) in ${parsed.world}` : '';
+                  const pos = parsed ? ` at (${parsed.x.toFixed(1)}, ${parsed.y.toFixed(1)}, ${parsed.z.toFixed(1)}) in ${parsed.world}` : '';
                   context = `Player: ${cp?.display_name || contextName}${pos}`;
                 } else {
-                  context = `Map center: (${Math.round(centerX)}, ${yLevel}, ${Math.round(centerZ)}) in ${worldName}`;
+                  context = `Map center: (${centerX.toFixed(1)}, ${yLevel}, ${centerZ.toFixed(1)}) in ${worldName}`;
                 }
                 const entry = { code: evalCode.trim(), timestamp: Date.now(), context };
                 evalMutation.mutate(

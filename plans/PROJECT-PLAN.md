@@ -5,14 +5,15 @@
 | Project / Task | Status | Summary |
 |---|---|---|
 | **Bugs & Fixes** | | |
-| Player death event has no player | TODO | |
-| Player position is 1 meter off | TODO | When position is middle of block X, we show as block X+1 |
-| Very Long Response Glitch | TODO | When a very long response, such as dir() is returned, the command window gets into an infinite re-sizing loop with the horizontal scroll-bar |
-| Polling | TODO | We are polling for the player list, should use event subscription instead |
-| Performance | TODO | When we are scrolling around the map we can build up a backlog of requests that will just be discarded when the complete; maintain a queue on the client of blocks to load and discard ones that are no longer relevant but haven't been sent yet |
-| teleport into ground | TODO | When teleporting we can wind up inside the earth, the logic should push us up until we find a block with two airs over it on which to stand |
-| getBlocks typing.List subtype | TODO | `WARNING: No sub-type on typing.List; dispatching on dict-types` from proxyobjects on getBlocks calls |
+| Polling | TODO | We are polling for the player list, should use event subscriptions instead |
 | Live pytest timeout | TODO | Async event loop mismatch causes RPC calls to never receive responses |
+| Item Drag Not Working | TODO | Dragging inventory item stacks between inventory slots doesn't work. Also doesn't work to drag to empty space to drop |
+| Player death event has no player | ✅ | `EntityEventConverter` sends entity as `"entity"` not `"player"`; fixed in Java + Python fallback (entity-is-Player → also set `player`) |
+| Player position is 1 meter off | ✅ | All coordinate displays now use `.toFixed(1)` for floats; map icon positions use raw float coords; block lookups use `Math.floor` |
+| Very Long Response Glitch | ✅ | Output Paper gets `overflow: hidden` + `wordBreak: break-all`; prevents horizontal overflow from expanding the window |
+| Query Backlog | ✅ | Map block query params debounced 250 ms; rapid scroll-wheel events no longer flood the server |
+| teleport into ground | ✅ | `Location.safe_above()` scans upward for two passable blocks; `set_location(safe=True)` default; dashboard teleport endpoint also safe by default |
+| getBlocks typing.List subtype | ✅ | `log.warning` → `log.debug` (unparameterised List fallback is harmless) |
 | Map re-renders on interpreter resize | ✅ | ResizeObserver debounced 300 ms; prevents map refetch on every interpreter panel resize |
 | Map center not persisted across tabs | ✅ | `worldName`, center, y-level, zoom stored in `sessionStorage`; restored on tab return |
 | elevators() sign text | ✅ | `BlockData.get_key()` overrode `Reference.get_key()` in dynamic class MRO; fixed by falling back to `super().get_key()` when `string_value` is None |
@@ -26,6 +27,7 @@
 | Event Handlers (persistent) | TODO | Persistent handlers for world events, reload on reconnect |
 | Dashboard Authentication | TODO | Username/password login to control access to the dashboard |
 | Web Dashboard (core) | Partial | Live map, player markers, inventory, teleport, search, events, code editor all done |
+| Entity Management | TODO | Allow for selecting entities, searching by entity type or name, and applying a menu of commands to an entity, such as kill, delete, edit inventory, etc |
 | **Map Enhancements** | | |
 | 3D Map Renderer | TODO | Replace 2D canvas map with a true 3D WebGL/Three.js renderer showing voxel terrain |
 | Configurable Resource Pack | TODO | Let users specify a resource pack URL so block textures reflect their chosen pack |

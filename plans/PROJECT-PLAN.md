@@ -5,6 +5,12 @@
 | Project / Task | Status | Summary |
 |---|---|---|
 | **Bugs & Fixes** | | |
+| Player death event has no player | TODO | |
+| Player position is 1 meter off | TODO | When position is middle of block X, we show as block X+1 |
+| Very Long Response Glitch | TODO | When a very long response, such as dir() is returned, the command window gets into an infinite re-sizing loop with the horizontal scroll-bar |
+| Polling | TODO | We are polling for the player list, should use event subscription instead |
+| Performance | TODO | When we are scrolling around the map we can build up a backlog of requests that will just be discarded when the complete; maintain a queue on the client of blocks to load and discard ones that are no longer relevant but haven't been sent yet |
+| teleport into ground | TODO | When teleporting we can wind up inside the earth, the logic should push us up until we find a block with two airs over it on which to stand |
 | getBlocks typing.List subtype | TODO | `WARNING: No sub-type on typing.List; dispatching on dict-types` from proxyobjects on getBlocks calls |
 | Live pytest timeout | TODO | Async event loop mismatch causes RPC calls to never receive responses |
 | Map re-renders on interpreter resize | ✅ | ResizeObserver debounced 300 ms; prevents map refetch on every interpreter panel resize |

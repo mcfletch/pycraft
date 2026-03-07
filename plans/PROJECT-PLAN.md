@@ -5,9 +5,9 @@
 | Project / Task | Status | Summary |
 |---|---|---|
 | **Bugs & Fixes** | | |
-| Polling | TODO | We are polling for the player list, should use event subscriptions instead |
 | Live pytest timeout | TODO | Async event loop mismatch causes RPC calls to never receive responses |
 | Item Drag Not Working | TODO | Dragging inventory item stacks between inventory slots doesn't work. Also doesn't work to drag to empty space to drop |
+| Polling | ✅ | `usePlayers` no longer polls; SSE join/quit events update the React Query cache directly; reconnect invalidates to resync |
 | Player death event has no player | ✅ | `EntityEventConverter` sends entity as `"entity"` not `"player"`; fixed in Java + Python fallback (entity-is-Player → also set `player`) |
 | Player position is 1 meter off | ✅ | All coordinate displays now use `.toFixed(1)` for floats; map icon positions use raw float coords; block lookups use `Math.floor` |
 | Very Long Response Glitch | ✅ | Output Paper gets `overflow: hidden` + `wordBreak: break-all`; prevents horizontal overflow from expanding the window |

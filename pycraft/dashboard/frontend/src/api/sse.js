@@ -2,7 +2,7 @@
  * SSE connection manager with automatic reconnection.
  * Returns an EventSource wrapper that dispatches typed events.
  */
-export function createSSEConnection(url = '/api/events', onEvent, onError) {
+export function createSSEConnection(url = '/api/events', onEvent, onError, onConnect) {
   let source = null;
   let reconnectTimer = null;
 
@@ -38,6 +38,7 @@ export function createSSEConnection(url = '/api/events', onEvent, onError) {
     });
 
     source.onopen = () => {
+      if (onConnect) onConnect();
       onEvent('heartbeat', {});
     };
 

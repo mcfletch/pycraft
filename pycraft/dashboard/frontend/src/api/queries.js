@@ -21,8 +21,7 @@ export function usePlayers() {
   return useQuery({
     queryKey: ['players'],
     queryFn: () => fetchApi('/players'),
-    staleTime: 5_000,
-    refetchInterval: 10_000,
+    staleTime: 30_000,
   });
 }
 

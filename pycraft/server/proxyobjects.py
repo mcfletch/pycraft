@@ -115,7 +115,7 @@ def dedupe_interfaces(classes):
     for cls in classes:
         for other in classes:
             if cls is not other and other in cls.__mro__:
-                log.info("%s already implements %s", cls, other)
+                log.debug("%s already implements %s", cls, other)
                 duplicates.setdefault(other, []).append(cls)
     return [c for c in classes if c not in duplicates]
 
@@ -730,7 +730,7 @@ async def construct_one_interface(declaration, definition_map, seen_classes):
             # World shows up as an isKeyed...
             clsDeclaration['isKeyed'] = False
         if clsDeclaration.get('isKeyed'):
-            log.info("Keyed type: %s", cls_key)
+            log.debug("Keyed type: %s", cls_key)
             base = KeyedServerObjectEnum
         elif clsDeclaration.get('isEnum'):
             base = ServerObjectEnum
@@ -817,7 +817,7 @@ async def construct_from_introspection(automatic: dict, channel):
         for fragment in fragments[:-1]:
             set_target = getattr(set_target, fragment, None)
         if set_target is None:
-            log.error("Did not find the parent for %s in the final namespace", name)
+            log.debug("Parent class not in introspection for %s; registering as %s", name, '_'.join(fragments))
             setattr(final, '_'.join(fragments), proxy)
         else:
             setattr(set_target, fragments[-1], proxy)

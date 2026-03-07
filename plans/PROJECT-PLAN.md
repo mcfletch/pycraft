@@ -30,6 +30,7 @@
 | Paper Interfaces | TODO | Dialogs and recipes via Paper API |
 | Missing Bukkit APIs | TODO | Audit spigot javadocs for unimplemented APIs |
 | Separate API Introspections | TODO | Split 20+ MB introspection into lazy-loaded subsets with version-keyed client cache |
+| Introspection Zip Cache | TODO | Replace monolithic `.introspection.json` with a per-class zip cache in `~/.cache`; lazy-load class definitions on first use; optionally fetch missing classes live from server |
 | Standard RPC Protocol | TODO | Replace custom TCP/RPC with a standard protocol (JSON-RPC, gRPC, WebSockets, etc.) |
 | Particle Effects | TODO | Expose particle API and create demos |
 | **Potions & Crafting** | | |
@@ -195,6 +196,33 @@ A local website providing:
 
 - [ ] Scan https://hub.spigotmc.org/javadocs/spigot/overview-tree.html and look for anything missing
 - [ ] Plan out parts we think could be useful
+
+### Introspection Zip Cache
+
+Replace the monolithic `pycraft/server/.introspection.json` (~20 MB, checked into the repo) with a versioned, per-class zip cache stored outside the source tree.
+
+**Format**
+- One zip file per server version, stored at `~/.cache/pycraft/introspection-<mc_version>-<plugin_version>.zip`
+- Each entry in the zip is `<ClassName>.json` — minimal-whitespace JSON for a single class definition
+- The zip index (list of class names) is a small `index.json` entry at the root
+
+**Loading**
+- On connect, download only the index from the server (or read it from the zip if cached)
+- **Lazy-load** individual class definitions: when a proxy class is first instantiated, load its `<ClassName>.json` from the zip and register it
+- Never load the entire introspection into memory at once
+
+**Cache invalidation**
+- Cache key is `(minecraft_version, plugin_version)` — a new plugin build automatically gets a fresh cache file
+- Old cache files can be pruned manually or by a `--clear-cache` flag
+
+**Extension: live fallback**
+- If a class is not in the local zip (e.g. cache was built against an older plugin), fetch its definition live from the server via a new `introspect/<ClassName>` endpoint
+- On success, write the result into the zip for future use
+
+**Benefits**
+- Eliminates the 20 MB file from the repo (`.introspection.json` moves to `.gitignore`)
+- Startup time drops dramatically — only the index is fetched/parsed up front
+- Memory footprint is proportional to the classes actually used in a session
 
 ### Separate API Introspections
 

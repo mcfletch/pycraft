@@ -1093,7 +1093,11 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
                 if (!evalCode.trim()) return;
                 const entry = { code: evalCode.trim(), timestamp: Date.now() };
                 evalMutation.mutate(
-                  { code: evalCode.trim(), player_uuid: contextPlayer || undefined },
+                  {
+                    code: evalCode.trim(),
+                    player_uuid: contextPlayer || undefined,
+                    map_context: !contextPlayer ? { x: centerX, y: yLevel, z: centerZ, world: worldName } : undefined,
+                  },
                   {
                     onSuccess: (data) => {
                       setEvalHistory((prev) => [{ ...entry, result: data.result, output: data.output, error: data.error }, ...prev]);

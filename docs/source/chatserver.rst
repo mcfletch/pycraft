@@ -128,10 +128,15 @@ can do from within the chat window.
     * - :py:func:`pycraft.acommands.findall`
       - ``findall(fragment:str)``
       - Searches for entities whose Individual Name contains fragment
+    * - :py:func:`pycraft.acommands.list_players`
+      - ``list_players()``
+      - Prints name, UUID, ban/whitelist status, and location for every player the
+        server has ever seen (online and offline).
     * - :py:func:`pycraft.acommands.this_guy`
       - ``this_guy() => right-click-on-entity``
       - Returns a reference to the next Entity that the user `interacts`
         with; normally by right-clicking on e.g. a Villager.
+        **Requires a player to be selected.**
 
 Shelter and Gear 
 -----------------
@@ -219,17 +224,26 @@ advanced players.
 
     * - :py:func:`pycraft.acommands.give`
       - ``give('cooked_beef',count=64)``
-      - Attempt to give the player an :py:class:`pycraft.server.final.ItemStack` with the 
+      - Attempt to give the player an :py:class:`pycraft.server.final.ItemStack` with the
         indicated amount of the indicated material.
+        **Requires a player to be selected.**
 
     * - :py:func:`pycraft.acommands.nice_item`
       - ``nice_item('leather_leggings')``
       - Give the player the indicated item, then attempt to apply to that item every :py:class:`pycraft.server.final.Enchantment`
         that can be applied to the item. The result is a very nice version of the item.
+        **Requires a player to be selected.**
 
     * - :py:func:`pycraft.acommands.nice_gear`
       - ``nice_gear()``
       - Give the player a set of `nice_item()` gear for adventuring.
+        **Requires a player to be selected.**
+
+    * - :py:func:`pycraft.acommands.enchanted`
+      - ``enchanted(stack)``
+      - Apply every applicable desirable enchantment to an existing
+        :py:class:`pycraft.server.final.ItemStack` at its maximum level.
+        Typically called on the result of ``give()``.
 
 Construction 
 -------------
@@ -254,12 +268,13 @@ The
       - ``bulldoze(depth=20,height=-3,width=10,material='tnt')``
       - Fills the area in front of the player with the given material.
         Material defaults to 'air', so by default the bulldozer "clears"
-        the area.
+        the area. **Requires a player to be selected.**
     * - :py:func:`pycraft.buildings.pyramid`
       - ``pyramid(width=9,depth=9,material='iron_block')``
-      - Creates a stepped pyramid using the given blocks. The Pyramid can 
-        be used to create a beacon so that players can find an area in 
-        which you've setup e.g. an shared event.
+      - Creates a stepped pyramid using the given blocks. The Pyramid can
+        be used to create a beacon so that players can find an area in
+        which you've setup e.g. a shared event.
+        **Requires a player to be selected** (uses player direction even when position is supplied).
     * - :py:func:`pycraft.acommands.stairs`
       - ``stairs(depth=25,ystep=1,material='stone_stairs[facing=north]')``
       - Creates a stairway with the given block going 25 blocks deep and 
@@ -271,34 +286,77 @@ The
         in the water column and then breaking it.
     * - :py:func:`pycraft.buildings.elevators`
       - ``elevators(to_surface=True)``
-      - Creates a two-way elevator bank with up and down columns, signs 
-        telling users which way to go to travel, lighting, and a set of 
+      - Creates a two-way elevator bank with up and down columns, signs
+        telling users which way to go to travel, lighting, and a set of
         walls to prevent flooding of nearby blocks.
+        **Requires a player to be selected.**
     * - :py:func:`pycraft.parabolic.parabolic_dome`
       - ``p_dome()``
       - Creates a loosely-parabolic dome with stained glass blocks centered
         around the player's position. The dome has an oculus at the top
         but makes a pleasant super-structure for setting up a base.
+        Uses player position as center if ``center`` is not supplied.
 
     * - :py:func:`pycraft.parabolic.draw_circle`
       - ``circle()``
-      - Creates a loosely-circular set of blocks around the user's position
-    
+      - Creates a loosely-circular set of blocks around the user's position.
+        Uses player position as center if ``center`` is not supplied.
+
+    * - :py:func:`pycraft.buildings.column_up`
+      - ``column_up(material='chain', position=None, height=None, to_air=False, to_surface=False)``
+      - Build a vertical column of the given material starting at ``position``
+        (defaults to one block in front of the player). Stops at the first
+        air block (``to_air``), at the solid surface (``to_surface``), or at
+        an explicit ``height``. ``material`` may be a list to cycle through materials.
+        Uses player position/direction if ``position`` is not supplied.
+
+    * - :py:func:`pycraft.buildings.torch_tower`
+      - ``torch_tower(position=None, height=None, to_air=False, to_surface=False)``
+      - Build a redstone torch tower (alternating dirt / redstone_torch) to
+        carry a redstone signal upward through solid material.
+        Uses player position/direction if ``position`` is not supplied.
+
+    * - :py:func:`pycraft.buildings.torch_cascade`
+      - ``torch_cascade(position=None, height=None, to_air=False, to_surface=False)``
+      - Build a two-column redstone torch cascade that inverts a signal as it
+        rises. **Requires a player to be selected** (position and direction are
+        always taken from the player).
+
+    * - :py:func:`pycraft.acommands.get_blocks`
+      - ``get_blocks(depth=10, width=10, height=10, position=None, direction=None)``
+      - Return the block materials in a rectangular prism in front of the
+        player as a 3-D list ``[y][z][x]``. Uses player position/direction
+        if ``position``/``direction`` are not supplied.
+
+    * - :py:func:`pycraft.acommands.hopper_cascade`
+      - ``hopper_cascade(left=5, right=5, depth=5, position=None, direction=None)``
+      - Build a grid of hoppers that feed sideways into a central chest placed
+        one block below ``position``. Useful for automatic item collection.
+        Uses player position/direction if not supplied.
+
+    * - :py:func:`pycraft.acommands.set_sign_text`
+      - ``set_sign_text(block, text, glowing=True, color=None)``
+      - Set the text on a sign block. ``block`` may be a Location tuple or a
+        Block reference. ``text`` may be a string or a list of strings (up to
+        four lines). ``color`` is a DyeColor constant such as ``'BLUE'``.
+
     * - :py:func:`pycraft.tunnels.tunnel`
       - ``tunnel(depth=25, width=3, height=3)``
       - Create a well-lit tunnel with stained-glass walls forward from the
         player's position. Useful for tunneling through mountains, underwater,
         or otherwise setting up a passage.
+        Uses player position/direction if not supplied.
     * - :py:func:`pycraft.tunnels.tunnel_continue`
       - ``tunnel_continue()``
       - Extends the previously created tunnel.
 
     * - :py:func:`pycraft.tunnels.fast_rail`
       - ``fr(depth=100, base='glass')``
-      - Create a fast-rail (minecart rails with power) that continues for depth blocks in the 
-        direction the user is facing. Specify ``base`` to have the fast rail 
-        construct a base on which the rails will be placed, otherwise the 
+      - Create a fast-rail (minecart rails with power) that continues for depth blocks in the
+        direction the user is facing. Specify ``base`` to have the fast rail
+        construct a base on which the rails will be placed, otherwise the
         rails will be placed, but may immediately fall.
+        Uses player position/direction if not supplied.
 
 Manipulating Entities and Players
 -----------------------------------
@@ -326,18 +384,21 @@ Manipulating Entities and Players
         the caller.
     * - :py:func:`pycraft.acommands.join`
       - ``join('vr')``
-      - Searches for the (first) player with the fragment 'vr' in their name and teleports to their location
+      - Searches for the (first) player with the fragment 'vr' in their name and teleports to their location.
+        **Requires a player to be selected.**
     * - :py:func:`pycraft.acommands.bring`
       - ``bring('vr')``
-      - Brings the (first) player with the fragment 'vr' in their name and teleports them to your location
+      - Brings the (first) player with the fragment 'vr' in their name and teleports them to your location.
+        **Requires a player to be selected.**
     * - :py:func:`pycraft.acommands.unjoin`
       - ``unjoin()``
       - Returns you to the location you were at before a ``join`` or ``bring`` teleported you.
-     
+        **Requires a player to be selected.**
     * - :py:func:`pycraft.acommands.back_to_bed`
       - ``back_to_bed()``
-      - Returns you to the location of your ``Bed Spawn Location`` which is basically the location 
-        of the bed in which you last slept (note that breaking that bed means you no longer have that location)
+      - Returns you to the location of your ``Bed Spawn Location`` which is basically the location
+        of the bed in which you last slept (note that breaking that bed means you no longer have that location).
+        **Requires a player to be selected.**
 
 .. list-table:: Entities and Spawning
     :header-rows: 1
@@ -349,17 +410,33 @@ Manipulating Entities and Players
 
     * - :py:func:`pycraft.acommands.spawn`
       - ``villager = spawn('villager')``
-      - Creates a new entity and returns a reference to them
+      - Creates a new entity and returns a reference to them.
+        Uses player position if ``position`` is not supplied.
     * - :py:func:`pycraft.acommands.spawn_drop`
       - ``spawn_drop('cow')``
-      - Creates a new entity 50 blocks over your current location, when you are 
-        standing on the surface this has the effect of dropping that entity in 
+      - Creates a new entity 50 blocks over your current location; when you are
+        standing on the surface this has the effect of dropping that entity in
         front of you, normally dropping some resources.
+        **Requires a player to be selected.**
     * - :py:func:`pycraft.acommands.spawn_shower`
       - ``spawn_shower('experience_bottle', count=50)``
-      - Showers entities with ``spawn_drop`` every 1/10th of a second until 
-        the number of entities specified are dropped. You can specify the 
+      - Showers entities with ``spawn_drop`` every 1/10th of a second until
+        the number of entities specified are dropped. You can specify the
         height of the drop (e.g. if the height is 1 most mobs will survive).
+        **Requires a player to be selected.**
+    * - :py:func:`pycraft.acommands.killall`
+      - ``killall('Zombie')``
+      - Kill every entity in the world whose individual name exactly matches
+        the given string. Returns the count of entities removed.
+    * - :py:func:`pycraft.acommands.full_farmer`
+      - ``full_farmer()``
+      - Spawn a level-5 master Farmer villager with a full inventory of wheat
+        seeds, positioned in front of the player. Useful for quickly getting
+        a trading partner set up. **Requires a player to be selected.**
+    * - :py:func:`pycraft.acommands.fill_inventory`
+      - ``fill_inventory(entity, item='wheat_seeds', count=64)``
+      - Fill every slot of an entity's inventory with the given item.
+        ``entity`` is typically obtained from ``spawn()`` or ``this_guy()``.
 
 Templates and Copying
 ----------------------
@@ -378,16 +455,18 @@ and then paste it many times.
       - Description 
     * - :py:func:`pycraft.copypaste.copy`
       - copy('my_template', width=10,depth=8, height=7)
-      - Copies a rectangular prism of blocks into a template 
-        which can be pasted later.
+      - Copies a rectangular prism of blocks into a template which can be pasted later.
+        The player's name, location, and facing direction are saved with the template so
+        that ``paste`` can auto-rotate it. **Requires a player to be selected.**
 
     * - :py:func:`pycraft.copypaste.paste`
       - paste('my_template')
-      - Pastes a previously-copied prism of blocks into a the world 
-    
+      - Pastes a previously-copied prism of blocks into the world, auto-rotating to match
+        the player's current facing direction. **Requires a player to be selected.**
+
     * - :py:func:`pycraft.copypaste.show_pastes`
       - show_pastes('my')
-      - Lists the names of pastes which contain the given fragment
+      - Lists the names of pastes which contain the given fragment.
 
     * - :py:meth:`pycraft.server.final.World.getBlocks`
       - world.getBlocks(start_location, (x_size,y_size,z_size))
@@ -396,6 +475,35 @@ and then paste it many times.
 
     * - :py:meth:`pycraft.server.final.World.getBlockArray`
       - world.getBlockArray(start_location, end_location)
-      - Returns the materials in the prism from start to end location 
+      - Returns the materials in the prism from start to end location
         as a list of lists of materials
 
+
+Potions
+-------
+
+These commands create custom potions and add them directly to the selected player's inventory.
+All require a player to be selected.
+
+.. list-table:: Potions
+    :header-rows: 1
+    :width: 100%
+
+    * - Implementation
+      - Chat Call
+      - Description
+
+    * - :py:func:`pycraft.acommands.potion_of`
+      - ``potion_of('water_breathing', 'My Potion', {'type':'heal'})``
+      - Give the player a custom potion. The first argument is the base potion type,
+        the second is the display name, and any remaining positional arguments are
+        extra effect dicts with keys ``type``, ``duration`` (ticks), and ``amplifier``.
+        **Requires a player to be selected.**
+
+    * - :py:func:`pycraft.acommands.mikes_potion`
+      - ``mikes_potion('carrots')``
+      - Give one of a set of pre-built overpowered potions by name.
+        Available names: ``carrots`` (night vision + healing),
+        ``health`` (instant heal + health boost + saturation),
+        ``gopher`` (fast digging + luck + night vision).
+        **Requires a player to be selected.**

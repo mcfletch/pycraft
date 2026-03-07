@@ -97,10 +97,10 @@ export function usePasteTemplate() {
 
 export function useEvalCode() {
   return useMutation({
-    mutationFn: ({ code, player_uuid }) =>
+    mutationFn: ({ code, player_uuid, map_context }) =>
       fetchApi('/eval', {
         method: 'POST',
-        body: JSON.stringify({ code, player_uuid }),
+        body: JSON.stringify({ code, player_uuid, map_context }),
       }),
   });
 }

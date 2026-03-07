@@ -772,7 +772,9 @@ async def elevators(
         height=height,
         base='soul_sand',
     )
-    assert height, height
+    if not isinstance(height, int) or height <= 0:
+        raise RuntimeError(f'Elevator failed: {height}')
+
     await elevator_up(
         position=down_pos,
         player=player,

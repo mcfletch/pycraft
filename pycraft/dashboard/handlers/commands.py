@@ -9,13 +9,67 @@ from aiohttp import web
 
 from pycraft.ainterpreter import AInterpreter
 from pycraft.expose import get_base_namespace
+from pycraft.server import world as world_module
 
 from ..serialization import serialize
 
 log = logging.getLogger(__name__)
 
 
-async def _build_namespace(channel, interpreter, player_uuid=None):
+class FakeMapPlayer:
+    """A synthetic player-like object anchored at the map's focus point, always facing north.
+
+    Used when no real player is selected in the dashboard map, so that exposed
+    functions that depend on a player's position and direction still work correctly.
+    North in Minecraft corresponds to yaw=180 (-Z direction).
+    """
+
+    name = '<map>'
+    is_real_player = False
+
+    def __init__(self, x, y, z, world_name):
+        # yaw=180 → facing north (-Z direction)
+        self.location = world_module.Location([world_name, float(x), float(y), float(z), 180.0, 0.0])
+
+    @property
+    def position(self):
+        return self.location
+
+    @property
+    def direction(self):
+        return self.location.direction
+
+    @property
+    def forward_and_cross(self):
+        from pycraft import directions
+        return directions.forward_and_cross(self.direction)
+
+    @property
+    def forward(self):
+        return self.forward_and_cross[0]
+
+    @property
+    def back(self):
+        return -self.forward_and_cross[0]
+
+    @property
+    def backward(self):
+        return -self.forward_and_cross[0]
+
+    @property
+    def left(self):
+        return -self.forward_and_cross[1]
+
+    @property
+    def right(self):
+        return self.forward_and_cross[1]
+
+    @property
+    def tile_position(self):
+        return self.location.__floor__() - (0, 1, 0)
+
+
+async def _build_namespace(channel, interpreter, player_uuid=None, map_context=None):
     """Build a pycraft namespace with optional player context"""
     namespace = get_base_namespace()
     namespace['mc'] = channel
@@ -33,13 +87,33 @@ async def _build_namespace(channel, interpreter, player_uuid=None):
                 except Exception:
                     pass
                 break
-    else:
+
+    if 'player' not in namespace:
+        # No real player — inject a FakeMapPlayer so position/direction-based commands work
+        if map_context:
+            x = map_context.get('x', 0)
+            y = map_context.get('y', 64)
+            z = map_context.get('z', 0)
+            world_name = map_context.get('world', '')
+        else:
+            # No map context (e.g. standalone code editor): use world spawn or defaults
+            x, y, z, world_name = 0, 64, 0, ''
+            try:
+                worlds = await channel.server.getWorlds()
+                if worlds:
+                    world_name = worlds[0].name
+            except Exception:
+                pass
+        fake = FakeMapPlayer(x=x, y=y, z=z, world_name=world_name)
+        namespace['player'] = fake
+        namespace['user'] = fake
+
+    if 'world' not in namespace:
         try:
-            worlds = await channel.server.getWorlds()
-            if worlds:
-                namespace['world'] = worlds[0]
+            namespace['world'] = namespace['player'].location.get_world()
         except Exception:
             pass
+
     return namespace
 
 
@@ -148,10 +222,11 @@ async def eval_code(request):
     if not code:
         return web.json_response({'error': 'No code provided'}, status=400)
     player_uuid = data.get('player_uuid')
+    map_context = data.get('map_context')
 
     try:
         interpreter = AInterpreter(channel)
-        namespace = await _build_namespace(channel, interpreter, player_uuid)
+        namespace = await _build_namespace(channel, interpreter, player_uuid, map_context)
 
         # Try eval mode first (single expression)
         try:

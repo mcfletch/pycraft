@@ -321,7 +321,10 @@ async def _apply_potion_meta(stack, potion_type=None, effects=None, name=None):
     applied = []
     for effect in (effects or []):
         try:
-            etype = effect['type'].upper()
+            # Bukkit 1.21 PotionEffectType uses namespaced keys (e.g. minecraft:instant_health)
+            etype = effect['type'].lower()
+            if ':' not in etype:
+                etype = f'minecraft:{etype}'
             duration_ticks = int(float(effect.get('duration_seconds', 60)) * 20)
             amplifier = int(effect.get('amplifier', 0))
             await metadata.addCustomEffect(

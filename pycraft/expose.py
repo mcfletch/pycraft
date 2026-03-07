@@ -1,8 +1,19 @@
 """Command namespace exposure and core commands"""
 from . import fuzzymatch
-import inspect, types
+import inspect, types, functools
 import numpy as np
 from pycraft.chatmessage import ChatMessage
+
+
+def requires_player(func):
+    """Decorator: raises RuntimeError when the player kwarg is absent/None."""
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        player = kwargs.get('player')
+        if not player or not getattr(player, 'is_real_player', True):
+            raise RuntimeError('No player selected')
+        return await func(*args, **kwargs)
+    return wrapper
 
 _range = range
 

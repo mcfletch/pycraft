@@ -1,5 +1,5 @@
 """Common commands exposed over chat server"""
-from .expose import expose, command_details, command_list
+from .expose import expose, command_details, command_list, requires_player
 from .directions import roughly_forward
 from .server import proxyobjects
 import typing
@@ -119,6 +119,7 @@ async def spawn(
 
 
 @expose()
+@requires_player
 async def spawn_drop(type_id, height=50, *, player=None, world=None):
     """Spawn an entity 50m overhead dropping onto your location
 
@@ -129,6 +130,7 @@ async def spawn_drop(type_id, height=50, *, player=None, world=None):
 
 
 @expose()
+@requires_player
 async def spawn_shower(type_id, count=30, height=50, *, player=None, world=None):
     """Spawn an entity 50m overhead dropping onto your location
 
@@ -281,6 +283,7 @@ async def players(player_name='*', *, world=None):
 
 
 @expose()
+@requires_player
 async def give(item, count=1, *, player=None):
     """Add a (stack of) item(s) to the player's inventory
 
@@ -302,6 +305,7 @@ async def give(item, count=1, *, player=None):
 
 
 @expose()
+@requires_player
 async def nice_item(item, count=1, *, player=None):
     """Add a nice item to the given inventory
 
@@ -314,6 +318,7 @@ async def nice_item(item, count=1, *, player=None):
 
 
 @expose()
+@requires_player
 async def nice_gear(material='netherite', *, player=None):
     """Given the calling player a collection of very nice items for adventuring
 
@@ -570,6 +575,7 @@ async def get_blocks(
 
 
 @expose()
+@requires_player
 async def get_click(*, listener=None, player=None):
     """Await the next (right) click by the player on a block"""
     event = await listener.wait_for_event(player=player.name)
@@ -580,6 +586,7 @@ UNJOIN_KEY = 'join.jump_back'
 
 
 @expose()
+@requires_player
 async def unjoin(*, player=None, interpreter=None):
     """Return the the last location before you were brought or joined another player"""
     join_stack = interpreter.user_namespace(player).setdefault(UNJOIN_KEY, [])
@@ -590,6 +597,7 @@ async def unjoin(*, player=None, interpreter=None):
 
 
 @expose()
+@requires_player
 async def bring(player_name='*', *, player=None, server=None, interpreter=None):
     """Gather other users (or one other user by name) to your location"""
     players = await server.getOnlinePlayers()
@@ -602,6 +610,7 @@ async def bring(player_name='*', *, player=None, server=None, interpreter=None):
 
 
 @expose()
+@requires_player
 async def join(player_name, *, player=None, server=None, interpreter=None):
     """Join (teleport to) another user by name, use unjoin() to return to your location"""
     players = await server.getOnlinePlayers()
@@ -615,10 +624,9 @@ async def join(player_name, *, player=None, server=None, interpreter=None):
 
 
 @expose()
+@requires_player
 async def back_to_bed(*, player=None):
     """Send the player back to their bed spawn location (last place they slept)"""
-    if not player:
-        return 'No player selected'
     location = await player.getBedSpawnLocation()
     if location:
         await player.set_location(location)
@@ -638,12 +646,15 @@ async def keep_inventory(keep=True, *, player=None, world=None):
 
 
 @expose()
+@requires_player
 async def mikes_potion(name, *, world=None, player=None):
-    """Creates one of a selection of over-powered potions
+    """Creates one of a selection of over-powered potions and gives it to the player
 
-    * carrots -- night_vision, healing
-    * heath -- health, health_boost, regeneration, saturation
-    * gopher -- digging, luck, night_vision
+    name -- str: one of 'carrots', 'health', or 'gopher'
+
+    * carrots -- night_vision base, instant_health + saturation extras
+    * health  -- instant_health base, instant_health + health_boost + saturation extras
+    * gopher  -- night_vision base, haste + luck extras
     """
     name = name.lower()
     if name == 'carrots':
@@ -651,13 +662,13 @@ async def mikes_potion(name, *, world=None, player=None):
             'night_vision',
             "Carrot Juice",
             {
-                'type': 'heal',
-                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
-                'amplifier': 50,  # likely excessive
+                'type': 'instant_health',
+                'duration': 20 * 60 * 8,
+                'amplifier': 50,
             },
             {
                 'type': 'saturation',
-                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
+                'duration': 20 * 60 * 8,
                 'amplifier': 1,
             },
             player=player,
@@ -665,21 +676,21 @@ async def mikes_potion(name, *, world=None, player=None):
         )
     elif name == 'health':
         return await potion_of(
-            'instant_heal',
+            'instant_health',
             "Tonic Water",
             {
-                'type': 'heal',
-                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
-                'amplifier': 50,  # likely excessive
+                'type': 'instant_health',
+                'duration': 20 * 60 * 8,
+                'amplifier': 50,
             },
             {
                 'type': 'saturation',
-                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
+                'duration': 20 * 60 * 8,
                 'amplifier': 1,
             },
             {
                 'type': 'health_boost',
-                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
+                'duration': 20 * 60 * 8,
                 'amplifier': 40,
             },
             player=player,
@@ -690,13 +701,13 @@ async def mikes_potion(name, *, world=None, player=None):
             'night_vision',
             "Gopher's Gruel",
             {
-                'type': 'fast_digging',
-                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
-                'amplifier': 50,  # likely excessive
+                'type': 'haste',
+                'duration': 20 * 60 * 8,
+                'amplifier': 50,
             },
             {
                 'type': 'luck',
-                'duration': 20 * 60 * 8,  # in ticks, so 20 seconds...
+                'duration': 20 * 60 * 8,
                 'amplifier': 1,
             },
             player=player,
@@ -707,6 +718,7 @@ async def mikes_potion(name, *, world=None, player=None):
 
 
 @expose()
+@requires_player
 async def potion_of(
     type='water_breathing',
     name='My Potion',
@@ -715,12 +727,21 @@ async def potion_of(
     world=None,
     server=None,
 ):
-    """Give a potion of base with extras as specified
+    """Give a potion with a base type and optional custom effects
+
+    type -- str: base PotionType key (uppercase bare name), e.g. 'water_breathing',
+            'night_vision', 'instant_heal'. 'minecraft:' prefix is stripped automatically.
+    name -- str: display name shown on the potion item
+    *extra -- dicts describing additional potion effects, each with keys:
+              'type' (str): Bukkit 1.21 PotionEffectType key, e.g. 'instant_health',
+                            'haste', 'speed'. Accepts with or without 'minecraft:' prefix.
+              'duration' (int): effect duration in ticks (20 ticks = 1 second)
+              'amplifier' (int): effect strength (0 = level I, 1 = level II, …)
 
     Examples::
 
-        # potion that gives you night vision and also heal's you, as carrots do
-        potion_of('night_vision','Carrot Juice',{'type':'heal'})
+        # potion that gives you night vision and also heals you
+        potion_of('night_vision', 'Carrot Juice', {'type': 'instant_health', 'duration': 9600, 'amplifier': 50})
 
     returns :py:class:`pycraft.server.final.ItemStack`
     """
@@ -728,12 +749,19 @@ async def potion_of(
     metadata = await stack.getItemMeta()
     if not metadata:
         raise ValueError("No metadata on the stack %s", stack)
-    print("metadata instance: %s" % (metadata,))
-    await metadata.setBasePotionType(type.upper())
+    base_type = type.split(':')[-1] if ':' in type else type
+    await metadata.setBasePotionType(base_type.upper())
     for effect in extra:
+        # Bukkit 1.21 PotionEffectType uses namespaced keys (e.g. minecraft:instant_health)
+        etype = effect['type'].lower()
+        if ':' not in etype:
+            etype = f'minecraft:{etype}'
+        duration = int(effect.get('duration', 20 * 60))
+        amplifier = int(effect.get('amplifier', 0))
         await metadata.addCustomEffect(
-            effect, True
-        )  # overwrite existing of this type...
+            {'type': etype, 'duration': duration, 'amplifier': amplifier},
+            True,
+        )
     await metadata.setDisplayName(name)
     await stack.setItemMeta(metadata)
 
@@ -757,6 +785,7 @@ async def fill_inventory(entity, item='wheat_seeds', count=64):
 
 
 @expose()
+@requires_player
 async def this_guy(*, player=None, listener=None, server=None):
     """Listen for an entity with which the player interacts"""
     try:
@@ -773,6 +802,7 @@ async def this_guy(*, player=None, listener=None, server=None):
 
 
 @expose()
+@requires_player
 async def full_farmer(*, player=None, listener=None, server=None, world=None):
     """Spawn a master farmer whose inventory is full of seeds
 

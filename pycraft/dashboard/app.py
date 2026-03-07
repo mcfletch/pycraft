@@ -4,6 +4,7 @@ import asyncio
 import logging
 import os
 import pathlib
+import subprocess
 
 from aiohttp import web
 
@@ -24,8 +25,8 @@ def get_options():
     parser.add_argument(
         '-H',
         '--host',
-        default='127.0.0.1',
-        help='Minecraft server host (default 127.0.0.1)',
+        default=None,
+        help='Minecraft server host (default: auto-detect from docker, fallback to localhost)',
     )
     parser.add_argument(
         '-p',
@@ -182,6 +183,30 @@ def create_app(mc_host='127.0.0.1', mc_port=4712, debug=False):
     return app
 
 
+def find_minecraft_host(container_name='minecraft'):
+    """Find the Minecraft server IP via docker inspect.
+
+    Returns the container's IP address, or 'localhost' if the container is not
+    found or docker is unavailable.
+    """
+    try:
+        ip = subprocess.check_output(
+            [
+                'docker', 'inspect', '-f',
+                '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}',
+                container_name,
+            ],
+            stderr=subprocess.DEVNULL,
+        ).decode('utf-8').strip()
+        if ip:
+            log.info("Auto-detected Minecraft container '%s' at %s", container_name, ip)
+            return ip
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+    log.info("No Minecraft container found, falling back to localhost")
+    return 'localhost'
+
+
 def main():
     parser = get_options()
     options = parser.parse_args()
@@ -191,8 +216,10 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO)
 
+    host = options.host or find_minecraft_host()
+
     app = create_app(
-        mc_host=options.host,
+        mc_host=host,
         mc_port=options.port,
         debug=options.verbose,
     )
@@ -200,7 +227,7 @@ def main():
         "Starting dashboard on %s:%s (MC server: %s:%s)",
         options.listen_host,
         options.listen_port,
-        options.host,
+        host,
         options.port,
     )
     web.run_app(app, host=options.listen_host, port=options.listen_port)

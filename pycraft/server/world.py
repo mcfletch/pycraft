@@ -651,7 +651,11 @@ class BlockData(ServerObjectProxy):
     string_value: str
 
     def get_key(self):
-        return self.string_value
+        if self.string_value is not None:
+            return self.string_value
+        # BlockState objects (returned via getState()) are also References;
+        # fall through to Reference.get_key() which returns __reference__.
+        return super().get_key()
 
 
 for _name in [

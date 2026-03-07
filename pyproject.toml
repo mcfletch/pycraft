@@ -1,3 +1,60 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pycraft"
+version = "3.0.0"
+description = "Automated dockerised Python-for-Minecraft (PycraftServer) server setup with API samples and live coding in text chat"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Simon Ditner" },
+    { name = "Mike C. Fletcher", email = "mcfletch@vrplumber.com" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.6"
+dependencies = [
+    "numpy",
+    "asyncstdlib",
+]
+
+[project.optional-dependencies]
+dashboard = [
+    "aiohttp",
+    "Pillow",
+]
+test = [
+    "pytest",
+    "pytest-asyncio",
+]
+dev = [
+    "ruff",
+]
+all = [
+    "pycraft[dashboard,test,dev]",
+]
+
+[project.urls]
+Homepage = "https://github.com/mcfletch/pycraft"
+
+[project.scripts]
+pycraft-chat-server = "pycraft.achatserver:main"
+pycraft-channel-test = "pycraft.server.operations:main"
+pycraft-doc-generator = "pycraft.server.docgenerator:main"
+pycraft-dashboard = "pycraft.dashboard.app:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+pycraft = ["*.json", "**/*.json"]
+
 [tool.pytest.ini_options]
 markers = [
     "live: tests that require a running Minecraft server on localhost:4712",

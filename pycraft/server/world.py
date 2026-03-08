@@ -566,6 +566,37 @@ class World(ServerObjectProxy):
         start, size = as_cube((sx, sy, sz), (ex, ey, ez))
         return await self.setBlocks(start, size, material)
 
+    async def getBlocksChunkAware(self, start, size):
+        """Chunk-aware block read using a compressed wire format.
+
+        Calls getBlocksCompressed on the server, which returns a palette of
+        unique block-state strings (without the ``minecraft:`` prefix) plus a
+        flat list of palette indices in y-major, z-minor, x-fastest order.
+        This method decompresses that into the same ``result[y][z][x]`` list
+        of full block-state strings that ``getBlocks`` returns.
+        """
+        compressed = await self.getBlocksCompressed(start, size)
+        palette_raw = compressed[0]
+        indices = compressed[1]
+        # Re-add the minecraft: prefix to bare names (no colon = minecraft namespace)
+        full_palette = [
+            name if ':' in name else 'minecraft:' + name
+            for name in palette_raw
+        ]
+        sx = int(size[0])
+        sy = int(size[1])
+        sz = int(size[2])
+        result = []
+        flat_idx = 0
+        for _y in range(sy):
+            slab = []
+            for _z in range(sz):
+                row = [full_palette[indices[flat_idx + x]] for x in range(sx)]
+                flat_idx += sx
+                slab.append(row)
+            result.append(slab)
+        return result
+
     async def getBlockArray(self, start, end):
         """Get block array by start and end coordinates"""
         from .. import directions

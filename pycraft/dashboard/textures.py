@@ -165,6 +165,108 @@ def _resolve_top_texture(material: str) -> str | None:
     return None
 
 
+def _resolve_side_texture(material: str) -> str | None:
+    """Given a material like 'minecraft:grass_block', return the ZIP entry path
+    for the best side-face texture, or None if not found.
+
+    Tries, in order:
+    1. Direct name + '_side' (e.g. grass_block_side)
+    2. Water/lava '_still' variant (no distinct side)
+    3. Direct name match (most blocks have one texture for all faces)
+    4. Explicit alias (e.g. farmland → dirt)
+    5. Variant suffix stripping (e.g. oak_slab → oak_planks)
+    """
+    _open_zip()
+    assert _block_index is not None
+    name = material.split(":")[-1] if ":" in material else material
+    # 1. side-face variant
+    if name + "_side" in _block_index:
+        return _block_index[name + "_side"]
+    # 2. water/lava still
+    if name in ("water", "lava") and name + "_still" in _block_index:
+        return _block_index[name + "_still"]
+    # 3. direct match
+    if name in _block_index:
+        return _block_index[name]
+    # 4. explicit alias
+    alias = _TEXTURE_ALIASES.get(name)
+    if alias:
+        if alias + "_side" in _block_index:
+            return _block_index[alias + "_side"]
+        if alias in _block_index:
+            return _block_index[alias]
+    # 5. strip variant suffix and resolve base material
+    for suffix in _VARIANT_SUFFIXES:
+        if name.endswith(suffix):
+            base = name[:-len(suffix)]
+            if base in _PLANKS_BASES:
+                planks = base + '_planks'
+                if planks in _block_index:
+                    return _block_index[planks]
+            if base + "_side" in _block_index:
+                return _block_index[base + "_side"]
+            if base in _block_index:
+                return _block_index[base]
+            break
+    return None
+
+
+def _get_side_texture_bytes(material: str) -> bytes | None:
+    """Get the PNG bytes for the side-face texture of a material."""
+    cache_key = "side:" + material
+    if cache_key in _tinted_cache:
+        return _tinted_cache[cache_key]
+    safe_name = "side_" + material.replace(":", "_").replace("/", "_")
+    disk_path = PROCESSED_DIR / f"{safe_name}.png"
+    if disk_path.exists():
+        raw = disk_path.read_bytes()
+        _tinted_cache[cache_key] = raw
+        return raw
+    entry_path = _resolve_side_texture(material)
+    if entry_path is None:
+        return None
+    _open_zip()
+    assert _zip_file is not None
+    raw = _zip_file.read(entry_path)
+    tex_name = _texture_name_from_path(entry_path)
+    tint = TINT_MAP.get(tex_name)
+    if tint:
+        try:
+            raw = _apply_tint(raw, tint)
+        except Exception:
+            log.debug("Failed to tint side %s, serving raw", tex_name, exc_info=True)
+    else:
+        try:
+            raw = _crop_first_frame(raw)
+        except Exception:
+            pass
+    _tinted_cache[cache_key] = raw
+    try:
+        PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+        disk_path.write_bytes(raw)
+    except Exception:
+        log.debug("Failed to cache processed side texture to disk", exc_info=True)
+    return raw
+
+
+async def get_side_texture(request):
+    """GET /api/textures/side/{name} — serve block side-face texture from ZIP."""
+    try:
+        raw_name = request.match_info["name"]
+        if raw_name.endswith(".png"):
+            raw_name = raw_name[:-4]
+        material = f"minecraft:{raw_name}"
+        data = _get_side_texture_bytes(material)
+        if data is None:
+            return web.Response(status=404, text=f"No side texture for {material}")
+        return web.Response(body=data, content_type="image/png", headers={
+            "Cache-Control": "public, max-age=3600",
+        })
+    except Exception as err:
+        log.exception("Failed to serve side texture %s", request.match_info.get("name"))
+        return web.Response(status=500, text=str(err))
+
+
 def _resolve_item_texture(material: str) -> str | None:
     """Given a material like 'minecraft:diamond_sword', return the ZIP entry path
     for the item texture.  Falls back to block texture, then GUI slot icons."""

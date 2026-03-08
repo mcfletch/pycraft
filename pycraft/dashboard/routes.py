@@ -55,4 +55,5 @@ def setup_routes(app):
     # Textures (served from Faithful 32x ZIP)
     app.router.add_get('/api/textures', textures.list_textures)
     app.router.add_get('/api/textures/items/{name}', textures.get_item_texture)
+    app.router.add_get('/api/textures/side/{name}', textures.get_side_texture)
     app.router.add_get('/api/textures/{name}', textures.get_texture)

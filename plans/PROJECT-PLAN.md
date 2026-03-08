@@ -5,8 +5,8 @@
 | Project / Task | Status | Summary |
 |---|---|---|
 | **Bugs & Fixes** | | |
-| Live pytest timeout | TODO | Async event loop mismatch causes RPC calls to never receive responses |
-| Item Drag Not Working | TODO | Dragging inventory item stacks between inventory slots doesn't work. Also doesn't work to drag to empty space to drop |
+| Live pytest timeout | ✅ | Fixed: set `asyncio_default_test_loop_scope = "session"` and `asyncio_default_fixture_loop_scope = "session"` in `pyproject.toml` |
+| Item Drag Not Working | ✅ | HTML5 drag-and-drop between all inventory sections (main, hotbar, armor, offhand); shared `useInventoryDrag` hook; `SlotBox`/`InventoryGrid` reusable components; `move_item` backend endpoint |
 | Polling | ✅ | `usePlayers` no longer polls; SSE join/quit events update the React Query cache directly; reconnect invalidates to resync |
 | Player death event has no player | ✅ | `EntityEventConverter` sends entity as `"entity"` not `"player"`; fixed in Java + Python fallback (entity-is-Player → also set `player`) |
 | Player position is 1 meter off | ✅ | All coordinate displays now use `.toFixed(1)` for floats; map icon positions use raw float coords; block lookups use `Math.floor` |
@@ -18,7 +18,7 @@
 | Map center not persisted across tabs | ✅ | `worldName`, center, y-level, zoom stored in `sessionStorage`; restored on tab return |
 | elevators() sign text | ✅ | `BlockData.get_key()` overrode `Reference.get_key()` in dynamic class MRO; fixed by falling back to `super().get_key()` when `string_value` is None |
 | Dashboard traceback display | ✅ | Backend sends `traceback` field on errors; clicking red error line opens a modal dialog with full traceback and copy button (CodeEditor + map interpreter) |
-| No-player guards | ✅ | `@requires_player` decorator raises `RuntimeError('No player selected')` for absent or fake players |
+| No-player guards | ✅ | `@requires_player` decorator raises `RuntimeError('No player selected')` for absent or fake players; all commands in `acommands.py` and `buildings.py` guarded |
 | elevators() height bug | ✅ | `column_up` returns string on failure; `assert height` passes for non-empty string, string passed as slice index |
 | help() & expose.py bugs | ✅ | Fixed `formatargspec` removal and undefined `name` variable |
 | Dev container | ✅ | `.devcontainer/` for agentic Claude Code with Docker socket access |
@@ -68,28 +68,15 @@
 
 These issues were identified during the current session and should be resolved first.
 
-### 1. All commands need no-player guards (PARTIALLY DONE)
-
-Dashboard can now send commands without a player selected, so any command using `player.*` without checking will crash with `'NoneType' object has no attribute ...`. Guards added to `back_to_bed()` and `spawn()` in `acommands.py`, but **all other commands still need guards**. Pattern:
-```python
-if not player:
-    return 'No player selected'
-```
-Affected files: `pycraft/acommands.py`, `pycraft/buildings.py` (elevators, bed, staircase, platform, hopper_cascade, column_up, elevator_up, etc.), any `@expose()` function that accesses `player.*`.
+### 1. ✅ No-player guards (DONE)
 
 ### 2. ✅ elevators() sign text fails: `'Expected non-null argument at 0'`
 
 **Fixed.** `BlockData.get_key()` (returns `string_value`) overrode `Reference.get_key()` (returns `__reference__`) in the dynamically-generated MRO for `CraftSign` BlockState objects. The MRO is `CraftSign → Sign → BlockData → … → Reference`, so `BlockData.get_key()` was found first and returned `None` (since BlockState objects have `string_value=None`). Fix in `world.py`: `BlockData.get_key()` now falls back to `super().get_key()` when `string_value` is None, reaching `Reference.get_key()` via cooperative MRO lookup.
 
-### 3. Live pytest tests timeout on RPC calls (event loop issue)
+### 3. ✅ Live pytest tests timeout on RPC calls (event loop issue)
 
-All live tests that make actual server calls (not just introspection) timeout after 30s. The channel fixture connects and introspects successfully, but `call_remote()` calls never receive responses. This affects both existing tests (`test_set_block_trial_spawner`) and new ones.
-
-- Likely cause: `asyncio.ensure_future()` in `Channel.open()` (line 84-86) creates reader/writer tasks on the fixture's event loop, but test functions may run on a different loop
-- Config: `pyproject.toml` has `asyncio_mode = "auto"`, channel fixture uses `scope='session', loop_scope='session'`
-- Need to verify: does `asyncio_default_test_loop_scope` need to be `session` instead of `function`?
-- Conftest: `tests/conftest.py`
-- Channel: `pycraft/server/channel.py` lines 61-87
+**Fixed.** The `channel` fixture used `scope='session', loop_scope='session'`, but `asyncio_mode = "auto"` defaults test functions to `loop_scope='function'`. Each test got its own event loop while the fixture's reader/writer tasks ran on the session loop, so RPC responses were never received. Fix: added `asyncio_default_test_loop_scope = "session"` and `asyncio_default_fixture_loop_scope = "session"` to `[tool.pytest.ini_options]` in `pyproject.toml`.
 
 ### 4. help() and expose.py bugs (FIXED)
 

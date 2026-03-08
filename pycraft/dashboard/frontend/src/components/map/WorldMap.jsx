@@ -34,6 +34,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import ViewInArIcon from '@mui/icons-material/ViewInAr';
+import GridOnIcon from '@mui/icons-material/GridOn';
 import InputAdornment from '@mui/material/InputAdornment';
 import Popper from '@mui/material/Popper';
 import Paper from '@mui/material/Paper';
@@ -43,83 +45,9 @@ import { useTeleportPlayer, usePasteTemplate, useEvalCode } from '../../api/muta
 import PlayerDetail from '../players/PlayerDetail';
 import { TracebackDialog, parseLocation } from '../editor/CodeEditor';
 import { fetchApi } from '../../api/client';
+import Map2DRenderer, { textureImages, loadTexture } from './Map2DRenderer';
+import Map3DRenderer from './Map3DRenderer';
 
-/* ── Fallback colors for blocks without a loaded texture ── */
-const BLOCK_COLORS = {
-  'minecraft:air': '#111111',
-  'minecraft:cave_air': '#111111',
-  'minecraft:void_air': '#0a0a0a',
-  'minecraft:stone': '#808080',
-  'minecraft:dirt': '#8B6914',
-  'minecraft:grass_block': '#5B8C3E',
-  'minecraft:water': '#3366CC',
-  'minecraft:lava': '#FF4500',
-  'minecraft:sand': '#E8D672',
-  'minecraft:gravel': '#A0A0A0',
-  'minecraft:bedrock': '#333333',
-  'minecraft:cobblestone': '#6B6B6B',
-  'minecraft:oak_planks': '#B8945F',
-  'minecraft:deepslate': '#505050',
-};
-
-function getBlockColor(material) {
-  if (!material) return '#87CEEB';
-  return BLOCK_COLORS[material] || '#808080';
-}
-
-/* ── Texture cache: shared across renders, persistent for session ── */
-const textureImages = new Map();
-
-function getTextureUrl(material) {
-  const name = material.startsWith('minecraft:') ? material.slice(10) : material;
-  return `/api/textures/${name}.png`;
-}
-
-function loadTexture(material, onLoaded) {
-  if (textureImages.has(material)) return;
-  textureImages.set(material, 'loading');
-  const img = new Image();
-  img.onload = () => { textureImages.set(material, img); onLoaded(); };
-  img.onerror = () => { textureImages.set(material, 'failed'); onLoaded(); };
-  img.src = getTextureUrl(material);
-}
-
-/* ── Entity type colors ── */
-const ENTITY_COLORS = {
-  'minecraft:player': '#FF0000',
-  'minecraft:zombie': '#2B5B2B',
-  'minecraft:skeleton': '#C8C8C8',
-  'minecraft:creeper': '#30B030',
-  'minecraft:spider': '#3B2B1B',
-  'minecraft:enderman': '#1B0B2E',
-  'minecraft:cow': '#6B4423',
-  'minecraft:pig': '#F0A0A0',
-  'minecraft:sheep': '#E0D8D0',
-  'minecraft:chicken': '#F0F0F0',
-  'minecraft:villager': '#8B6914',
-  'minecraft:item': '#FFFF00',
-};
-
-function getEntityColor(type) {
-  return ENTITY_COLORS[type] || '#FF8800';
-}
-
-/** Draw a facing-direction triangle on the canvas */
-function drawFacingArrow(ctx, cx, cy, yaw, radius, color) {
-  const angle = ((yaw + 180) * Math.PI) / 180;
-  const tipX = cx + Math.sin(angle) * radius;
-  const tipY = cy - Math.cos(angle) * radius;
-  const backL = angle - Math.PI * 0.8;
-  const backR = angle + Math.PI * 0.8;
-  const tailR = radius * 0.4;
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(tipX, tipY);
-  ctx.lineTo(cx + Math.sin(backL) * tailR, cy - Math.cos(backL) * tailR);
-  ctx.lineTo(cx + Math.sin(backR) * tailR, cy - Math.cos(backR) * tailR);
-  ctx.closePath();
-  ctx.fill();
-}
 
 /** Rotate a 2D footprint array [z][x] by steps * 90 degrees CW */
 function rotateFootprint(footprint, steps) {
@@ -157,7 +85,6 @@ function countMaterials(blocks) {
 const MAX_QUERY = 128;  // cap per-axis; 128x128x60 = ~1M blocks, safe for MC server
 
 export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed }) {
-  const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const [containerSize, setContainerSize] = useState({ w: 800, h: 500 });
   const [worldName, setWorldName] = useState(() => sessionStorage.getItem('map_worldName') || '');
@@ -171,6 +98,10 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
   const [examinePlayer, setExaminePlayer] = useState(null);
   const examineAnchorRef = useRef(null);
   const [hoverInfo, setHoverInfo] = useState(null);
+
+  /* Render mode toggle */
+  const [renderMode, setRenderMode] = useState(() => sessionStorage.getItem('map_renderMode') || '2d');
+  useEffect(() => { sessionStorage.setItem('map_renderMode', renderMode); }, [renderMode]);
 
   /* Interaction modes: 'normal' | 'teleport-pick-player' | 'teleport-pick-dest' | 'paste-preview' */
   const [interactionMode, setInteractionMode] = useState('normal');
@@ -376,137 +307,6 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
     ? rotateFootprint(templateDetail.footprint, pasteRotation)
     : null;
 
-  const drawMap = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !blockData?.blocks) return;
-    const ctx = canvas.getContext('2d');
-    const blocks = blockData.blocks;
-    const w = blocks.length;
-    const h = blocks[0]?.length || 0;
-
-    canvas.width = canvasW;
-    canvas.height = canvasH;
-    ctx.imageSmoothingEnabled = false;
-
-    const bpx = canvasW / w;
-    const bpz = canvasH / h;
-
-    for (let x = 0; x < w; x++) {
-      for (let z = 0; z < h; z++) {
-        const material = blocks[x][z];
-        const cached = material ? textureImages.get(material) : null;
-        if (cached instanceof HTMLImageElement) {
-          ctx.drawImage(cached, x * bpx, z * bpz, bpx, bpz);
-        } else {
-          ctx.fillStyle = getBlockColor(material);
-          ctx.fillRect(x * bpx, z * bpz, bpx, bpz);
-        }
-      }
-    }
-
-    const ox = blockData.x1 || 0;
-    const oz = blockData.z1 || 0;
-
-    if (blockData.entities) {
-      for (const e of blockData.entities) {
-        if (!e.location || e.type === 'minecraft:player') continue;
-        const ex = e.location.x - ox;
-        const ez = e.location.z - oz;
-        if (ex < -0.5 || ex >= w + 0.5 || ez < -0.5 || ez >= h + 0.5) continue;
-        const sz = Math.max(2, bpx * 0.6);
-        ctx.fillStyle = getEntityColor(e.type);
-        ctx.fillRect(ex * bpx - sz / 2, ez * bpz - sz / 2, sz, sz);
-      }
-    }
-
-    // Draw paste preview overlay
-    if (interactionMode === 'paste-preview' && pasteFootprint) {
-      const pos = pastePosition || pasteMousePos;
-      if (pos) {
-        const fpDepth = pasteFootprint.length;
-        const fpWidth = pasteFootprint[0]?.length || 0;
-        const startX = pos.x - Math.floor(fpWidth / 2);
-        const startZ = pos.z - Math.floor(fpDepth / 2);
-
-        ctx.save();
-        ctx.globalAlpha = 0.6;
-        for (let fz = 0; fz < fpDepth; fz++) {
-          for (let fx = 0; fx < fpWidth; fx++) {
-            const mat = pasteFootprint[fz][fx];
-            if (!mat) continue;
-            const canvX = (startX + fx - ox) * bpx;
-            const canvZ = (startZ + fz - oz) * bpz;
-            if (canvX + bpx < 0 || canvX > canvasW || canvZ + bpz < 0 || canvZ > canvasH) continue;
-            const cached = textureImages.get(mat);
-            if (cached instanceof HTMLImageElement) {
-              ctx.drawImage(cached, canvX, canvZ, bpx, bpz);
-            } else {
-              ctx.fillStyle = getBlockColor(mat);
-              ctx.fillRect(canvX, canvZ, bpx, bpz);
-            }
-          }
-        }
-        ctx.globalAlpha = 1.0;
-        // Draw border around paste region
-        ctx.strokeStyle = pastePosition ? '#00FF00' : '#FFFF00';
-        ctx.lineWidth = 2;
-        ctx.setLineDash(pastePosition ? [] : [4, 4]);
-        ctx.strokeRect(
-          (startX - ox) * bpx,
-          (startZ - oz) * bpz,
-          fpWidth * bpx,
-          fpDepth * bpz,
-        );
-        ctx.setLineDash([]);
-        ctx.restore();
-      }
-    }
-
-    if (players) {
-      for (const p of players) {
-        if (!p.location || p.location.world !== worldName) continue;
-        const px = p.location.x - ox;
-        const pz = p.location.z - oz;
-        if (px < -0.5 || px >= w + 0.5 || pz < -0.5 || pz >= h + 0.5) continue;
-        const cx = px * bpx;
-        const cz = pz * bpz;
-        const r = Math.max(3, bpx * 0.4);
-
-        const isFollowed = p.uuid === followPlayer;
-        const isSelected = p.uuid === selectedPlayer;
-        const isTeleportTarget = teleportTarget?.uuid === p.uuid;
-        const color = isTeleportTarget ? '#FF00FF' : isFollowed ? '#00FF00' : isSelected ? '#FFFFFF' : '#FF0000';
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(cx, cz, r, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (isFollowed || isSelected || isTeleportTarget) {
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(cx, cz, r + 3, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-
-        if (p.location.yaw !== undefined) {
-          drawFacingArrow(ctx, cx, cz, p.location.yaw, r + 6, isFollowed ? '#00FF00' : '#FFFFFF');
-        }
-
-        ctx.fillStyle = '#FFFFFF';
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 2;
-        ctx.font = `bold ${Math.max(10, bpx * 0.5)}px sans-serif`;
-        const label = p.name;
-        const tx = cx + r + 4;
-        const ty = cz + 4;
-        ctx.strokeText(label, tx, ty);
-        ctx.fillText(label, tx, ty);
-      }
-    }
-  }, [blockData, players, worldName, canvasW, canvasH, texturesReady, followPlayer, teleportTarget, interactionMode, pasteFootprint, pastePosition, pasteMousePos]);
-
-  useEffect(() => { drawMap(); }, [drawMap]);
 
   /* ── Drag-to-pan ── */
   const handleMouseDown = (e) => {
@@ -532,9 +332,9 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
   const eventToWorldCoords = useCallback((e) => {
     const bd = blockDataRef.current;
     if (!bd?.blocks) return null;
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
+    const container = containerRef.current;
+    if (!container) return null;
+    const rect = container.getBoundingClientRect();
     const ez = effectiveZoomRef.current;
     const clickX = Math.floor((e.clientX - rect.left) / ez) + (bd.x1 || 0);
     const clickZ = Math.floor((e.clientY - rect.top) / ez) + (bd.z1 || 0);
@@ -649,9 +449,9 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
     }
     const bd = blockDataRef.current;
     if (!bd?.blocks) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
     const ez = effectiveZoomRef.current;
     const bx = Math.floor((e.clientX - rect.left) / ez);
     const bz = Math.floor((e.clientY - rect.top) / ez);
@@ -889,6 +689,13 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
             </Stack>
           )}
 
+          {/* 2D / 3D toggle */}
+          <Tooltip title={renderMode === '2d' ? 'Switch to 3D view' : 'Switch to 2D view'}>
+            <IconButton size="small" onClick={() => setRenderMode((m) => m === '2d' ? '3d' : '2d')}>
+              {renderMode === '2d' ? <ViewInArIcon /> : <GridOnIcon />}
+            </IconButton>
+          </Tooltip>
+
           {/* Map search */}
           <Box sx={{ position: 'relative' }} ref={searchAnchorRef}>
             <TextField
@@ -975,20 +782,47 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
               <CircularProgress />
             </Box>
           )}
-          <canvas
-            ref={canvasRef}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleCanvasMouseMove}
-            onMouseLeave={handleCanvasMouseLeave}
-            style={{
-              cursor,
-              display: 'block',
-              transform: (visualOffset.x || visualOffset.y)
-                ? `translate(${visualOffset.x}px, ${visualOffset.y}px)`
-                : undefined,
-              userSelect: 'none',
-            }}
-          />
+          {renderMode === '2d' ? (
+            <Map2DRenderer
+              blockData={blockData}
+              players={players}
+              worldName={worldName}
+              canvasW={canvasW}
+              canvasH={canvasH}
+              effectiveZoom={effectiveZoom}
+              followPlayer={followPlayer}
+              selectedPlayer={selectedPlayer}
+              teleportTarget={teleportTarget}
+              interactionMode={interactionMode}
+              pasteFootprint={pasteFootprint}
+              pastePosition={pastePosition}
+              pasteMousePos={pasteMousePos}
+              cursor={cursor}
+              visualOffset={visualOffset}
+              texturesReady={texturesReady}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleCanvasMouseMove}
+              onMouseLeave={handleCanvasMouseLeave}
+            />
+          ) : (
+            <Map3DRenderer
+              blockData={blockData}
+              players={players}
+              worldName={worldName}
+              containerW={containerSize.w}
+              containerH={containerSize.h}
+              blocksW={blocksW}
+              blocksH={blocksH}
+              followPlayer={followPlayer}
+              selectedPlayer={selectedPlayer}
+              teleportTarget={teleportTarget}
+              interactionMode={interactionMode}
+              cursor={cursor}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleCanvasMouseMove}
+              onMouseLeave={handleCanvasMouseLeave}
+            />
+          )}
           {hoverInfo && (
             <Box
               sx={{

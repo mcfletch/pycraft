@@ -1,8 +1,7 @@
 """Parsing of Minecraft namespaced materials with embedded properties"""
-from functools import lru_cache
+
 import re
 import typing
-from . import rotations
 
 
 class ParsedMaterial(typing.TypedDict):
@@ -14,25 +13,25 @@ class ParsedMaterial(typing.TypedDict):
 
 
 MATERIAL_MATCHER = re.compile(
-    r'(?:(?P<namespace>\w+)[:])?(?P<name>\w+)(?:\[(?P<properties>(\w+?)[=](\w+?)([,]\w+?[=]\w+?)*)\])?'
+    r"(?:(?P<namespace>\w+)[:])?(?P<name>\w+)(?:\[(?P<properties>(\w+?)[=](\w+?)([,]\w+?[=]\w+?)*)\])?"
 )
 
 
 def parse_material(material: str) -> ParsedMaterial:
     """Parse a material string into namespace, name and properties"""
-    base = MATERIAL_MATCHER.match(material)
-    if not base:
+    match = MATERIAL_MATCHER.match(material)
+    if not match:
         raise ValueError("Unable to parse %s as a material" % (material,))
-    props = base.group('properties') or None
-    base = {
-        'namespace': base.group('namespace') or 'minecraft',
-        'name': base.group('name'),
-        'properties': {},
+    props = match.group("properties") or None
+    base: ParsedMaterial = {
+        "namespace": match.group("namespace") or "minecraft",
+        "name": match.group("name"),
+        "properties": {},
     }
     if props:
-        for segment in props.split(','):
-            key, value = segment.split('=', 1)
-            base['properties'][key] = value
+        for segment in props.split(","):
+            key, value = segment.split("=", 1)
+            base["properties"][key] = value
     return base
 
 
@@ -41,20 +40,20 @@ def copy_struct(material: typing.Union[str, ParsedMaterial], **named) -> ParsedM
     if isinstance(material, str):
         material = parse_material(material)
     material = material.copy()
-    material['properties'] = material['properties'].copy()
-    material['properties'].update(named)
+    material["properties"] = material["properties"].copy()
+    material["properties"].update(named)
     return material
 
 
 def unparse_material(material: typing.Union[str, ParsedMaterial]) -> str:
     """Given a parsed material, convert to string form"""
     if isinstance(material, dict):
-        base = '%(namespace)s:%(name)s' % material
-        if material['properties']:
-            props = ','.join(
-                [f'{k}={v}' for (k, v) in sorted(material['properties'].items())]
+        base = "%(namespace)s:%(name)s" % material
+        if material["properties"]:
+            props = ",".join(
+                [f"{k}={v}" for (k, v) in sorted(material["properties"].items())]
             )
-            return f'{base}[{props}]' % locals()
+            return f"{base}[{props}]" % locals()
         else:
             return base
     return material

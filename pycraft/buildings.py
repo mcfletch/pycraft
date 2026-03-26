@@ -1,11 +1,10 @@
 """Create building-like structures for players"""
-from pycraft.directions import as_cube
-import numpy as np
-import random, os, typing
+
+import os, typing
 import itertools
 import logging
 from . import expose, directions, randomchoice, rotations
-from .server.world import Vector, Block, Location
+from .server.world import Vector, Block, Location, World, Player
 from .server import final
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -18,7 +17,7 @@ def square(
     depth,
     cross,
     forward,
-) -> typing.Tuple[typing.List[Location]]:
+) -> typing.List[Location]:
     """Calculate positions starting at position going for width and depths"""
     positions = []
     for j in range(depth):
@@ -35,7 +34,7 @@ def hollow_square(
     depth,
     cross,
     forward,
-) -> typing.Tuple[typing.List[Location]]:
+) -> typing.List[Location]:
     positions = []
     for j in range(depth):
         row = forward * j
@@ -54,12 +53,12 @@ async def pyramid(
     position=None,
     width=9,
     depth=9,
-    material='iron_block',
+    material="iron_block",
     ystep=1,
     hollow=False,
     *,
-    player=None,
-    world=None,
+    player: Player,
+    world: World,
 ):
     """Create a pyramid in front of the player
 
@@ -104,13 +103,13 @@ async def hall(
     width=8,
     depth=13,
     height=4,
-    wall_material='minecraft:polished_andesite',
-    floor_material='minecraft:stone_bricks',
-    carpet_material='minecraft:red_carpet',
-    roof_material='minecraft:red_glazed_terracotta',
+    wall_material="minecraft:polished_andesite",
+    floor_material="minecraft:stone_bricks",
+    carpet_material="minecraft:red_carpet",
+    roof_material="minecraft:red_glazed_terracotta",
     *,
-    player=None,
-    world=None,
+    player: Player,
+    world: World,
 ):
     if position is None:
         position = player.position
@@ -122,37 +121,27 @@ async def hall(
     bottom = y - 1
     top = y + height
 
+    positions = []
+    materials = []
+    world_name = position.world if hasattr(position, "world") else position[0]
+
+    def add(bx, by, bz, material):
+        positions.append(Location([world_name, bx, by, bz]))
+        materials.append(material)
+
+    def fill(sx, sy, sz, ex, ey, ez, material):
+        for by in range(min(sy, ey), max(sy, ey) + 1):
+            for bz in range(min(sz, ez), max(sz, ez) + 1):
+                for bx in range(min(sx, ex), max(sx, ex) + 1):
+                    add(bx, by, bz, material)
+
     # clear
-    await world.oldSetBlocks(
-        left + 1,
-        bottom + 1,
-        front + 1,
-        right - 1,
-        top,
-        back - 1,
-        'air',
-    )
+    fill(left + 1, bottom + 1, front + 1, right - 1, top, back - 1, "air")
     # subfloor...
-    await world.oldSetBlocks(
-        left,
-        bottom - 1,
-        front,
-        right,
-        bottom,
-        back,
-        floor_material,
-    )
+    fill(left, bottom - 1, front, right, bottom, back, floor_material)
     if width > 4 and depth > 4:
         # Carpet on top...
-        await world.oldSetBlocks(
-            left + 2,
-            bottom,
-            front + 2,
-            right - 2,
-            bottom,
-            back - 2,
-            carpet_material,
-        )
+        fill(left + 2, bottom, front + 2, right - 2, bottom, back - 2, carpet_material)
     # walls...
     for start, stop in [
         ((left, bottom, front), (right, top, front)),
@@ -160,11 +149,7 @@ async def hall(
         ((left, bottom, back), (right, top, back)),
         ((right, bottom, front), (right, top, back)),
     ]:
-        await world.oldSetBlocks(
-            *start,
-            *stop,
-            wall_material,
-        )
+        fill(*start, *stop, wall_material)
     # front doorway
     front_blocks = width - 1
     log.info("Front blocks: %s", front_blocks)
@@ -176,67 +161,35 @@ async def hall(
     delta = (front_blocks - doorwidth) // 2
     log.info("delta %s", delta)
     doorleft = left + delta + 1
-    await world.oldSetBlocks(
+    fill(
         doorleft,
         bottom + 1,
         front,
         doorleft + (doorwidth - 1),
         bottom + 2,
         front,
-        'air',
+        "air",
     )
-    await world.setBlock(
+    add(
         doorleft,
         bottom + 1,
         front,
-        'minecraft:dark_oak_door[facing=north,half=lower,hinge=right,open=false,powered=false]',
+        "minecraft:dark_oak_door[facing=north,half=lower,hinge=right,open=false,powered=false]",
     )  # facing North
-    await world.setBlock(
+    add(
         doorleft,
         bottom + 2,
         front,
-        'minecraft:dark_oak_door[facing=north,half=upper,hinge=right,open=false,powered=false]',
+        "minecraft:dark_oak_door[facing=north,half=upper,hinge=right,open=false,powered=false]",
     )  # upper part
     # Cornice...
     roofstart, roofstop = left - 1, right + 1
     roofy = top
     while roofstart <= roofstop:
-        await world.oldSetBlocks(
-            roofstart,
-            roofy,
-            front - 1,
-            roofstart,
-            roofy,
-            back + 1,
-            roof_material,
-        )
-        await world.oldSetBlocks(
-            roofstop,
-            roofy,
-            front - 1,
-            roofstop,
-            roofy,
-            back + 1,
-            roof_material,
-        )
-        await world.oldSetBlocks(
-            roofstart + 1,
-            roofy,
-            front,
-            roofstop - 1,
-            roofy,
-            front,
-            wall_material,
-        )
-        await world.oldSetBlocks(
-            roofstart + 1,
-            roofy,
-            back,
-            roofstop - 1,
-            roofy,
-            back,
-            wall_material,
-        )
+        fill(roofstart, roofy, front - 1, roofstart, roofy, back + 1, roof_material)
+        fill(roofstop, roofy, front - 1, roofstop, roofy, back + 1, roof_material)
+        fill(roofstart + 1, roofy, front, roofstop - 1, roofy, front, wall_material)
+        fill(roofstart + 1, roofy, back, roofstop - 1, roofy, back, wall_material)
         roofstart += 1
         roofstop -= 1
         roofy += 1
@@ -245,101 +198,47 @@ async def hall(
     torches = []
     for step in range(front + 2, back - 2, 3):
         torches.append(step)
-        await world.setBlock(
-            left + 1,
-            bottom + 3,
-            step,
-            'minecraft:wall_torch[facing=east]',
-        )
-        await world.setBlock(
-            right - 1,
-            bottom + 3,
-            step,
-            'minecraft:wall_torch[facing=west]',
-        )
-        await world.oldSetBlocks(
+        add(left + 1, bottom + 3, step, "minecraft:wall_torch[facing=east]")
+        add(right - 1, bottom + 3, step, "minecraft:wall_torch[facing=west]")
+        fill(
             left + 1,
             top + 1,
             step,
             right - 1,
             top + 1,
             step,
-            'minecraft:dark_oak_log[axis=x]',
+            "minecraft:dark_oak_log[axis=x]",
         )
     glass_material = randomchoice.RANDOM_STAINED_GLASS
     for step in range(front + 1, back - 1):
-        if not step in torches:
-            await world.oldSetBlocks(
-                left,
-                bottom + 1,
-                step,
-                left,
-                top - 1,
-                step,
-                glass_material,
-            )
-            await world.oldSetBlocks(
-                right,
-                bottom + 1,
-                step,
-                right,
-                top - 1,
-                step,
-                glass_material,
-            )
-    await world.setBlock(left + 2, bottom, back - 4, 'minecraft:air')
-    await world.setBlock(left + 2, bottom, back - 5, 'minecraft:air')
+        if step not in torches:
+            fill(left, bottom + 1, step, left, top - 1, step, glass_material)
+            fill(right, bottom + 1, step, right, top - 1, step, glass_material)
+    add(left + 2, bottom, back - 4, "minecraft:air")
+    add(left + 2, bottom, back - 5, "minecraft:air")
 
-    await world.setBlock(
+    add(
         left + 2,
         bottom,
         back - 4,
-        'minecraft:cyan_bed[facing=south,occupied=false,part=head]',
+        "minecraft:cyan_bed[facing=south,occupied=false,part=head]",
     )
-    await world.setBlock(
+    add(
         left + 2,
         bottom,
         back - 5,
-        'minecraft:cyan_bed[facing=south,occupied=false,part=foot]',
+        "minecraft:cyan_bed[facing=south,occupied=false,part=foot]",
     )
 
     crafting = left + (width // 2)
-    await world.setBlock(
-        crafting,
-        bottom,
-        back - 1,
-        'crafting_table',
-    )
-    await world.setBlock(
-        crafting - 1,
-        bottom,
-        back - 1,
-        'furnace',
-    )
-    await world.setBlock(
-        crafting + 1,
-        bottom,
-        back - 1,
-        'chest',
-    )
-    await world.setBlock(
-        crafting + 2,
-        bottom,
-        back - 1,
-        'enchanting_table',
-    )
-    await world.setBlock(
-        crafting - 2,
-        bottom,
-        back - 1,
-        'brewing_stand',
-    )
-    await world.setBlock(
-        crafting - 2,
-        bottom,
-        back - 2,
-        'anvil',
-    )
+    add(crafting, bottom, back - 1, "crafting_table")
+    add(crafting - 1, bottom, back - 1, "furnace")
+    add(crafting + 1, bottom, back - 1, "chest")
+    add(crafting + 2, bottom, back - 1, "enchanting_table")
+    add(crafting - 2, bottom, back - 1, "brewing_stand")
+    add(crafting - 2, bottom, back - 2, "anvil")
+
+    await world.setBlockList(positions, materials)
 
 
 @expose.expose()
@@ -348,16 +247,16 @@ async def temple(
     width=17,
     depth=23,
     height=4,  # column/room height
-    wall_material='minecraft:quartz_block',
-    floor_material='minecraft:smooth_quartz',
-    column_material='minecraft:quartz_pillar',
-    roof_material='minecraft:blue_stained_glass',
-    beam_material='minecraft:smooth_quartz',
-    beam_support_material='minecraft:smooth_quartz_stairs',
-    pediment_top_material='minecraft:green_stained_glass',
+    wall_material="minecraft:quartz_block",
+    floor_material="minecraft:smooth_quartz",
+    column_material="minecraft:quartz_pillar",
+    roof_material="minecraft:blue_stained_glass",
+    beam_material="minecraft:smooth_quartz",
+    beam_support_material="minecraft:smooth_quartz_stairs",
+    pediment_top_material="minecraft:green_stained_glass",
     *,
-    player=None,
-    world=None,
+    player: Player,
+    world: World,
 ):
     if position is None:
         position = player.position + player.direction
@@ -463,18 +362,18 @@ async def temple(
     # Cross beams...
     def linprops(base, props):
         if props:
-            return '%s[%s]' % (
+            return "%s[%s]" % (
                 base,
-                ','.join(['%s=%s' % (k, v) for k, v in props.items()]),
+                ",".join(["%s=%s" % (k, v) for k, v in props.items()]),
             )
         else:
             return base
 
     STAIR_DIR = {
-        (0, 0, 1): dict(facing='south', half='top'),
-        (0, 0, -1): dict(facing='north', half='top'),
-        (1, 0, 0): dict(facing='east', half='top'),
-        (-1, 0, 0): dict(facing='west', half='top'),
+        (0, 0, 1): dict(facing="south", half="top"),
+        (0, 0, -1): dict(facing="north", half="top"),
+        (1, 0, 0): dict(facing="east", half="top"),
+        (-1, 0, 0): dict(facing="west", half="top"),
     }
     LEFT = {
         (0, 0, -1): (1, 0, 0),
@@ -500,9 +399,9 @@ async def temple(
     facing = STAIR_DIR[tuple(forward)].copy()
     pediment_bottom_material = linprops(beam_support_material, facing)
     left_corner = facing.copy()
-    left_corner.update({'shape': 'outer_right'})
+    left_corner.update({"shape": "outer_right"})
     right_corner = facing.copy()
-    right_corner.update({'shape': 'outer_left'})
+    right_corner.update({"shape": "outer_left"})
     pediment_left_corner_material = linprops(beam_support_material, left_corner)
     pediment_right_corner_material = linprops(beam_support_material, right_corner)
 
@@ -608,7 +507,7 @@ async def temple(
 def strip_top_air(materials):
     for item in materials[::-1]:
         item = item[0][0]
-        if item == 'minecraft:air':
+        if item == "minecraft:air":
             del materials[-1]
         else:
             break
@@ -618,7 +517,7 @@ def strip_top_air(materials):
 def until_air(materials):
     for item in materials:
         item = item[0][0]
-        if item != 'minecraft:air':
+        if item != "minecraft:air":
             yield item
         else:
             break
@@ -639,14 +538,14 @@ def until_change(materials):
 
 @expose.expose()
 async def column_up(
-    material: typing.Union[list, str] = 'chain',
+    material: typing.Union[list, str] = "chain",
     position=None,
     height: typing.Optional[float] = None,
     to_air: typing.Optional[bool] = False,
     to_surface: typing.Optional[bool] = False,
     *,
-    player=None,
-    world=None,
+    player: Player,
+    world: World,
 ):
     """Create a chain in the block in front of you going up to a solid block"""
     if position is None:
@@ -655,7 +554,7 @@ async def column_up(
     maxHeight = int(await world.getMaxHeight())
     y_height = maxHeight - y - 1
     if y_height < 1:
-        return 'At the top of the world'
+        return "At the top of the world"
 
     above = await world.getBlocks(
         [x, y, z],
@@ -668,11 +567,11 @@ async def column_up(
     elif to_surface:
         above = strip_top_air(above)
         if len(above) < 2:
-            return 'Did not find a ceiling'
+            return "Did not find a ceiling"
     else:
         above = list(until_change(above))
         if len(above) < 2:
-            return 'Did not find a ceiling'
+            return "Did not find a ceiling"
 
     if isinstance(material, list):
         next_material = itertools.cycle(material).__next__
@@ -698,10 +597,10 @@ async def elevator_up(
     to_surface: typing.Optional[bool] = None,
     height: typing.Optional[float] = None,
     to_air: typing.Optional[bool] = None,
-    base: typing.Optional[str] = 'soul_sand',
+    base: typing.Optional[str] = "soul_sand",
     *,
-    player=None,
-    world=None,
+    player: Player,
+    world: World,
 ):
     """Construct a water-elevator going up"""
     if position is None:
@@ -711,7 +610,7 @@ async def elevator_up(
         to_air = True
     await world.setBlockList([[position.world, x, y - 1, z]], [base])
     final_height = await column_up(
-        material='bubble_column[drag=false]',
+        material="bubble_column[drag=false]",
         position=position,
         to_air=to_air,
         to_surface=to_surface,
@@ -728,10 +627,10 @@ async def elevators(
     to_surface: typing.Optional[bool] = None,
     height: typing.Optional[float] = None,
     to_air: typing.Optional[bool] = None,
-    walls: typing.Optional[str] = 'glass',
+    walls: str = "glass",
     *,
-    player=None,
-    world=None,
+    player: Player,
+    world: World,
 ):
     """Create a full-featured up-and-down bubble elevator with walls as specified
 
@@ -763,24 +662,25 @@ async def elevators(
         # default to to_surface because otherwise you wind up with
         # single-block elevators far more often than not...
         to_surface = True
-    height = await elevator_up(
+    calculated_height = await elevator_up(
         position=up_pos,
         player=player,
         world=world,
         to_surface=to_surface,
         to_air=to_air,
         height=height,
-        base='soul_sand',
+        base="soul_sand",
     )
     if not isinstance(height, int) or height <= 0:
-        raise RuntimeError(f'Elevator failed: {height}')
+        raise RuntimeError(f"Elevator failed: {height}")
+    height = float(calculated_height)
 
     await elevator_up(
         position=down_pos,
         player=player,
         world=world,
         height=height,
-        base='magma_block',
+        base="magma_block",
     )
     await column_up(
         walls,
@@ -797,14 +697,14 @@ async def elevators(
         world=world,
     )
     await column_up(
-        [walls] * 10 + ['soul_lantern'],
+        [walls] * 10 + ["soul_lantern"],
         position=up_pos + forward,
         height=height,
         player=player,
         world=world,
     )
     await column_up(
-        [walls] * 10 + ['lantern'],
+        [walls] * 10 + ["lantern"],
         position=down_pos + forward,
         height=height,
         player=player,
@@ -844,27 +744,27 @@ async def elevators(
     signs = [
         (
             up_pos - forward,
-            'oak_wall_sign[facing=%(left)s]' % locals(),
-            ['Mind the Sand', 'As you Enter'],
-            'BLUE',
+            "oak_wall_sign[facing=%(left)s]" % locals(),
+            ["Mind the Sand", "As you Enter"],
+            "BLUE",
         ),
         (
             up_pos - forward + (0, 1, 0),
-            'oak_wall_sign[facing=%(left)s]' % locals(),
-            'Elevator Up',
-            'BLUE',
+            "oak_wall_sign[facing=%(left)s]" % locals(),
+            "Elevator Up",
+            "BLUE",
         ),
         (
             down_pos - forward,
-            'oak_wall_sign[facing=%(right)s]' % locals(),
-            ['Please', 'Keep Clear', 'Of the Exits'],
-            'RED',
+            "oak_wall_sign[facing=%(right)s]" % locals(),
+            ["Please", "Keep Clear", "Of the Exits"],
+            "RED",
         ),
         (
             down_pos - forward + (0, 1, 0),
-            'oak_wall_sign[facing=%(right)s]' % locals(),
-            'Elevator Down',
-            'RED',
+            "oak_wall_sign[facing=%(right)s]" % locals(),
+            "Elevator Down",
+            "RED",
         ),
     ]
 
@@ -882,14 +782,14 @@ async def torch_tower(
     to_air: typing.Optional[bool] = False,
     to_surface: typing.Optional[bool] = False,
     *,
-    player=None,
-    world=None,
+    player: Player,
+    world: World,
 ):
     """Construct a redstone torch tower to transmit redstone signal upward"""
     return await column_up(
         [
-            'dirt',
-            'redstone_torch',
+            "dirt",
+            "redstone_torch",
         ],
         position=position,
         height=height,
@@ -907,17 +807,17 @@ async def torch_cascade(
     to_air=False,
     to_surface=False,
     *,
-    player=None,
-    world=None,
+    player: Player,
+    world: World,
 ):
     forward, cross = directions.forward_and_cross(player.direction)
     position = player.position + forward
     await column_up(
         [
-            'dirt',
-            'redstone_wire[north=none,west=none,east=none,south=none]',
-            'redstone_wall_torch[facing=east]',
-            'air',
+            "dirt",
+            "redstone_wire[north=none,west=none,east=none,south=none]",
+            "redstone_wall_torch[facing=east]",
+            "air",
         ],
         position=position,
         height=height,
@@ -929,10 +829,10 @@ async def torch_cascade(
     position = position - (1, 0, 0) + (0, 2, 0)
     await column_up(
         [
-            'dirt',
-            'redstone_wire[north=none,west=none,east=none,south=none]',
-            'redstone_wall_torch[facing=west]',
-            'air',
+            "dirt",
+            "redstone_wire[north=none,west=none,east=none,south=none]",
+            "redstone_wall_torch[facing=west]",
+            "air",
         ],
         position=position,
         height=height if height is None else height - 2,

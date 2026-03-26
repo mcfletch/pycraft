@@ -15,6 +15,13 @@ log = logging.getLogger(__name__)
 
 
 class ScriptLoader(object):
+    """Loads script files from the script_dirs"""
+
+    script_dirs: str
+    scripts: dict
+    names: dict
+    msg_queue: asyncio.Queue
+
     def __init__(self, script_dirs):
         self.script_dirs = script_dirs
         self.scripts = {}  # path: module
@@ -24,7 +31,6 @@ class ScriptLoader(object):
     async def main(self):
         """Scan the scripts directories, loading each script and watching for changes"""
         log.info("Starting to load scripts from: %s", self.script_dirs)
-        import os, glob
 
         directories = [
             os.path.normpath(os.path.abspath(x))
@@ -34,7 +40,7 @@ class ScriptLoader(object):
         while True:
             for directory in directories:
                 # log.info("Scanning directory: %s", directory)
-                for path in sorted(glob.glob(os.path.join(directory, '*.py'))):
+                for path in sorted(glob.glob(os.path.join(directory, "*.py"))):
                     try:
                         if path not in self.scripts:
                             self.scripts[path] = await self.load_path(path)
@@ -49,11 +55,10 @@ class ScriptLoader(object):
             await asyncio.sleep(2)
 
     async def load_path(self, path):
-        import os, traceback
 
+        base = os.path.splitext(os.path.basename(path))[0]
         try:
-            base = os.path.splitext(os.path.basename(path))[0]
-            name = 'scripts.%s' % (base,)
+            name = "scripts.%s" % (base,)
             other = self.names.get(name)
             if other is not None and other != path:
                 await self.msg_queue.put(
@@ -62,12 +67,12 @@ class ScriptLoader(object):
                 return None, None
             self.names[name] = path
             stat = os.stat(path)
-            with open(path, encoding='utf-8') as fh:
+            with open(path, encoding="utf-8") as fh:
                 content = fh.read()
-            new_module = new_module(name)
-            new_module.__file__ = path
-            code = compile(content, path, 'exec')
-            exec(code, new_module.__dict__, new_module.__dict__)
+            gen_module = new_module(name)
+            gen_module.__file__ = path
+            code = compile(content, path, "exec")
+            exec(code, gen_module.__dict__, gen_module.__dict__)
         except Exception as err:
             await self.msg_queue.put(
                 "Can't import %s:\n %s" % (base, traceback.format_exc()),

@@ -1,7 +1,7 @@
 """Create transportation"""
+
 from pycraft import directions
 from .server.world import Vector
-from .server import final
 from . import randomchoice
 import numpy as np
 import random, os
@@ -18,9 +18,9 @@ async def tunnel(
     depth=25,
     width=3,
     height=3,
-    walls='glass',
-    floor='glass',
-    ceiling='glass',
+    walls="glass",
+    floor="glass",
+    ceiling="glass",
     position=None,
     direction=None,
     *,
@@ -28,14 +28,16 @@ async def tunnel(
     player_storage=None,
     world=None,
 ):
-    """Create a pyramid centered at position in material
+    """Create a tunnel facing forward from the user to depth with width and height
 
     position -- start position
-    direction -- rough direction to go (must be a unit block direction)
+    direction -- rough direction to go (must be a unit block direction, defaults to "forward from user")
+
     width -- size in the x direction
     depth -- size in the y direction
-    material -- name of the material to use
-    zstep -- 1 for upward, -1 for downward
+    walls -- name of the material to use for walls
+    floor -- name of the material to use for floor
+    ceiling -- name of the material to use for ceiling
     """
     log.info("Position %s direction %s", position, direction)
 
@@ -47,9 +49,9 @@ async def tunnel(
         position = player.position
     direction, cross = directions.forward_and_cross(direction)
     if not direction[1]:
-        up = np.array((0, 1, 0), dtype='f')
+        up = np.array((0, 1, 0), dtype="f")
     else:
-        up = np.array([0, 0, 1], dtype='f')
+        up = np.array([0, 0, 1], dtype="f")
 
     start = position + direction
     log.info("Start %s direction %s", start, direction)
@@ -60,51 +62,51 @@ async def tunnel(
     left_back_top = left_front_bottom + (up * (height + 2)) + (direction * depth)
     right_back_top = right_front_bottom + (up * (height + 2)) + (direction * depth)
 
-    await world.oldSetBlocks(
-        *left_front_bottom[:3],
-        *left_back_top[:3],
-        walls,
-    )
-    await world.oldSetBlocks(
-        *right_front_bottom[:3],
-        *right_back_top[:3],
-        walls,
-    )
+    locations = []
+    blocks = []
+
+    def fill_rect(corner_a, corner_b, material):
+        """Expand a rectangular region into individual block positions"""
+        a = np.array(corner_a[:3], dtype='d')
+        b = np.array(corner_b[:3], dtype='d')
+        mins = np.minimum(a, b).astype(int)
+        maxs = np.maximum(a, b).astype(int)
+        for x in range(mins[0], maxs[0] + 1):
+            for y in range(mins[1], maxs[1] + 1):
+                for z in range(mins[2], maxs[2] + 1):
+                    locations.append(Vector(x, y, z))
+                    blocks.append(material)
+
+    # left wall
+    fill_rect(left_front_bottom, left_back_top, walls)
+    # right wall
+    fill_rect(right_front_bottom, right_back_top, walls)
+
     inner_lfb = left_front_bottom + cross
     inner_lbt = left_back_top + cross
     inner_rfb = right_front_bottom - cross
     inner_rbt = right_back_top - cross
+
     # floor
-    await world.oldSetBlocks(
-        *inner_lfb[:3],
-        *(inner_rfb + (direction * depth))[:3],
-        floor,
-    )
-    await world.oldSetBlocks(
-        *inner_lbt[:3],
-        *(inner_rbt - (direction * depth))[:3],
-        ceiling,
-    )
-    # carve out the inner space...
-    await world.oldSetBlocks(
-        *(inner_lfb + up)[:3],
-        *(inner_rbt - up)[:3],
-        'air',
-    )
+    fill_rect(inner_lfb, inner_rfb + (direction * depth), floor)
+    # ceiling
+    fill_rect(inner_lbt, inner_rbt - (direction * depth), ceiling)
+    # carve out the inner space
+    fill_rect(inner_lfb + up, inner_rbt - up, "air")
 
     TORCH_DIR = {
-        (0, 0, -1): 'wall_torch[facing=west]',
-        (0, 0, 1): 'wall_torch[facing=east]',
-        (1, 0, 0): 'wall_torch[facing=south]',
-        (-1, 0, 0): 'wall_torch[facing=north]',
+        (0, 0, -1): "wall_torch[facing=west]",
+        (0, 0, 1): "wall_torch[facing=east]",
+        (1, 0, 0): "wall_torch[facing=south]",
+        (-1, 0, 0): "wall_torch[facing=north]",
     }
 
     # setup some torches every once in a while...
     torch_pos = inner_lbt - (up)  # one below ceiling...
+    torch_block = TORCH_DIR.get(tuple(direction[:3]))
     for step in range(0, depth, 5):
-        await final.Block(location=torch_pos - (direction * step)).setBlockData(
-            TORCH_DIR.get(tuple(direction[:3]))
-        )
+        locations.append(torch_pos - (direction * step))
+        blocks.append(torch_block)
 
     # setup some windows so the players can see...
     window_pos = left_back_top - (up)  # one below ceiling...
@@ -112,14 +114,14 @@ async def tunnel(
 
     for step in range(1, depth, 5):
         window_depth = window_pos - (direction * step)
-        await world.oldSetBlocks(
-            *(window_depth[:3]), *(window_depth - (up * 2))[:3], glass
-        )
-        await world.oldSetBlocks(
-            *(window_depth + (cross * (width + 2)))[:3],
-            *(window_depth - (up * 2) + (cross * (width + 2)))[:3],
+        fill_rect(window_depth, window_depth - (up * 2), glass)
+        fill_rect(
+            window_depth + (cross * (width + 2)),
+            window_depth - (up * 2) + (cross * (width + 2)),
             glass,
         )
+
+    await world.setBlockList(locations, blocks)
     player_storage()[TUNNEL_CONTINUE_KEY] = (
         width,
         height,
@@ -131,7 +133,7 @@ async def tunnel(
     )
 
 
-TUNNEL_CONTINUE_KEY = '__current_tunnel__'
+TUNNEL_CONTINUE_KEY = "__current_tunnel__"
 
 
 @expose.expose()
@@ -141,13 +143,13 @@ async def tunnel_continue(depth=25, *, player=None, player_storage=None, world=N
     storage = player_storage()
     params = storage.get(TUNNEL_CONTINUE_KEY)
     if not params:
-        return 'Sorry, I have forgotten where the tunnel was'
+        return "Sorry, I have forgotten where the tunnel was"
     return await tunnel(
         depth, *params, player=player, player_storage=player_storage, world=world
     )
 
 
-@expose.expose(name='fr')
+@expose.expose(name="fr")
 async def fast_rail(
     depth=100,
     position=None,
@@ -182,50 +184,55 @@ async def fast_rail(
     #     # 9 SW join
 
     if np.abs(direction[2]):  # N/S direction
-        shape = 'north_south'
+        shape = "north_south"
     else:
-        shape = 'east_west'
+        shape = "east_west"
 
-    if base:
-        await world.oldSetBlocks(
-            *(position[:3]),
-            *(position + (direction * depth))[:3],
-            base,
-        )
     down = Vector(0, -1, 0)
-
     air_start = position + Vector(0, 1, 0)
     air_end = air_start + (direction * depth) + Vector(0, 1, 0)
-    await world.oldSetBlocks(
-        *(air_start[:3]),
-        *(air_end[:3]),
-        'air',
-    )
+
+    locations = []
+    blocks = []
+
+    def fill_rect(corner_a, corner_b, material):
+        """Expand a rectangular region into individual block positions"""
+        a = np.array(corner_a[:3], dtype='d')
+        b = np.array(corner_b[:3], dtype='d')
+        mins = np.minimum(a, b).astype(int)
+        maxs = np.maximum(a, b).astype(int)
+        for x in range(mins[0], maxs[0] + 1):
+            for y in range(mins[1], maxs[1] + 1):
+                for z in range(mins[2], maxs[2] + 1):
+                    locations.append(Vector(x, y, z))
+                    blocks.append(material)
+
+    if base:
+        fill_rect(position, position + (direction * depth), base)
+    fill_rect(air_start, air_end, "air")
 
     # Now generate the actual track segments...
     # Always start and end with a powered-rail that has no power...
 
-    locations, blocks = [
-        air_start,
-        air_start + direction,
-    ], [f'powered_rail[shape={shape}]', f'rail[shape={shape}]']
+    locations.extend([air_start, air_start + direction])
+    blocks.extend([f"powered_rail[shape={shape}]", f"rail[shape={shape}]"])
 
     for offset in range(2, depth - 2, 8):
         for i in range(8):
             locations.append(air_start + (direction * (offset + i)))
             if i <= 4:
-                blocks.append(f'powered_rail[shape={shape}]')
+                blocks.append(f"powered_rail[shape={shape}]")
             else:
-                blocks.append(f'rail[shape={shape}]')
+                blocks.append(f"rail[shape={shape}]")
         if base:
             locations.append(air_start + (direction * (offset + 4)) + cross + down)
             blocks.append(base)
         locations.append(air_start + (direction * (offset + 4)) + cross)
-        blocks.append('redstone_torch')
+        blocks.append("redstone_torch")
 
     locations.append(air_start + (direction * (depth - 1)))
-    blocks.append(f'rail[shape={shape}]')
+    blocks.append(f"rail[shape={shape}]")
     locations.append(air_start + (direction * depth))
-    blocks.append(f'powered_rail[shape={shape}]')
+    blocks.append(f"powered_rail[shape={shape}]")
 
     await world.setBlockList(locations, blocks)

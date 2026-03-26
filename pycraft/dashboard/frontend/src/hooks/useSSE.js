@@ -4,7 +4,7 @@ import { createSSEConnection } from '../api/sse';
 
 const MAX_LOG_ENTRIES = 200;
 
-export function useSSE() {
+export function useSSE(disabled = false) {
   const queryClient = useQueryClient();
   const connectionRef = useRef(null);
   const connectedOnceRef = useRef(false);
@@ -21,6 +21,7 @@ export function useSSE() {
   }, []);
 
   useEffect(() => {
+    if (disabled) return;
     const connection = createSSEConnection(
       '/api/events',
       (type, data) => {
@@ -88,7 +89,7 @@ export function useSSE() {
     connectionRef.current = connection;
 
     return () => connection.close();
-  }, [queryClient, addLogEntry]);
+  }, [queryClient, addLogEntry, disabled]);
 
   return { connected, eventLog };
 }

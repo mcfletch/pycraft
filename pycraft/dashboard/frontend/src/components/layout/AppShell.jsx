@@ -22,7 +22,9 @@ import MapIcon from '@mui/icons-material/Map';
 import CodeIcon from '@mui/icons-material/Code';
 import SearchIcon from '@mui/icons-material/Search';
 import PetsIcon from '@mui/icons-material/Pets';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useServerInfo } from '../../api/queries';
+import { useAuth } from '../../hooks/useAuth';
 
 const DRAWER_WIDTH = 240;
 
@@ -46,6 +48,7 @@ export default function AppShell({ children, sseConnected }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: serverInfo } = useServerInfo();
+  const { username, logout } = useAuth();
 
   const drawer = (
     <Box sx={{ mt: 8 }}>
@@ -94,6 +97,16 @@ export default function AppShell({ children, sseConnected }) {
             size="small"
             variant="outlined"
           />
+          {username && (
+            <Chip
+              label={username}
+              size="small"
+              variant="outlined"
+              onDelete={logout}
+              deleteIcon={<LogoutIcon />}
+              sx={{ ml: 1, color: 'inherit', borderColor: 'rgba(255,255,255,0.5)' }}
+            />
+          )}
         </Toolbar>
       </AppBar>
 

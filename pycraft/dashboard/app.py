@@ -10,6 +10,7 @@ from aiohttp import web
 
 from pycraft.server import channel
 
+from .auth import auth_middleware, auth_required, add_user_interactive
 from .routes import setup_routes
 from .services import DashboardServices
 from .sse import SSEManager
@@ -52,6 +53,17 @@ def get_options():
         default=False,
         action='store_true',
         help='Enable verbose logging',
+    )
+    parser.add_argument(
+        '--add-user',
+        action='store_true',
+        default=False,
+        help='Interactively add a dashboard user (prompts for username/password)',
+    )
+    parser.add_argument(
+        '--credentials-file',
+        default=None,
+        help='Path to credentials file (default: ~/.pycraft-dashboard-users.json)',
     )
     return parser
 
@@ -146,9 +158,10 @@ async def cleanup(app):
     log.info("Dashboard shut down")
 
 
-def create_app(mc_host='127.0.0.1', mc_port=4712, debug=False):
+def create_app(mc_host='127.0.0.1', mc_port=4712, debug=False, credentials_file=None):
     """Create and configure the aiohttp application"""
-    app = web.Application()
+    app = web.Application(middlewares=[auth_middleware])
+    app['credentials_file'] = credentials_file
 
     ch = channel.Channel(host=mc_host, port=mc_port, debug=debug)
     sse_manager = SSEManager()
@@ -216,12 +229,28 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO)
 
+    # Handle --add-user: add a user interactively and exit
+    if options.add_user:
+        import sys
+
+        success = add_user_interactive(options.credentials_file)
+        sys.exit(0 if success else 1)
+
+    if not auth_required(options.credentials_file):
+        import sys
+
+        log.error(
+            "No users configured. Add a user first with: pycraft-dashboard --add-user"
+        )
+        sys.exit(1)
+
     host = options.host or find_minecraft_host()
 
     app = create_app(
         mc_host=host,
         mc_port=options.port,
         debug=options.verbose,
+        credentials_file=options.credentials_file,
     )
     log.info(
         "Starting dashboard on %s:%s (MC server: %s:%s)",

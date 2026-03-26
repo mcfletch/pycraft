@@ -11,6 +11,8 @@ import SearchPanel from './components/server/SearchPanel';
 import EntityPanel from './components/server/EntityPanel';
 import { useSSE } from './hooks/useSSE';
 import { useServerInfo } from './api/queries';
+import { useAuth } from './hooks/useAuth';
+import LoginPage from './components/auth/LoginPage';
 
 function ServerPage() {
   const navigate = useNavigate();
@@ -61,7 +63,7 @@ function EntitiesPage({ worlds }) {
   return <EntityPanel worlds={worlds} />;
 }
 
-export default function App() {
+function AuthenticatedApp() {
   const { connected, eventLog } = useSSE();
   const { data: serverInfo } = useServerInfo();
   const worlds = serverInfo?.worlds || [];
@@ -82,4 +84,13 @@ export default function App() {
       </Routes>
     </AppShell>
   );
+}
+
+export default function App() {
+  const { loading, authenticated, authRequired } = useAuth();
+
+  if (loading) return null;
+  if (authRequired && !authenticated) return <LoginPage />;
+
+  return <AuthenticatedApp />;
 }

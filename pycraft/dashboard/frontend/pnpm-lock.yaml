@@ -32,9 +32,6 @@ importers:
       react-router-dom:
         specifier: ^7.6.2
         version: 7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      three:
-        specifier: ^0.183.2
-        version: 0.183.2
     devDependencies:
       '@vitejs/plugin-react':
         specifier: ^4.5.2
@@ -902,9 +899,6 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
-  three@0.183.2:
-    resolution: {integrity: sha512-di3BsL2FEQ1PA7Hcvn4fyJOlxRRgFYBpMTcyOgkwJIaDOdJMebEFPA+t98EvjuljDx4hNulAGwF6KIjtwI5jgQ==}
-
   tinyglobby@0.2.15:
     resolution: {integrity: sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ==}
     engines: {node: '>=12.0.0'}
@@ -1741,8 +1735,6 @@ snapshots:
   stylis@4.2.0: {}
 
   supports-preserve-symlinks-flag@1.0.0: {}
-
-  three@0.183.2: {}
 
   tinyglobby@0.2.15:
     dependencies:

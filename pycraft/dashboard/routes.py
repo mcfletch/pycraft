@@ -1,10 +1,15 @@
 """Route registration for the dashboard API"""
+from . import auth, textures
 from .handlers import server, players, world, commands, search, templates
-from . import textures
 
 
 def setup_routes(app):
     """Register all API routes on the aiohttp application"""
+    # Authentication
+    app.router.add_post('/api/auth/login', auth.login_handler)
+    app.router.add_post('/api/auth/logout', auth.logout_handler)
+    app.router.add_get('/api/auth/status', auth.status_handler)
+
     # Server info
     app.router.add_get('/api/server/info', server.get_server_info)
     app.router.add_get('/api/server/worlds', server.get_worlds)

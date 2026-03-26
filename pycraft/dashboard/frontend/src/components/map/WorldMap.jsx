@@ -34,8 +34,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import ViewInArIcon from '@mui/icons-material/ViewInAr';
-import GridOnIcon from '@mui/icons-material/GridOn';
 import InputAdornment from '@mui/material/InputAdornment';
 import Popper from '@mui/material/Popper';
 import Paper from '@mui/material/Paper';
@@ -46,7 +44,6 @@ import PlayerDetail from '../players/PlayerDetail';
 import { TracebackDialog, parseLocation } from '../editor/CodeEditor';
 import { fetchApi } from '../../api/client';
 import Map2DRenderer, { textureImages, loadTexture } from './Map2DRenderer';
-import Map3DRenderer from './Map3DRenderer';
 
 
 /** Rotate a 2D footprint array [z][x] by steps * 90 degrees CW */
@@ -98,10 +95,6 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
   const [examinePlayer, setExaminePlayer] = useState(null);
   const examineAnchorRef = useRef(null);
   const [hoverInfo, setHoverInfo] = useState(null);
-
-  /* Render mode toggle */
-  const [renderMode, setRenderMode] = useState(() => sessionStorage.getItem('map_renderMode') || '2d');
-  useEffect(() => { sessionStorage.setItem('map_renderMode', renderMode); }, [renderMode]);
 
   /* Interaction modes: 'normal' | 'teleport-pick-player' | 'teleport-pick-dest' | 'paste-preview' */
   const [interactionMode, setInteractionMode] = useState('normal');
@@ -689,13 +682,6 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
             </Stack>
           )}
 
-          {/* 2D / 3D toggle */}
-          <Tooltip title={renderMode === '2d' ? 'Switch to 3D view' : 'Switch to 2D view'}>
-            <IconButton size="small" onClick={() => setRenderMode((m) => m === '2d' ? '3d' : '2d')}>
-              {renderMode === '2d' ? <ViewInArIcon /> : <GridOnIcon />}
-            </IconButton>
-          </Tooltip>
-
           {/* Map search */}
           <Box sx={{ position: 'relative' }} ref={searchAnchorRef}>
             <TextField
@@ -782,47 +768,27 @@ export default function WorldMap({ worlds, initialFollowPlayer, onFollowConsumed
               <CircularProgress />
             </Box>
           )}
-          {renderMode === '2d' ? (
-            <Map2DRenderer
-              blockData={blockData}
-              players={players}
-              worldName={worldName}
-              canvasW={canvasW}
-              canvasH={canvasH}
-              effectiveZoom={effectiveZoom}
-              followPlayer={followPlayer}
-              selectedPlayer={selectedPlayer}
-              teleportTarget={teleportTarget}
-              interactionMode={interactionMode}
-              pasteFootprint={pasteFootprint}
-              pastePosition={pastePosition}
-              pasteMousePos={pasteMousePos}
-              cursor={cursor}
-              visualOffset={visualOffset}
-              texturesReady={texturesReady}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleCanvasMouseMove}
-              onMouseLeave={handleCanvasMouseLeave}
-            />
-          ) : (
-            <Map3DRenderer
-              blockData={blockData}
-              players={players}
-              worldName={worldName}
-              containerW={containerSize.w}
-              containerH={containerSize.h}
-              blocksW={blocksW}
-              blocksH={blocksH}
-              followPlayer={followPlayer}
-              selectedPlayer={selectedPlayer}
-              teleportTarget={teleportTarget}
-              interactionMode={interactionMode}
-              cursor={cursor}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleCanvasMouseMove}
-              onMouseLeave={handleCanvasMouseLeave}
-            />
-          )}
+          <Map2DRenderer
+            blockData={blockData}
+            players={players}
+            worldName={worldName}
+            canvasW={canvasW}
+            canvasH={canvasH}
+            effectiveZoom={effectiveZoom}
+            followPlayer={followPlayer}
+            selectedPlayer={selectedPlayer}
+            teleportTarget={teleportTarget}
+            interactionMode={interactionMode}
+            pasteFootprint={pasteFootprint}
+            pastePosition={pastePosition}
+            pasteMousePos={pasteMousePos}
+            cursor={cursor}
+            visualOffset={visualOffset}
+            texturesReady={texturesReady}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleCanvasMouseMove}
+            onMouseLeave={handleCanvasMouseLeave}
+          />
           {hoverInfo && (
             <Box
               sx={{

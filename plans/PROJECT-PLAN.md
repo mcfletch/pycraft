@@ -25,11 +25,10 @@
 | **Dashboard Features** | | |
 | Player Management | TODO | Whitelist management UI |
 | Event Handlers (persistent) | TODO | Persistent handlers for world events, reload on reconnect |
-| Dashboard Authentication | TODO | Username/password login to control access to the dashboard |
+| Dashboard Authentication | Done | Username/password login to control access to the dashboard |
 | Web Dashboard (core) | Partial | Live map, player markers, inventory, teleport, search, events, code editor all done |
 | Entity Management | TODO | Allow for selecting entities, searching by entity type or name, and applying a menu of commands to an entity, such as kill, delete, edit inventory, etc |
 | **Map Enhancements** | | |
-| 3D Map Renderer | TODO | Replace 2D canvas map with a true 3D WebGL/Three.js renderer showing voxel terrain |
 | Configurable Resource Pack | TODO | Let users specify a resource pack URL so block textures reflect their chosen pack |
 | Map Block Painting | TODO | Click-to-paint blocks with material palette and brush sizes |
 | Map Height Shadows | TODO | Terrain elevation shadows based on sun angle / time of day |
@@ -130,23 +129,12 @@ A local website providing:
 
 ### Dashboard Authentication
 
-- [ ] Protect the dashboard with a username/password login screen
-- [ ] Backend: session-based or JWT auth on the FastAPI server; credentials configured via CLI flag or config file
-- [ ] Frontend: login page shown when unauthenticated; token stored in `localStorage` or a secure cookie
-- [ ] All API routes and SSE endpoint require a valid session/token
+- [x] Protect the dashboard with a username/password login screen
+- [x] Backend: HMAC-signed session auth on aiohttp server; credentials configured via `--add-user` CLI flag, stored in `~/.pycraft-dashboard-users.json`
+- [x] Frontend: login page shown when unauthenticated; session stored in httponly secure cookie
+- [x] All API routes and SSE endpoint require a valid session token
 - [ ] Optional: multiple users with different roles (read-only vs. admin)
-- [ ] Designed for local-network use — not a full enterprise auth system, but enough to prevent casual unauthorized access
-
-### 3D Map Renderer
-
-- [ ] Replace the 2D top-down canvas renderer with a true 3D WebGL scene (Three.js or Babylon.js)
-- [ ] Stream block data from the existing blocks endpoint; build a voxel mesh client-side
-- [ ] Camera: free-fly or orbit controls with zoom, pan, and rotation
-- [ ] Render block faces with textures from the resource pack (pairs well with Configurable Resource Pack)
-- [ ] Player markers become 3D billboards or simple character models positioned in world space
-- [ ] Teleport and template-paste interactions adapted to 3D raycasting for block targeting
-- [ ] LOD (level of detail): coarser chunks at distance, full detail up close
-- [ ] Distinct from pseudo-3D height shadows — this is a full perspective projection, not a top-down approximation
+- [x] Designed for local-network use — not a full enterprise auth system, but enough to prevent casual unauthorized access
 
 ### Configurable Resource Pack
 

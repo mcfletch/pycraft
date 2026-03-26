@@ -515,6 +515,13 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
     def inject_methods(cls, channel, method_descriptions):
         """Inject the methods the server reports are available for this namespace"""
         to_cache = cls.__cached_methods__ or set()
+        # Collect attribute names defined by override types in the MRO
+        # (e.g. @property descriptors) so we don't shadow them with
+        # injected ProxyMethod descriptors from introspection.
+        override_attrs = set()
+        for parent in cls.__mro__:
+            if parent in OVERRIDE_TYPES.values():
+                override_attrs.update(parent.__dict__.keys())
         for description in method_descriptions.get('commands', ()):
             if description.get('type') not in ('method', 'multidispatch'):
                 continue
@@ -522,6 +529,8 @@ class ServerObjectProxy(metaclass=ServerObjectMeta):
                 method = MultiMethod(description, cls.__namespace__)
             else:
                 method = ProxyMethod(description, cls.__namespace__)
+            if method.__name__ in override_attrs:
+                continue
             setattr(cls, method.__name__, method)
         if 'cls' in method_descriptions:
             cls.interfaces = method_descriptions['cls'].get('interfaces', [])

@@ -671,9 +671,9 @@ async def elevators(
         height=height,
         base="soul_sand",
     )
-    if not isinstance(height, int) or height <= 0:
-        raise RuntimeError(f"Elevator failed: {height}")
-    height = float(calculated_height)
+    if not isinstance(calculated_height, int) or calculated_height <= 0:
+        raise RuntimeError(f"Elevator failed: {calculated_height}")
+    height = calculated_height
 
     await elevator_up(
         position=down_pos,
